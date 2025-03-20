@@ -25,7 +25,7 @@ variable "sku" {
 variable "microsoft_app_id" {
   description = "Microsoft App ID for the Azure Bot Service"
   type        = string
-  default     = "your-microsoft-app-id"
+  default     = "0eecb239-f1dc-4ab6-8ac7-5d60fd9102d1"
 }
 
 variable "tags" {

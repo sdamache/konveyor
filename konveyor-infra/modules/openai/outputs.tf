@@ -3,6 +3,11 @@ output "cognitive_account_id" {
   value       = azurerm_cognitive_account.openai.id
 }
 
+output "cognitive_account_name" {
+  description = "Azure OpenAI Service cognitive account name"
+  value       = azurerm_cognitive_account.openai.name
+}
+
 output "deployment_id" {
   description = "Azure OpenAI Service deployment ID"
   value       = azurerm_cognitive_deployment.gpt_deployment.id
