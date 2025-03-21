@@ -5,16 +5,10 @@ terraform {
       version = "~> 3.75.0"
     }
   }
-  
-  backend "azurerm" {
-    resource_group_name  = "terraform-state-rg"
-    storage_account_name = "konveyortfstate"
-    container_name       = "tfstate"
-    key                  = "konveyor.terraform.tfstate"
-  }
 }
 
 provider "azurerm" {
+  skip_provider_registration = true
   features {
     key_vault {
       purge_soft_delete_on_destroy = false
