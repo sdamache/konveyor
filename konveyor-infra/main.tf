@@ -17,11 +17,12 @@ module "openai" {
   source              = "./modules/openai"
   name                = "${var.prefix}-openai"
   resource_group_name = module.resource_group.name
-  location            = var.location
+  location            = "swedencentral"
   sku_name            = "S0"
   model_name          = "gpt-4o"
-  model_version       = "1106-Preview"
+  model_version       = "2024-05-13"
   capacity            = 1
+  deploy_model        = true
   tags                = var.tags
 }
 
