@@ -1,0 +1,21 @@
+{
+  "name": "Konveyor Development Environment",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/azure-cli:1": {},
+    "ghcr.io/devcontainers/features/terraform:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "hashicorp.terraform",
+        "ms-azuretools.vscode-azureresourcegroups",
+        "ms-vscode.azurecli",
+        "golang.go"
+      ]
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/scripts/install-tools.sh"
+}
