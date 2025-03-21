@@ -13,14 +13,18 @@ DATABASES = {
     }
 }
 
-# Enable debug toolbar if installed
-try:
-    import debug_toolbar
-    INSTALLED_APPS += ['debug_toolbar']
-    MIDDLEWARE = ['debug_toolbar.middleware.DebugToolbarMiddleware'] + MIDDLEWARE
-    INTERNAL_IPS = ['127.0.0.1']
-except ImportError:
-    pass
+# Debug Toolbar Configuration
+INSTALLED_APPS += [
+    'debug_toolbar',
+]
+
+MIDDLEWARE = [
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
+] + MIDDLEWARE
+
+INTERNAL_IPS = [
+    '127.0.0.1',
+]
 
 # Enable django extensions if installed
 try:
@@ -52,8 +56,3 @@ LOGGING = {
         },
     },
 }
-
-# Additional development apps
-INSTALLED_APPS += [
-    # Development specific apps can be added here
-] 
