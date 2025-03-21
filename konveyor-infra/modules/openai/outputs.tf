@@ -10,5 +10,5 @@ output "cognitive_account_name" {
 
 output "deployment_id" {
   description = "Azure OpenAI Service deployment ID"
-  value       = azurerm_cognitive_deployment.gpt_deployment.id
+  value       = var.deploy_model ? azurerm_cognitive_deployment.gpt_deployment[0].id : "deployment-not-created"
 }

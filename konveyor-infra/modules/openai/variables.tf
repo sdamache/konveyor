@@ -41,3 +41,9 @@ variable "tags" {
     environment = "test"
   }
 }
+
+variable "deploy_model" {
+  description = "Whether to deploy the model (set to false if you don't have quota)"
+  type        = bool
+  default     = false
+}

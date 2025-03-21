@@ -8,6 +8,7 @@ resource "azurerm_cognitive_account" "openai" {
 }
 
 resource "azurerm_cognitive_deployment" "gpt_deployment" {
+  count                = var.deploy_model ? 1 : 0
   name                 = "gpt-deployment"
   cognitive_account_id = azurerm_cognitive_account.openai.id
   model {
@@ -16,7 +17,7 @@ resource "azurerm_cognitive_deployment" "gpt_deployment" {
     version = var.model_version
   }
   scale {
-    type     = "Standard"
+    type     = "GlobalStandard"
     capacity = var.capacity
   }
 }
