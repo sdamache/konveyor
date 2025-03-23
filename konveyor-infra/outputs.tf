@@ -47,3 +47,13 @@ output "bot_service_name" {
   description = "Azure Bot Service name"
   value       = module.bot_service.bot_service_name
 }
+
+output "document_intelligence_id" {
+  description = "Document Intelligence Service ID"
+  value       = module.document_intelligence.id
+}
+
+output "document_intelligence_endpoint" {
+  description = "Document Intelligence Service endpoint"
+  value       = module.document_intelligence.endpoint
+}

@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'konveyor.apps.core.apps.CoreConfig',
     'konveyor.apps.users.apps.UsersConfig',
     'konveyor.apps.api.apps.ApiConfig',
+    'konveyor.apps.documents.apps.DocumentsConfig',  # Updated this line
 ]
 
 MIDDLEWARE = [
@@ -96,6 +97,10 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
+# Media files configuration
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -120,4 +125,18 @@ LOGGING = {
         'handlers': ['console'],
         'level': 'INFO',
     },
-} 
+}
+
+# Azure Service Configuration
+AZURE_OPENAI_ENDPOINT = os.environ.get('AZURE_OPENAI_ENDPOINT')
+AZURE_OPENAI_API_KEY = os.environ.get('AZURE_OPENAI_API_KEY')
+AZURE_OPENAI_API_VERSION = os.environ.get('AZURE_OPENAI_API_VERSION', '2023-12-01-preview')
+
+AZURE_STORAGE_CONNECTION_STRING = os.environ.get('AZURE_STORAGE_CONNECTION_STRING')
+AZURE_STORAGE_CONTAINER = os.environ.get('AZURE_STORAGE_CONTAINER', 'documents')
+
+AZURE_SEARCH_ENDPOINT = os.environ.get('AZURE_SEARCH_ENDPOINT')
+AZURE_SEARCH_API_KEY = os.environ.get('AZURE_SEARCH_API_KEY')
+AZURE_SEARCH_INDEX_NAME = os.environ.get('AZURE_SEARCH_INDEX_NAME', 'documents')
+
+AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT = os.environ.get('AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT')

@@ -49,7 +49,7 @@ Konveyor is a knowledge transfer (KT) agent designed to help new and existing em
 
 6. Start the development server
    ```bash
-   python manage.py runserver
+   python3 manage.py runserver
    ```
 
 ## Project Structure
