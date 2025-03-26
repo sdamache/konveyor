@@ -1,5 +1,21 @@
 Django>=5.0.0
 psycopg2-binary>=2.9.9
 python-dotenv>=1.0.0
-azure-ai-documentintelligence>=1.0.0
 langchain>=0.1.0
+
+# Azure packages
+azure-identity>=1.15.0
+azure-core>=1.29.5
+azure-ai-documentintelligence>=1.0.0
+azure-search-documents>=11.4.0
+azure-storage-blob>=12.19.0
+azure-keyvault-secrets>=4.7.0
+
+# OpenAI
+openai>=1.12.0
+
+# Document processing
+beautifulsoup4>=4.12.0
+python-docx>=0.8.11
+PyPDF2>=3.0.0
+markdown>=3.5.0
