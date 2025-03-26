@@ -35,7 +35,8 @@ staticfiles/
 venv/
 ENV/
 .env
-.env.example
+.env.*
+!.env.example
 
 # IDE
 .idea/

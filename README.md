@@ -108,6 +108,9 @@ konveyor/
 - [ ] Document API endpoints with Swagger/OpenAPI
 
 ### User Interface
-- [ ] Build React-based frontend
 - [ ] Implement Teams bot integration
-- [ ] Create admin interface for content management 
+- [ ] Create admin interface for content management
+
+## Environment Setup
+1. Copy `.env.example` to `.env`
+2. Update `.env` with your local values 
