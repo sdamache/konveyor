@@ -28,13 +28,21 @@ class SearchService:
     def create_search_index(self) -> SearchIndex:
         """Create the search index."""
         fields = [
-            SimpleField(name="id", type=SearchFieldDataType.String, key=True),
-            SimpleField(name="document_id", type=SearchFieldDataType.String, filterable=True),
+            SimpleField(
+                name="id", 
+                type=SearchFieldDataType.String, 
+                key=True,
+                searchable=False
+            ),
+            SimpleField(
+                name="document_id", 
+                type=SearchFieldDataType.String, 
+                filterable=True
+            ),
             SearchableField(
                 name="content",
                 type=SearchFieldDataType.String,
-                analyzer_name="standard.lucene",
-                searchable=True,
+                analyzer_name="standard.lucene"
             ),
             SimpleField(
                 name="chunk_index", 
@@ -82,5 +90,5 @@ class SearchService:
         try:
             return self.index_client.get_index(self.index_name)
         except Exception as e:
-            logger.error(f"Failed to get search index: {str(e)}")
+            logger.error(f"Failed to get search index '{self.index_name}': {str(e)}")
             raise 
