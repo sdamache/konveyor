@@ -1,7 +1,8 @@
 from django.test import TestCase
 from django.conf import settings
-from ..services.search_service import SearchService
-from azure.search.documents.indexes.models import SearchIndex
+# Use explicit imports to avoid confusion
+from konveyor.apps.documents.services.search_service import SearchService
+from azure.search.documents.indexes.models import SearchIndex  # Azure's documents module
 
 class SearchServiceTests(TestCase):
     def setUp(self):
@@ -17,8 +18,7 @@ class SearchServiceTests(TestCase):
         
         # Verify fields
         field_names = [field.name for field in index.fields]
-        expected_fields = ['id', 'document_id', 'content', 'chunk_index', 
-                         'metadata', 'created_at', 'file_type']
+        expected_fields = ['id', 'document_id', 'content', 'chunk_index','metadata', 'created_at', 'file_type']
         for field in expected_fields:
             self.assertIn(field, field_names)
 

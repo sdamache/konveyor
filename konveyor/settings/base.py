@@ -21,11 +21,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
-    # Local apps
+    # Local apps - use full paths
     'konveyor.apps.core.apps.CoreConfig',
     'konveyor.apps.users.apps.UsersConfig',
     'konveyor.apps.api.apps.ApiConfig',
-    'konveyor.apps.documents.apps.DocumentsConfig',  # Updated this line
+    'konveyor.apps.documents.apps.DocumentsConfig',
 ]
 
 MIDDLEWARE = [
