@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-# Build paths inside the project
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -129,6 +129,21 @@ LOGGING = {
     },
 }
 
+# Core Azure Settings (common across all environments)
+AZURE_CORE_SETTINGS = {
+    'AZURE_LOCATION': os.getenv('AZURE_LOCATION', 'eastus'),
+    'AZURE_TENANT_ID': os.getenv('AZURE_TENANT_ID'),
+    'AZURE_SUBSCRIPTION_ID': os.getenv('AZURE_SUBSCRIPTION_ID'),
+}
+
+# Azure Search Settings - Single source of truth
+AZURE_SEARCH_ENDPOINT = os.getenv('AZURE_SEARCH_ENDPOINT')  # Use single env variable name
+AZURE_SEARCH_API_KEY = os.getenv('AZURE_SEARCH_API_KEY')
+AZURE_SEARCH_INDEX_NAME = os.getenv('AZURE_SEARCH_INDEX_NAME', 'konveyor-documents')
+
+# For backward compatibility and clarity, set both names
+AZURE_COGNITIVE_SEARCH_ENDPOINT = AZURE_SEARCH_ENDPOINT
+
 # Azure Service Configuration
 AZURE_OPENAI_ENDPOINT = os.environ.get('AZURE_OPENAI_ENDPOINT')
 AZURE_OPENAI_API_KEY = os.environ.get('AZURE_OPENAI_API_KEY')
@@ -137,11 +152,4 @@ AZURE_OPENAI_API_VERSION = os.environ.get('AZURE_OPENAI_API_VERSION', '2023-12-0
 AZURE_STORAGE_CONNECTION_STRING = os.environ.get('AZURE_STORAGE_CONNECTION_STRING')
 AZURE_STORAGE_CONTAINER = os.environ.get('AZURE_STORAGE_CONTAINER', 'documents')
 
-AZURE_SEARCH_ENDPOINT = os.environ.get('AZURE_SEARCH_ENDPOINT')
-AZURE_SEARCH_API_KEY = os.environ.get('AZURE_SEARCH_API_KEY')
-AZURE_SEARCH_INDEX_NAME = os.environ.get('AZURE_SEARCH_INDEX_NAME', 'konveyor-documents')
-
 AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT = os.environ.get('AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT')
-
-# Azure Cognitive Search Settings
-AZURE_COGNITIVE_SEARCH_ENDPOINT = os.getenv('AZURE_COGNITIVE_SEARCH_ENDPOINT')

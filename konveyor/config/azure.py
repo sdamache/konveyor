@@ -143,7 +143,7 @@ class AzureConfig:
             return None
         try:
             return SearchClient(
-                endpoint=os.getenv("AZURE_COGNITIVE_SEARCH_ENDPOINT"),
+                endpoint=os.getenv("AZURE_SEARCH_ENDPOINT"),
                 index_name=os.getenv("AZURE_SEARCH_INDEX_NAME", "konveyor-documents"),
                 credential=self.credential
             )
