@@ -142,11 +142,25 @@ class AzureConfig:
             logger.warning("Azure Search package not installed. Install with: pip install azure-search-documents")
             return None
         try:
-            return SearchClient(
-                endpoint=os.getenv("AZURE_SEARCH_ENDPOINT"),
-                index_name=os.getenv("AZURE_SEARCH_INDEX_NAME", "konveyor-documents"),
-                credential=self.credential
-            )
+            # Try using the API key - this is more reliable for search
+            search_api_key = os.getenv("AZURE_SEARCH_API_KEY")
+            search_endpoint = os.getenv("AZURE_SEARCH_ENDPOINT")
+            search_index = os.getenv("AZURE_SEARCH_INDEX_NAME", "konveyor-documents")
+            
+            if search_api_key:
+                return SearchClient(
+                    endpoint=search_endpoint,
+                    index_name=search_index,
+                    credential=AzureKeyCredential(search_api_key)
+                )
+            else:
+                # Fall back to token auth (though this may not work in all environments)
+                logger.warning("AZURE_SEARCH_API_KEY not set - falling back to token authentication")
+                return SearchClient(
+                    endpoint=search_endpoint,
+                    index_name=search_index,
+                    credential=self.credential
+                )
         except Exception as e:
             logger.warning(f"Failed to initialize Search client: {str(e)}")
             return None
