@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.conf import settings
 # Use explicit imports to avoid confusion
-from konveyor.apps.documents.services.search_service import SearchService
+from konveyor.apps.search.services.search_service import SearchService
 from azure.search.documents.indexes.models import SearchIndex, SearchFieldDataType  # Azure's documents module
 import json
 
