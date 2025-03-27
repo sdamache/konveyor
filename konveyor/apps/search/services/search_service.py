@@ -38,8 +38,8 @@ class SearchService:
     
     def __init__(self):
         self.search_endpoint = settings.AZURE_SEARCH_ENDPOINT
-        self.search_key = settings.AZURE_SEARCH_KEY
-        self.index_name = settings.AZURE_SEARCH_INDEX
+        self.search_key = settings.AZURE_SEARCH_API_KEY
+        self.index_name = settings.AZURE_SEARCH_INDEX_NAME
         
         self.openai_client = AzureOpenAI(
             azure_endpoint=settings.AZURE_OPENAI_ENDPOINT,
