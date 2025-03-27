@@ -10,26 +10,37 @@ def validate_file_extension(value):
         raise ValidationError('Unsupported file type.')
 
 class Document(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    """Model for tracking documents."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     title = models.CharField(max_length=255)
-    description = models.TextField(blank=True, null=True)
-    file = models.FileField(
-        upload_to='documents/',
-        validators=[validate_file_extension]
+    blob_path = models.CharField(max_length=512)  # Path in Azure Blob Storage
+    content_type = models.CharField(max_length=100)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    processed_at = models.DateTimeField(null=True)
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ('PENDING', 'Pending'),
+            ('PROCESSING', 'Processing'),
+            ('PROCESSED', 'Processed'),
+            ('FAILED', 'Failed')
+        ],
+        default='PENDING'
     )
-    file_type = models.CharField(max_length=10)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    error_message = models.TextField(null=True, blank=True)
+    metadata = models.JSONField(default=dict)
     
     def __str__(self):
         return self.title
 
 class DocumentChunk(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    """Model for tracking document chunks."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='chunks')
-    content = models.TextField()
     chunk_index = models.IntegerField()
+    blob_path = models.CharField(max_length=512)  # Path in Azure Blob Storage
     metadata = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
         ordering = ['document', 'chunk_index']
