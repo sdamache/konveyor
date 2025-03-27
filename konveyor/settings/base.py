@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'konveyor.apps.users.apps.UsersConfig',
     'konveyor.apps.api.apps.ApiConfig',
     'konveyor.apps.documents.apps.DocumentsConfig',
+    'konveyor.apps.search.apps.SearchConfig',
 ]
 
 MIDDLEWARE = [
@@ -147,7 +148,7 @@ AZURE_COGNITIVE_SEARCH_ENDPOINT = AZURE_SEARCH_ENDPOINT
 # Azure Service Configuration
 AZURE_OPENAI_ENDPOINT = os.environ.get('AZURE_OPENAI_ENDPOINT')
 AZURE_OPENAI_API_KEY = os.environ.get('AZURE_OPENAI_API_KEY')
-AZURE_OPENAI_API_VERSION = os.environ.get('AZURE_OPENAI_API_VERSION', '2023-12-01-preview')
+AZURE_OPENAI_API_VERSION = os.environ.get('AZURE_OPENAI_API_VERSION', '2024-11-20')
 
 AZURE_STORAGE_CONNECTION_STRING = os.environ.get('AZURE_STORAGE_CONNECTION_STRING')
 AZURE_STORAGE_CONTAINER = os.environ.get('AZURE_STORAGE_CONTAINER', 'documents')
