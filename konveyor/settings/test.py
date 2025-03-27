@@ -5,7 +5,7 @@ AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT = 'https://test-doc-intelligence.azure.com'
 
 # Azure Storage Settings
 AZURE_STORAGE_ACCOUNT_URL = 'https://test-storage.azure.com'
-AZURE_STORAGE_CONTAINER = 'test-container'
+AZURE_STORAGE_CONTAINER_NAME = 'test-container'
 
 # Azure Search Settings
 AZURE_COGNITIVE_SEARCH_ENDPOINT = 'https://test-search.azure.com'
