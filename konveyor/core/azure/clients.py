@@ -36,8 +36,8 @@ from azure.storage.blob import BlobServiceClient
 from azure.keyvault.secrets import SecretClient
 from openai import AzureOpenAI
 
-from .config import AzureConfig
-from .retry import azure_retry
+from konveyor.core.azure.config import AzureConfig
+from konveyor.core.azure.retry import azure_retry
 
 logger = logging.getLogger(__name__)
 

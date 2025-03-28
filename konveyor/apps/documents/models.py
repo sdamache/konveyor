@@ -13,6 +13,8 @@ class Document(models.Model):
     """Model for tracking documents."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     title = models.CharField(max_length=255)
+    filename = models.CharField(max_length=255, null=True, blank=True)  # Original filename
+    size = models.IntegerField(null=True, blank=True)  # File size in bytes
     blob_path = models.CharField(max_length=512)  # Path in Azure Blob Storage
     content_type = models.CharField(max_length=100)
     uploaded_at = models.DateTimeField(auto_now_add=True)

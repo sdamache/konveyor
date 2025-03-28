@@ -1,8 +1,29 @@
+"""Azure Cognitive Search service.
+
+This module provides functionality for document search using Azure Cognitive Search,
+including vector search with OpenAI embeddings and hybrid search capabilities.
+
+Example:
+    ```python
+    # Initialize service
+    search = SearchService()
+    
+    # Perform hybrid search
+    results = search.hybrid_search(
+        query="machine learning",
+        top=5,
+        load_full_content=True
+    )
+    ```
+"""
+
 import logging
 import os
 import json
 import time
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
+
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents import SearchClient
 from azure.search.documents.indexes import SearchIndexClient
@@ -20,150 +41,70 @@ from azure.search.documents.indexes.models import (
     VectorSearchAlgorithmConfiguration
 )
 from openai import AzureOpenAI
-from langchain_openai import AzureOpenAIEmbeddings
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from django.conf import settings
 from azure.core.exceptions import AzureError
-from tenacity import stop_after_attempt, wait_exponential, retry_if_exception_type
-from tenacity import stop_after_attempt, wait_exponential, retry_if_exception_type
 from azure.storage.blob import BlobServiceClient
-from azure.storage.blob import ContentSettings
-import uuid
 from django.utils import timezone
-from konveyor.apps.documents.services.document_service import DocumentService
+
+from konveyor.core.azure.service import AzureService
+from konveyor.services.documents.document_service import DocumentService
 from konveyor.apps.documents.models import DocumentChunk
-from konveyor.utils.azure.openai_client import AzureOpenAIClient
+from konveyor.core.azure.retry import azure_retry
+from konveyor.core.azure.mixins import ServiceLoggingMixin, AzureClientMixin, AzureServiceConfig
 
 logger = logging.getLogger(__name__)
 
-class SearchService:
+class SearchService(AzureService):
     """Service for interacting with Azure Cognitive Search."""
     
     def __init__(self):
-        """Initialize search service with detailed logging and validation."""
-        logger.info("Initializing SearchService...")
+        """Initialize search service with Azure clients and configuration.
         
-        # 1. Validate and log settings
-        self.search_endpoint = settings.AZURE_SEARCH_ENDPOINT
-        self.search_key = settings.AZURE_SEARCH_API_KEY
-        self.index_name = settings.AZURE_SEARCH_INDEX_NAME
+        Sets up Azure Search and OpenAI clients, creates search index if needed,
+        and initializes document processing service.
         
-        if not self.search_endpoint or not self.search_key:
-            error_msg = "AZURE_SEARCH_ENDPOINT and AZURE_SEARCH_API_KEY must be configured"
-            logger.error(error_msg)
-            raise ValueError(error_msg)
+        Raises:
+            Exception: If client initialization fails
+        """
+        # Initialize base class
+        super().__init__('SEARCH')
+        self.log_init("SearchService")
         
-        logger.info(f"Search endpoint: {self.search_endpoint}")
-        logger.info(f"Search index name: {self.index_name}")
+        # Get configuration
+        self.index_name = os.getenv('AZURE_SEARCH_INDEX_NAME', 'konveyor-documents')
+        self.log_success(f"Search index name: {self.index_name}")
         
-        # 2. Initialize and validate OpenAI client and embeddings
-        openai_endpoint = settings.AZURE_OPENAI_ENDPOINT
-        openai_key = settings.AZURE_OPENAI_API_KEY
-        openai_version = settings.AZURE_OPENAI_API_VERSION
-        embedding_deployment = os.getenv("AZURE_OPENAI_EMBEDDING_DEPLOYMENT", "text-embedding-ada-002")
+        # Get OpenAI configuration
+        openai_version = os.getenv('AZURE_OPENAI_API_VERSION', '2024-12-01-preview')
+        embedding_deployment = os.getenv('AZURE_OPENAI_EMBEDDING_DEPLOYMENT', 'embeddings')
+        self.log_success(f"OpenAI API version: {openai_version}")
+        self.log_success(f"OpenAI embedding deployment: {embedding_deployment}")
         
-        logger.info(f"OpenAI endpoint: {openai_endpoint}")
-        logger.info(f"OpenAI API version: {openai_version}")
-        logger.info(f"OpenAI embedding deployment: {embedding_deployment}")
-        
-        if not openai_endpoint or not openai_key:
-            logger.warning("Azure OpenAI credentials not configured. Embedding generation will not work.")
-            self.openai_client = None
-            self.embeddings = None
-            self.azure_openai_client = None
-        else:
-            try:
-                # Fix for Azure OpenAI endpoint that may already include a deployment
-                base_endpoint = openai_endpoint
-                if "/deployments/" in openai_endpoint:
-                    # Extract the base endpoint by removing the deployment part
-                    base_endpoint = openai_endpoint.split("/deployments/")[0]
-                    logger.info(f"Extracted base OpenAI endpoint: {base_endpoint}")
-                
-                # Initialize our custom Azure OpenAI client
-                self.azure_openai_client = AzureOpenAIClient(
-                    api_key=openai_key,
-                    endpoint=base_endpoint,
-                    gpt_deployment=os.getenv("AZURE_OPENAI_GPT_DEPLOYMENT", "gpt-deployment"),
-                    embeddings_deployment=embedding_deployment
-                )
-                logger.info("Successfully initialized AzureOpenAIClient")
-                
-                # Initialize regular OpenAI client for completions (for backward compatibility)
-                # Use API version appropriate for GPT models
-                gpt_api_version = openai_version
-                self.openai_client = AzureOpenAI(
-                    azure_endpoint=base_endpoint,
-                    api_key=openai_key,
-                    api_version=gpt_api_version
-                )
-                logger.info(f"Successfully initialized Azure OpenAI client with API version {gpt_api_version}")
-                
-                # Initialize LangChain embeddings with a version known to work with embeddings
-                embeddings_api_version = os.getenv("AZURE_OPENAI_EMBEDDING_API_VERSION", "2023-05-15")
-                self.embeddings = AzureOpenAIEmbeddings(
-                    azure_deployment=embedding_deployment,
-                    openai_api_version=embeddings_api_version,
-                    azure_endpoint=base_endpoint,
-                    api_key=openai_key
-                )
-                logger.info(f"Successfully initialized AzureOpenAIEmbeddings with model {embedding_deployment} and API version {embeddings_api_version}")
-                
-                # Test embedding generation
-                try:
-                    # Keep test very short to avoid unnecessary token usage
-                    test_embedding = self.generate_embedding("test")
-                    logger.info(f"Test embedding generation successful: {len(test_embedding)} dimensions")
-                except Exception as e:
-                    logger.warning(f"Test embedding generation failed: {str(e)}")
-                    if "404" in str(e):
-                        logger.error(f"Make sure you have deployed the embedding model '{embedding_deployment}' in your Azure OpenAI resource")
-                        logger.error(f"Check the deployment name in AZURE_OPENAI_EMBEDDING_DEPLOYMENT environment variable")
-            except Exception as e:
-                logger.error(f"Failed to initialize Azure OpenAI services: {str(e)}")
-                self.openai_client = None
-                self.embeddings = None
-                self.azure_openai_client = None
-        
-        # 3. Initialize and validate search clients
         try:
-            self.search_credential = AzureKeyCredential(self.search_key)
-            self.index_client = SearchIndexClient(
-                endpoint=self.search_endpoint,
-                credential=self.search_credential
-            )
+            # Initialize search clients
+            self.index_client, self.search_client = self.client_manager.get_search_clients(self.index_name)
             
             # Test index client
-            try:
-                # List indexes to validate connectivity
-                indexes = list(self.index_client.list_indexes())
-                index_names = [index.name for index in indexes]
-                logger.info(f"Successfully connected to search service. Found {len(indexes)} indexes: {', '.join(index_names)}")
-            except Exception as e:
-                logger.warning(f"Test connection to search index client failed: {str(e)}")
+            indexes = list(self.index_client.list_indexes())
+            index_names = [index.name for index in indexes]
+            self.log_success(f"Found {len(indexes)} indexes: {', '.join(index_names)}")
             
-            # Initialize search client
-            self.search_client = SearchClient(
-                endpoint=self.search_endpoint,
-                index_name=self.index_name,
-                credential=self.search_credential
-            )
-            logger.info(f"Initialized search client for index: {self.index_name}")
+            # Initialize OpenAI client
+            self.openai_client = self.client_manager.get_openai_client()
             
-        except Exception as e:
-            error_msg = f"Failed to initialize Azure Search clients: {str(e)}"
-            logger.error(error_msg)
-            raise ValueError(error_msg)
-        
-        # 4. Initialize document service
-        try:
+            # Test embedding generation
+            test_embedding = self.generate_embedding("test")
+            self.log_success(f"Test embedding generation successful: {len(test_embedding)} dimensions")
+            
+            # Initialize document service
             self.document_service = DocumentService()
-            logger.info("Successfully initialized DocumentService")
+            self.log_success("Successfully initialized DocumentService")
+            
+            self.log_success("SearchService initialization completed successfully")
+            
         except Exception as e:
-            logger.error(f"Failed to initialize DocumentService: {str(e)}")
+            self.log_error("Failed to initialize service", e)
             raise
-        
-        logger.info("SearchService initialization completed successfully")
     
     def create_search_index(self, index_name=None):
         """
@@ -235,6 +176,13 @@ class SearchService:
                         "sortable": True
                     },
                     {
+                        "name": "chunk_id",
+                        "type": "Edm.String",
+                        "searchable": False,
+                        "filterable": True,
+                        "sortable": False
+                    },
+                    {
                         "name": "document_id",
                         "type": "Edm.String",
                         "searchable": False,
@@ -269,8 +217,11 @@ class SearchService:
                         "searchable": True,
                         "filterable": False,
                         "sortable": False,
+                        "retrievable": False,
+                        "stored": False,
                         "dimensions": 1536,
-                        "vectorSearchProfile": "embedding-profile"
+                        "vectorSearchProfile": "embedding-profile",
+                        "nullable": True  # Allow null values for embedding field
                     }
                 ],
                 "vectorSearch": vector_search
@@ -303,10 +254,19 @@ class SearchService:
                     raise e2
             
             # Update the search client to use the new index
+            # Get the endpoint and key from environment variables
+            endpoint = os.getenv('AZURE_SEARCH_ENDPOINT')
+            api_key = os.getenv('AZURE_SEARCH_API_KEY')
+            
+            # Create AzureKeyCredential
+            from azure.core.credentials import AzureKeyCredential
+            credential = AzureKeyCredential(api_key)
+            
+            # Create a new search client with the new index
             self.search_client = SearchClient(
-                endpoint=self.search_endpoint,
+                endpoint=endpoint,
                 index_name=index_name,
-                credential=self.search_credential
+                credential=credential
             )
             logger.info(f"Updated search client to use index: {index_name}")
             
@@ -317,11 +277,7 @@ class SearchService:
                 logger.error("The 'kind' field is required but was not properly set. Check your SDK version compatibility.")
             raise
 
-    @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=4, max=10),
-        reraise=True
-    )
+    @azure_retry()
     def generate_embedding(self, text: str) -> List[float]:
         """
         Generate an embedding for the given text using LangChain's AzureOpenAIEmbeddings.
@@ -336,18 +292,27 @@ class SearchService:
         Raises:
             Exception: If embedding generation fails after retries
         """
-        logger.info(f"Generating embedding for text ({len(text)} chars)...")
+        self.log_success(f"Generating embedding for text ({len(text)} chars)...")
         
-        if self.azure_openai_client:
-            # Use our custom client if available
+        if self.openai_client:
+            # Use Azure OpenAI client
             try:
-                return self.azure_openai_client.generate_embedding(text)
+                # Get deployment name from environment variable
+                embedding_deployment = os.getenv('AZURE_OPENAI_EMBEDDING_DEPLOYMENT', 'text-embedding-ada-002')
+                self.log_success(f"Using embedding deployment: {embedding_deployment}")
+                
+                response = self.openai_client.embeddings.create(
+                    model=embedding_deployment,
+                    input=text
+                )
+                return response.data[0].embedding
             except Exception as e:
-                logger.warning(f"Failed to generate embedding with custom client: {str(e)}. Falling back to LangChain.")
+                self.log_error("Failed to generate embedding with Azure OpenAI client", e)
+                raise
         
-        if not self.embeddings:
-            error_msg = "Azure OpenAI Embeddings not configured correctly"
-            logger.error(error_msg)
+        if not self.openai_client:
+            error_msg = "Azure OpenAI client not configured correctly"
+            self.log_error(error_msg)
             raise ValueError(error_msg)
         
         try:
@@ -356,20 +321,22 @@ class SearchService:
             if len(truncated_text) < len(text):
                 logger.info(f"Truncated text from {len(text)} to {len(truncated_text)} chars")
             
-            # Get the deployment name from environment variable for logging
-            embedding_deployment = os.getenv("AZURE_OPENAI_EMBEDDING_DEPLOYMENT", "text-embedding-ada-002")
-            logger.info(f"Using OpenAI embedding deployment: {embedding_deployment}")
+            # Get deployment name
+            embedding_deployment = os.getenv('AZURE_OPENAI_EMBEDDING_DEPLOYMENT', 'text-embedding-ada-002')
             
-            logger.info("Generating embedding with LangChain...")
-            # LangChain handles the API call and response parsing
-            embedding = self.embeddings.embed_query(truncated_text)
-            
-            logger.info(f"Successfully generated embedding with {len(embedding)} dimensions")
+            # Generate embedding
+            response = self.openai_client.embeddings.create(
+                model=embedding_deployment,
+                input=truncated_text
+            )
+            embedding = response.data[0].embedding
+            self.log_success(f"Generated embedding with {len(embedding)} dimensions")
             return embedding
             
         except Exception as e:
             error_msg = f"Error generating embedding: {str(e)}"
-            logger.error(error_msg)
+            self.log_error(error_msg)
+            raise
             
             # Additional diagnostic info
             if "404" in str(e):
@@ -412,25 +379,44 @@ class SearchService:
         content: str, 
         chunk_index: int, 
         metadata: Dict[str, Any],
-        embedding: List[float]
+        embedding: Optional[List[float]] = None
     ) -> bool:
         """
         Index a document chunk in Azure Cognitive Search.
         Content should already be stored in blob storage by DocumentService.
         
+        Args:
+            chunk_id: Unique identifier for the chunk
+            document_id: ID of the parent document
+            content: Text content to index
+            chunk_index: Index of this chunk within the document
+            metadata: Additional metadata to store
+            embedding: Optional pre-computed embedding. If None, will be generated from content.
+        
         Returns:
             bool: True if indexing was successful
         """
         try:
-            # Simplified document preparation - no blob storage handling
+            # Generate embedding if not provided
+            if embedding is None and content:
+                try:
+                    embedding = self.generate_embedding(content)
+                except Exception as e:
+                    logger.warning(f"Failed to generate embedding for chunk {chunk_id}: {e}")
+                    embedding = None
+            
+            # Prepare document for indexing
             search_document = {
                 "id": chunk_id,
                 "document_id": document_id,
                 "chunk_index": chunk_index,
                 "content": content[:8000],  # Store a preview in search index
-                "metadata": json.dumps(metadata),
-                "embedding": embedding
+                "metadata": json.dumps(metadata)
             }
+            
+            # Only include embedding if we have one
+            if embedding is not None:
+                search_document["embedding"] = embedding
             
             result = self.search_client.upload_documents(documents=[search_document])
             
@@ -468,23 +454,19 @@ class SearchService:
             # Generate embedding for the query
             query_embedding = self.generate_embedding(query)
             
-            # Configure hybrid search options with semantic ranking
+            # Configure hybrid search options
             search_options = {
                 "search_text": query,
                 "vector_queries": [
                     {
                         "kind": "vector",
-                        "fields": ["embedding"],
+                        "field": "embedding",
                         "k": top,
                         "vector": query_embedding
                     }
                 ],
                 "select": ["id", "document_id", "content", "metadata", "chunk_index"],
-                "query_type": "semantic",
-                "query_language": "en-us",
-                "semantic_configuration_name": "default",
                 "top": top,
-                "query_caption": "extractive",  # Get relevant excerpts
                 "include_total_count": True
             }
             
@@ -523,12 +505,7 @@ class SearchService:
             logger.error(f"Semantic search failed: {str(e)}")
             raise
 
-    @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=4, max=10),
-        retry=retry_if_exception_type(AzureError),
-        reraise=True
-    )
+    @azure_retry()
     def vector_similarity_search(self, query: str, top: int = 5, 
                                filter_expr: Optional[str] = None) -> List[Dict[str, Any]]:
         """
@@ -548,8 +525,15 @@ class SearchService:
             
             # Perform vector search
             results = self.search_client.search(
-                search_text=None,  # Pure vector search
-                vector={"value": query_embedding, "fields": "embedding", "k": top},
+                search_text="",  # Empty string for pure vector search
+                vector_queries=[
+                    {
+                        "kind": "vector",
+                        "fields": "embedding",  # Field to search in
+                        "k": top,  # Number of results to return
+                        "vector": query_embedding  # Vector to search for
+                    }
+                ],
                 select=["id", "document_id", "content", "metadata", "chunk_index"],
                 filter=filter_expr,
                 top=top
@@ -566,18 +550,14 @@ class SearchService:
                     "similarity_score": result["@search.score"]
                 })
             
+            self.log_success(f"Vector search found {len(processed_results)} results")
             return processed_results
             
         except Exception as e:
-            logger.error(f"Vector similarity search failed: {str(e)}")
-            raise 
+            self.log_error("Vector similarity search failed", e)
+            raise
 
-    @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=4, max=10),
-        retry=retry_if_exception_type(AzureError),
-        reraise=True
-    )
+    @azure_retry()
     def hybrid_search(
         self, 
         query: str, 
@@ -607,19 +587,14 @@ class SearchService:
                 "vector_queries": [
                     {
                         "kind": "vector",
-                        "fields": ["embedding"],
-                        "k": top,
-                        "vector": query_embedding,
-                        "filter": filter_expr  # Apply filter to vector portion
+                        "fields": "embedding",  # Field to search in
+                        "k": top,  # Number of results to return
+                        "vector": query_embedding  # Vector to search for
                     }
                 ],
                 "filter": filter_expr,  # Apply filter to text portion
                 "select": ["id", "document_id", "content", "metadata", "chunk_index"],
-                "query_type": "semantic",
-                "query_language": "en-us",
-                "semantic_configuration_name": "default",
                 "top": top,
-                "query_caption": "extractive",
                 "include_total_count": True
             }
             

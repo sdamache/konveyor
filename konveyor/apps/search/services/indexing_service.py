@@ -1,34 +1,92 @@
+"""Document indexing service for Azure Cognitive Search.
+
+This module provides functionality for indexing documents in Azure Cognitive Search,
+including batch processing and optimization.
+
+Example:
+    ```python
+    # Initialize service
+    indexing = IndexingService()
+    
+    # Index a document
+    document = Document.objects.get(id=1)
+    indexing.index_document(document)
+    ```
+"""
+
 from typing import Dict, Any, List
 from django.db import transaction
 import logging
 import time
+
 from konveyor.apps.documents.models import Document, DocumentChunk
-from konveyor.apps.documents.services.document_service import DocumentService
+from konveyor.services.documents.document_service import DocumentService
 from konveyor.apps.search.services.search_service import SearchService
+from konveyor.core.azure.service import AzureService
 
-# Configure logger
-logger = logging.getLogger(__name__)
-
-class IndexingService:
-    """Service for indexing documents in the search service."""
+class IndexingService(AzureService):
+    """Service for indexing documents in Azure Cognitive Search.
+    
+    This service provides methods for:
+    - Indexing documents and their chunks
+    - Batch processing with size optimization
+    - Progress tracking and error handling
+    
+    Attributes:
+        search_service (SearchService): Service for search operations
+        document_service (DocumentService): Service for document processing
+        min_batch_size (int): Minimum batch size for indexing
+        max_batch_size (int): Maximum batch size (Azure limit)
+        max_batch_size_bytes (int): Maximum batch size in bytes (Azure limit)
+    """
     
     def __init__(self):
-        self.search_service = SearchService()
-        self.document_service = DocumentService()
-        self.min_batch_size = 10
-        self.max_batch_size = 1000  # Azure Search limit
-        self.max_batch_size_bytes = 16 * 1024 * 1024  # 16 MB Azure Search limit
-        logger.info("Initialized IndexingService with adaptive batch sizing")
+        """Initialize indexing service.
+        
+        Sets up search and document services, and configures batch size limits.
+        
+        Raises:
+            Exception: If service initialization fails
+        """
+        # Initialize base class
+        super().__init__('SEARCH')
+        self.log_init("IndexingService")
+        
+        try:
+            # Initialize services
+            self.search_service = SearchService()
+            self.document_service = DocumentService()
+            
+            # Configure batch sizing
+            self.min_batch_size = 10
+            self.max_batch_size = 1000  # Azure Search limit
+            self.max_batch_size_bytes = 16 * 1024 * 1024  # 16 MB Azure Search limit
+            
+            self.log_success("Initialized with adaptive batch sizing")
+            
+        except Exception as e:
+            self.log_error("Failed to initialize service", e)
+            raise
     
     def _calculate_batch_size(self, chunks: List[DocumentChunk]) -> int:
-        """
-        Calculate optimal batch size based on content size.
+        """Calculate optimal batch size based on content size.
+        
+        Uses a sampling approach to estimate average chunk size and determine
+        the optimal batch size that stays within Azure limits.
+        
+        Args:
+            chunks (List[DocumentChunk]): List of chunks to analyze
+            
+        Returns:
+            int: Optimal batch size between min_batch_size and max_batch_size
         """
         if not chunks:
+            self.log_debug("No chunks provided, using minimum batch size")
             return self.min_batch_size
             
         # Sample first few chunks to estimate average size
         sample_size = min(10, len(chunks))
+        self.log_debug(f"Sampling {sample_size} chunks for size estimation")
         total_bytes = sum(len(chunk.content.encode('utf-8')) for chunk in chunks[:sample_size])
         avg_bytes_per_chunk = total_bytes / sample_size
         

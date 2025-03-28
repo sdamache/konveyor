@@ -1,10 +1,12 @@
 import os
-from typing import BinaryIO, List, Dict, Any
+from typing import BinaryIO, List, Dict, Any, Tuple
 from django.core.exceptions import ValidationError, ImproperlyConfigured
 from django.conf import settings
 from ..models import Document, DocumentChunk
 import logging
-from konveyor.config.azure import AzureConfig
+from konveyor.core.azure.config import AzureConfig
+from konveyor.core.azure.mixins import ServiceLoggingMixin, AzureClientMixin
+from konveyor.core.azure.retry import azure_retry
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from azure.ai.documentintelligence import DocumentIntelligenceClient
 from azure.core.credentials import AzureKeyCredential
@@ -22,33 +24,54 @@ import base64
 
 logger = logging.getLogger(__name__)
 
-class DocumentService:
+class DocumentService(ServiceLoggingMixin, AzureClientMixin):
     """Service for handling document operations with blob storage."""
     
     def __init__(self):
+        logger.info("Initializing DocumentService...")
+        
         # Initialize Azure configuration
-        self.azure = AzureConfig()
+        try:
+            logger.info("Creating AzureConfig instance...")
+            self.azure = AzureConfig()
+            logger.info("AzureConfig instance created successfully")
+        except Exception as e:
+            logger.error(f"Failed to create AzureConfig instance: {str(e)}")
+            raise
         
         # Get Document Intelligence client from AzureConfig
         endpoint = os.getenv("AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT")
         key = os.getenv("AZURE_DOCUMENT_INTELLIGENCE_API_KEY")
         
+        logger.info(f"Document Intelligence Endpoint: {endpoint if endpoint else 'Not set'}")
+        logger.info(f"Document Intelligence Key: {'Set' if key else 'Not set'}")
+        
         if not endpoint:
+            logger.error("AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT environment variable is required")
             raise ImproperlyConfigured("AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT environment variable is required")
             
         # Initialize Document Intelligence client
         # Try using the API key first as it's more reliable than token-based auth
-        if key:
-            self.doc_intelligence_client = DocumentIntelligenceClient(
-                endpoint=endpoint,
-                credential=AzureKeyCredential(key)
-            )
-        else:
-            # Fall back to the client from AzureConfig which uses token auth
-            self.doc_intelligence_client = self.azure.get_document_intelligence_client()
-            
-            if not self.doc_intelligence_client:
-                raise ImproperlyConfigured("Failed to initialize Document Intelligence client")
+        try:
+            if key:
+                logger.info("Initializing Document Intelligence client with API key...")
+                self.doc_intelligence_client = DocumentIntelligenceClient(
+                    endpoint=endpoint,
+                    credential=AzureKeyCredential(key)
+                )
+                logger.info("Document Intelligence client initialized successfully with API key")
+            else:
+                # Fall back to the client from AzureConfig which uses token auth
+                logger.info("Attempting to get Document Intelligence client from AzureConfig...")
+                self.doc_intelligence_client = self.azure.get_document_intelligence_client()
+                
+                if not self.doc_intelligence_client:
+                    logger.error("Failed to initialize Document Intelligence client from AzureConfig")
+                    raise ImproperlyConfigured("Failed to initialize Document Intelligence client")
+                logger.info("Document Intelligence client obtained successfully from AzureConfig")
+        except Exception as e:
+            logger.error(f"Failed to initialize Document Intelligence client: {str(e)}")
+            raise
         
         # Initialize text splitter for chunking documents
         self.text_splitter = RecursiveCharacterTextSplitter(
@@ -59,12 +82,243 @@ class DocumentService:
         )
         
         # Initialize blob storage client from connection string
-        self.blob_service_client = BlobServiceClient.from_connection_string(
-            settings.AZURE_STORAGE_CONNECTION_STRING
-        )
-        self.container_name = settings.AZURE_STORAGE_CONTAINER_NAME
+        connection_string = os.getenv('AZURE_STORAGE_CONNECTION_STRING')
+        if not connection_string:
+            logger.error("AZURE_STORAGE_CONNECTION_STRING environment variable is required")
+            raise ImproperlyConfigured("AZURE_STORAGE_CONNECTION_STRING environment variable is required")
+            
+        container_name = os.getenv('AZURE_STORAGE_CONTAINER_NAME')
+        if not container_name:
+            logger.error("AZURE_STORAGE_CONTAINER_NAME environment variable is required")
+            raise ImproperlyConfigured("AZURE_STORAGE_CONTAINER_NAME environment variable is required")
+            
+        try:
+            logger.info("Initializing blob storage client...")
+            self.blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+            self.container_name = container_name
+            logger.info("Blob storage client initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize blob storage client: {str(e)}")
+            raise
         
         logger.info("DocumentService initialized successfully")
+    
+    # List of supported content types
+    SUPPORTED_CONTENT_TYPES = {
+        'text/plain',
+        'text/markdown',
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',  # docx
+    }
+    
+    def parse_file(self, file_obj: BinaryIO, content_type: str) -> tuple[str, dict]:
+        """Parse a file to extract its text content and metadata.
+        
+        Args:
+            file_obj: File-like object containing the document
+            content_type: MIME type of the document
+            
+        Returns:
+            Tuple of (text content, metadata)
+            
+        Raises:
+            ValueError: If content_type is not supported
+        """
+        # Validate content type
+        if content_type not in self.SUPPORTED_CONTENT_TYPES:
+            raise ValueError(f"Unsupported content type: {content_type}. Supported types are: {', '.join(sorted(self.SUPPORTED_CONTENT_TYPES))}")
+        
+        try:
+            # Get the raw bytes
+            file_obj.seek(0)
+            file_bytes = file_obj.read()
+            
+            # Handle different content types
+            if content_type == 'text/plain':
+                content, metadata = self._parse_text(file_bytes)
+            elif content_type == 'text/markdown':
+                content, metadata = self._parse_markdown(file_bytes)
+            else:
+                try:
+                    # Use Document Intelligence to extract text
+                    poller = self.doc_intelligence_client.begin_analyze_document(
+                        "prebuilt-layout",  # Use the prebuilt-layout model for better structure analysis
+                        body=file_bytes
+                    )
+                    result = poller.result()
+                    
+                    # Extract content and metadata
+                    content = result.content
+                    metadata = {
+                        'content_type': content_type,
+                        'page_count': len(result.pages) if result.pages else 1,
+                        'language': result.languages[0].name if result.languages else 'unknown',
+                        'has_tables': bool(result.tables),
+                        'has_selection_marks': any(page.selection_marks for page in result.pages) if result.pages else False,
+                        'has_handwritten': bool(result.styles) and any(style.is_handwritten for style in result.styles)
+                    }
+                    logger.info(f"Successfully parsed {content_type} document with {metadata['page_count']} pages")
+                except Exception as e:
+                    logger.error(f"Failed to parse document with Document Intelligence: {str(e)}")
+                    raise
+            
+            return content, metadata
+        except Exception as e:
+            logger.error(f"Failed to parse file: {str(e)}")
+            raise
+    
+    @azure_retry()
+    def _parse_text(self, file_bytes: bytes | BinaryIO) -> Tuple[str, Dict[str, Any]]:
+        """Parse plain text content.
+        
+        Args:
+            file_bytes: Raw bytes or BytesIO object containing the text file
+            
+        Returns:
+            Tuple of (content, metadata)
+        """
+        if isinstance(file_bytes, bytes):
+            content = file_bytes.decode('utf-8')
+        else:
+            # Handle BytesIO object
+            content = file_bytes.read().decode('utf-8')
+            
+        metadata = {
+            'content_type': 'text/plain',
+            'document_type': 'text',
+            'line_count': len(content.splitlines()),
+            'language': 'unknown',  # We don't detect language for plain text
+            'has_tables': False,
+            'has_selection_marks': False,
+            'has_handwritten': False
+        }
+        logger.info(f"Successfully parsed text file with {metadata['line_count']} lines")
+        return content, metadata
+    
+    def _parse_markdown(self, file_bytes: bytes | BinaryIO) -> Tuple[str, Dict[str, Any]]:
+        """Parse markdown content.
+        
+        Args:
+            file_bytes: Raw bytes or BytesIO object containing the markdown file
+            
+        Returns:
+            Tuple of (content, metadata)
+        """
+        if isinstance(file_bytes, bytes):
+            content = file_bytes.decode('utf-8')
+        else:
+            # Handle BytesIO object
+            content = file_bytes.read().decode('utf-8')
+            
+        metadata = {
+            'content_type': 'text/markdown',
+            'document_type': 'markdown',
+            'line_count': len(content.splitlines()),
+            'language': 'unknown',
+            'has_tables': '|' in content,  # Basic table detection
+            'has_selection_marks': False,
+            'has_handwritten': False
+        }
+        logger.info(f"Successfully parsed markdown file with {metadata['line_count']} lines")
+        return content, metadata
+        
+    def _parse_pdf(self, file_bytes: bytes | BinaryIO) -> Tuple[str, Dict[str, Any]]:
+        """Parse PDF content.
+        
+        Args:
+            file_bytes: Raw bytes or BytesIO object containing the PDF file
+            
+        Returns:
+            Tuple of (content, metadata)
+        """
+        if isinstance(file_bytes, bytes):
+            body = file_bytes
+        else:
+            # Handle BytesIO object
+            body = file_bytes.read()
+            
+        # Use Document Intelligence to extract text
+        poller = self.doc_intelligence_client.begin_analyze_document(
+            "prebuilt-layout",  # Use the prebuilt-layout model for better structure analysis
+            body=body
+        )
+        result = poller.result()
+        
+        # Extract content and metadata
+        content = result.content
+        metadata = {
+            'content_type': 'application/pdf',
+            'document_type': 'pdf',
+            'page_count': len(result.pages) if result.pages else 1,
+            'language': result.languages[0].name if result.languages else 'unknown',
+            'has_tables': bool(result.tables),
+            'has_selection_marks': any(page.selection_marks for page in result.pages) if result.pages else False,
+            'has_handwritten': bool(result.styles) and any(style.is_handwritten for style in result.styles)
+        }
+        logger.info(f"Successfully parsed PDF document with {metadata['page_count']} pages")
+        return content, metadata
+
+    def _parse_docx(self, file_bytes: bytes | BinaryIO) -> Tuple[str, Dict[str, Any]]:
+        """Parse DOCX content.
+        
+        Args:
+            file_bytes: Raw bytes or BytesIO object containing the DOCX file
+            
+        Returns:
+            Tuple of (content, metadata)
+        """
+        if isinstance(file_bytes, bytes):
+            body = file_bytes
+        else:
+            # Handle BytesIO object
+            body = file_bytes.read()
+            
+        # Use Document Intelligence to extract text
+        poller = self.doc_intelligence_client.begin_analyze_document(
+            "prebuilt-layout",  # Use the prebuilt-layout model for better structure analysis
+            body=body
+        )
+        result = poller.result()
+        
+        # Extract content and metadata
+        content = result.content
+        metadata = {
+            'content_type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'document_type': 'docx',
+            'page_count': len(result.pages) if result.pages else 1,
+            'language': result.languages[0].name if result.languages else 'unknown',
+            'has_tables': bool(result.tables),
+            'has_selection_marks': any(page.selection_marks for page in result.pages) if result.pages else False,
+            'has_handwritten': bool(result.styles) and any(style.is_handwritten for style in result.styles)
+        }
+        logger.info(f"Successfully parsed DOCX document with {metadata['page_count']} pages")
+        return content, metadata
+
+    def store_chunk_content(self, chunk: DocumentChunk, content: str) -> None:
+        """Store chunk content in blob storage.
+        
+        Args:
+            chunk: The DocumentChunk model instance
+            content: The text content to store
+        """
+        try:
+            # Get container client
+            container_client = self.blob_service_client.get_container_client(self.container_name)
+            
+            # Get blob client for the chunk
+            blob_client = container_client.get_blob_client(chunk.blob_path)
+            
+            # Upload content as text
+            blob_client.upload_blob(
+                content,
+                content_settings=ContentSettings(content_type='text/plain'),
+                overwrite=True
+            )
+            
+            logger.info(f"Successfully stored content for chunk {chunk.id} at {chunk.blob_path}")
+        except Exception as e:
+            logger.error(f"Failed to store content for chunk {chunk.id}: {str(e)}")
+            raise
     
     def process_document(self, file_obj: BinaryIO, filename: str, title: str = None) -> Document:
         """
