@@ -1,9 +1,10 @@
 from typing import Dict, Any, List
 from django.db import transaction
 import logging
-from documents.models import Document, DocumentChunk
-from documents.services.document_service import DocumentService
-from .search_service import SearchService
+import time
+from konveyor.apps.documents.models import Document, DocumentChunk
+from konveyor.apps.documents.services.document_service import DocumentService
+from konveyor.apps.search.services.search_service import SearchService
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -14,19 +15,31 @@ class IndexingService:
     def __init__(self):
         self.search_service = SearchService()
         self.document_service = DocumentService()
-        self.batch_size = 10  # Adjust based on your needs
-        logger.info("Initialized IndexingService with batch_size=%d", self.batch_size)
+        self.min_batch_size = 10
+        self.max_batch_size = 1000  # Azure Search limit
+        self.max_batch_size_bytes = 16 * 1024 * 1024  # 16 MB Azure Search limit
+        logger.info("Initialized IndexingService with adaptive batch sizing")
+    
+    def _calculate_batch_size(self, chunks: List[DocumentChunk]) -> int:
+        """
+        Calculate optimal batch size based on content size.
+        """
+        if not chunks:
+            return self.min_batch_size
+            
+        # Sample first few chunks to estimate average size
+        sample_size = min(10, len(chunks))
+        total_bytes = sum(len(chunk.content.encode('utf-8')) for chunk in chunks[:sample_size])
+        avg_bytes_per_chunk = total_bytes / sample_size
+        
+        # Calculate batch size based on size limits
+        size_based_limit = int(self.max_batch_size_bytes / avg_bytes_per_chunk)
+        return min(size_based_limit, self.max_batch_size, max(self.min_batch_size, len(chunks)))
     
     @transaction.atomic
     def index_document(self, document_id: str) -> Dict[str, Any]:
         """
-        Index all chunks of a document.
-        
-        Args:
-            document_id: The ID of the document to index
-            
-        Returns:
-            Dictionary with indexing results
+        Index all chunks of a document with improved batch processing and error handling.
         """
         try:
             logger.info("Starting indexing for document_id=%s", document_id)
@@ -36,34 +49,42 @@ class IndexingService:
             chunks = DocumentChunk.objects.filter(document=document).order_by('chunk_index')
             total_chunks = chunks.count()
             
+            if not total_chunks:
+                raise ValueError(f"No chunks found for document {document_id}")
+            
             logger.info(
                 "Found document '%s' with %d chunks to process",
                 document.title if hasattr(document, 'title') else document_id,
                 total_chunks
             )
             
-            # Ensure search index exists
+            # Ensure search index exists with latest configuration
             self.search_service.create_search_index()
             logger.debug("Verified search index exists")
             
-            # Process chunks in batches
+            # Initialize results tracking
             results = {
                 "document_id": str(document_id),
                 "total_chunks": total_chunks,
                 "indexed_chunks": 0,
                 "failed_chunks": 0,
                 "failed_chunk_ids": [],
-                "processing_time": 0
+                "retried_chunks": 0,
+                "processing_time": 0,
+                "batch_stats": []
             }
             
-            # Process chunks in batches
-            import time
             start_time = time.time()
             
-            for i in range(0, total_chunks, self.batch_size):
-                batch = chunks[i:i + self.batch_size]
-                batch_num = (i // self.batch_size) + 1
-                total_batches = (total_chunks + self.batch_size - 1) // self.batch_size
+            # Process chunks with adaptive batch sizing
+            chunk_list = list(chunks)
+            while chunk_list:
+                batch_size = self._calculate_batch_size(chunk_list)
+                batch = chunk_list[:batch_size]
+                chunk_list = chunk_list[batch_size:]
+                
+                batch_num = len(results["batch_stats"]) + 1
+                total_batches = (total_chunks + batch_size - 1) // batch_size
                 
                 logger.info(
                     "Processing batch %d/%d for document %s (%d chunks)",
@@ -72,13 +93,25 @@ class IndexingService:
                 
                 batch_results = self._index_chunk_batch(batch)
                 
+                # Update results with batch statistics
                 results["indexed_chunks"] += batch_results["success"]
                 results["failed_chunks"] += batch_results["failed"]
                 results["failed_chunk_ids"].extend(batch_results["failed_ids"])
+                results["retried_chunks"] += batch_results.get("retries", 0)
+                results["batch_stats"].append({
+                    "batch_number": batch_num,
+                    "batch_size": len(batch),
+                    "successful": batch_results["success"],
+                    "failed": batch_results["failed"],
+                    "retries": batch_results.get("retries", 0)
+                })
                 
                 logger.info(
-                    "Batch %d/%d completed. Success: %d, Failed: %d",
-                    batch_num, total_batches, batch_results["success"], batch_results["failed"]
+                    "Batch %d/%d completed. Success: %d, Failed: %d, Retries: %d",
+                    batch_num, total_batches, 
+                    batch_results["success"], 
+                    batch_results["failed"],
+                    batch_results.get("retries", 0)
                 )
             
             end_time = time.time()
@@ -108,53 +141,62 @@ class IndexingService:
             error_msg = f"Error indexing document {document_id}: {str(e)}"
             logger.error(error_msg, exc_info=True)
             raise
-    
+
     def _index_chunk_batch(self, chunks: List[DocumentChunk]) -> Dict[str, Any]:
         """
-        Index a batch of document chunks.
-        
-        Args:
-            chunks: List of DocumentChunk instances
-            
-        Returns:
-            Dictionary with batch indexing results
+        Index a batch of document chunks with improved error handling and retries.
         """
-        results = {"success": 0, "failed": 0, "failed_ids": []}
+        results = {"success": 0, "failed": 0, "failed_ids": [], "retries": 0}
         
         for chunk in chunks:
-            try:
-                logger.debug(
-                    "Processing chunk %s (index: %d) from document %s",
-                    chunk.id, chunk.chunk_index, chunk.document.id
-                )
-                
-                # Get chunk content from blob storage
-                content = self.document_service.get_chunk_content(chunk)
-                
-                # Generate embedding
-                embedding = self.search_service.generate_embedding(content)
-                logger.debug("Generated embedding for chunk %s", chunk.id)
-                
-                # Index the chunk
-                self.search_service.index_document_chunk(
-                    chunk_id=str(chunk.id),
-                    document_id=str(chunk.document.id),
-                    content=content,
-                    chunk_index=chunk.chunk_index,
-                    metadata=chunk.metadata,
-                    embedding=embedding
-                )
-                
-                results["success"] += 1
-                logger.debug("Successfully indexed chunk %s", chunk.id)
-                
-            except Exception as e:
-                logger.error(
-                    "Failed to index chunk %s: %s",
-                    chunk.id, str(e), exc_info=True
-                )
-                results["failed"] += 1
-                results["failed_ids"].append(str(chunk.id))
+            max_retries = 3
+            retry_count = 0
+            
+            while retry_count < max_retries:
+                try:
+                    logger.debug(
+                        "Processing chunk %s (index: %d) from document %s",
+                        chunk.id, chunk.chunk_index, chunk.document.id
+                    )
+                    
+                    # Get chunk content from blob storage
+                    content = self.document_service.get_chunk_content(chunk)
+                    
+                    # Generate embedding with retry logic
+                    embedding = self.search_service.generate_embedding(content)
+                    logger.debug("Generated embedding for chunk %s", chunk.id)
+                    
+                    # Index the chunk with vector search support
+                    self.search_service.index_document_chunk(
+                        chunk_id=str(chunk.id),
+                        document_id=str(chunk.document.id),
+                        content=content,
+                        chunk_index=chunk.chunk_index,
+                        metadata=chunk.metadata,
+                        embedding=embedding
+                    )
+                    
+                    results["success"] += 1
+                    if retry_count > 0:
+                        results["retries"] += retry_count
+                    logger.debug("Successfully indexed chunk %s", chunk.id)
+                    break
+                    
+                except Exception as e:
+                    retry_count += 1
+                    if retry_count < max_retries:
+                        logger.warning(
+                            "Retry %d/%d for chunk %s after error: %s",
+                            retry_count, max_retries, chunk.id, str(e)
+                        )
+                        time.sleep(2 ** retry_count)  # Exponential backoff
+                    else:
+                        logger.error(
+                            "Failed to index chunk %s after %d retries: %s",
+                            chunk.id, max_retries, str(e), exc_info=True
+                        )
+                        results["failed"] += 1
+                        results["failed_ids"].append(str(chunk.id))
         
         return results
     
