@@ -298,7 +298,7 @@ class SearchService(AzureService):
             # Use Azure OpenAI client
             try:
                 # Get deployment name from environment variable
-                embedding_deployment = os.getenv('AZURE_OPENAI_EMBEDDING_DEPLOYMENT', 'text-embedding-ada-002')
+                embedding_deployment = os.getenv('AZURE_OPENAI_EMBEDDING_DEPLOYMENT', 'embeddings')
                 self.log_success(f"Using embedding deployment: {embedding_deployment}")
                 
                 response = self.openai_client.embeddings.create(
@@ -345,7 +345,7 @@ class SearchService(AzureService):
                 logger.error("2. API key is valid and has access to the embeddings model")
                 logger.error("3. The model name is correct (should match your Azure OpenAI deployment name)")
                 logger.error("4. The model is deployed to your OpenAI resource")
-                logger.error(f"Current model: {os.getenv('AZURE_OPENAI_EMBEDDING_DEPLOYMENT', 'text-embedding-ada-002')}")
+                logger.error(f"Current model: {os.getenv('AZURE_OPENAI_EMBEDDING_DEPLOYMENT', 'embeddings')}")
             
             raise
 

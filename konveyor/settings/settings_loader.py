@@ -24,6 +24,10 @@ def load_settings():
         'AZURE_STORAGE_CONTAINER_NAME': os.environ.get('AZURE_STORAGE_CONTAINER_NAME', 'documents'),
         'AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT': os.environ.get('AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT'),
         'AZURE_DOCUMENT_INTELLIGENCE_API_KEY': os.environ.get('AZURE_DOCUMENT_INTELLIGENCE_API_KEY'),
+        'AZURE_COSMOS_CONNECTION_STRING': os.environ.get('AZURE_COSMOS_CONNECTION_STRING',
+            'AccountEndpoint=https://konveyor-cosmos-test.mongo.cosmos.azure.com:10255/;AccountKey=your_key_here'),
+        'AZURE_REDIS_CONNECTION_STRING': os.environ.get('AZURE_REDIS_CONNECTION_STRING',
+            'redis://localhost:6379/0'),
     }
     
     # Update environment variables if they're not set

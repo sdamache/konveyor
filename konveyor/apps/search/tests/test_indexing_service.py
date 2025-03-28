@@ -24,7 +24,7 @@ from konveyor.core.azure.config import AzureConfig
 load_dotenv()
 
 from konveyor.apps.documents.models import Document, DocumentChunk
-from konveyor.apps.documents.services.document_service import DocumentService
+from konveyor.services.documents.document_service import DocumentService
 from konveyor.apps.search.services.indexing_service import IndexingService
 from konveyor.apps.search.services.search_service import SearchService
 from konveyor.core.azure.clients import AzureClientManager
@@ -292,6 +292,27 @@ class TestIndexingService(TestCase):
         # Clean up documents and chunks after each test
         Document.objects.all().delete()
         DocumentChunk.objects.all().delete()
+        
+        # Clean up blob storage
+        try:
+            blob_client = self.azure_client_manager.get_blob_client()
+            container_name = 'document-chunks'
+            
+            try:
+                container_client = blob_client.get_container_client(container_name)
+                # List all blobs and delete them
+                blobs = container_client.list_blobs()
+                for blob in blobs:
+                    container_client.delete_blob(blob.name)
+                logger.info(f"Cleaned up all blobs in {container_name} container")
+                
+                # Delete the container
+                container_client.delete_container()
+                logger.info(f"Deleted container {container_name}")
+            except Exception as e:
+                logger.warning(f"Container {container_name} may not exist or error during cleanup: {str(e)}")
+        except Exception as e:
+            logger.error(f"Error during blob storage cleanup: {str(e)}")
     
     def test_index_existence_verification(self):
         """Test that index existence verification works correctly."""

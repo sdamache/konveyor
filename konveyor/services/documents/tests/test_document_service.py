@@ -1,17 +1,18 @@
 """Tests for document processing service."""
 
 import io
+import os
 import pytest
-from django.test import TestCase
+import unittest
 from konveyor.services.documents.document_service import DocumentService
 
-class TestDocumentService(TestCase):
+class TestDocumentService(unittest.TestCase):
     """Test cases for DocumentService."""
     
     def setUp(self):
         """Set up test environment."""
-        # Using actual implementation as requested
         self.service = DocumentService()
+        self.test_files_dir = os.path.join(os.path.dirname(__file__), 'test_files')
             
     def test_parse_pdf(self):
         """Test PDF parsing."""
@@ -21,7 +22,9 @@ class TestDocumentService(TestCase):
         # Test parsing
         # Create a simple PDF file for testing
         try:
-            pdf_content = io.BytesIO(b"%PDF-1.4\n1 0 obj\n<</Type/Catalog/Pages 2 0 R>>\nendobj\n2 0 obj\n<</Type/Pages/Kids[3 0 R]/Count 1>>\nendobj\n3 0 obj\n<</Type/Page/MediaBox[0 0 612 792]/Resources<<>>>>\nendobj\ntrailer\n<</Root 1 0 R>>\n")
+            pdf_path = os.path.join(self.test_files_dir, 'sample.pdf')
+            with open(pdf_path, 'rb') as f:
+                pdf_content = io.BytesIO(f.read())
             content, metadata = self.service._parse_pdf(pdf_content)
             
             # Verify basic structure without checking exact content
@@ -39,7 +42,9 @@ class TestDocumentService(TestCase):
         # Note: This might fail with real implementation as it's not a valid DOCX
         # For a hackathon, we might want to skip this test if it fails
         try:
-            docx_content = io.BytesIO(b"PK\x03\x04\x14\x00\x00\x00\x08\x00")
+            docx_path = os.path.join(self.test_files_dir, 'sample.docx')
+            with open(docx_path, 'rb') as f:
+                docx_content = io.BytesIO(f.read())
             content, metadata = self.service._parse_docx(docx_content)
             
             # Verify basic structure

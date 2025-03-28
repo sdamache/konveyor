@@ -138,6 +138,7 @@ class AzureClientManager:
             if not all([endpoint, api_key]):
                 raise ValueError("Missing required OpenAI configuration")
                 
+            # Create client without deployment (will be specified per operation)
             client = AzureOpenAI(
                 azure_endpoint=endpoint,
                 api_key=api_key,
@@ -249,4 +250,41 @@ class AzureClientManager:
             
         except Exception as e:
             logger.error(f"Failed to initialize Key Vault client: {str(e)}")
+            raise
+            
+    @azure_retry()
+    def get_storage_manager(self) -> 'AzureStorageManager':
+        """Initialize and return Azure Storage Manager.
+        
+        Creates a manager for handling both Cosmos DB and Redis storage.
+        
+        Returns:
+            AzureStorageManager: Configured storage manager
+            
+        Raises:
+            ValueError: If required configuration is missing
+            Exception: If client initialization fails
+            
+        Required Environment Variables:
+            AZURE_COSMOS_CONNECTION_STRING: Cosmos DB connection string
+            AZURE_REDIS_CONNECTION_STRING: Redis connection string
+        """
+        try:
+            from konveyor.core.azure.storage import AzureStorageManager
+            
+            cosmos_conn_str = self.config.get_cosmos_connection_string()
+            redis_conn_str = self.config.get_redis_connection_string()
+            
+            if not all([cosmos_conn_str, redis_conn_str]):
+                raise ValueError("Missing required storage configuration")
+                
+            manager = AzureStorageManager(
+                cosmos_connection_str=cosmos_conn_str,
+                redis_connection_str=redis_conn_str
+            )
+            
+            return manager
+            
+        except Exception as e:
+            logger.error(f"Failed to initialize Storage Manager: {str(e)}")
             raise
