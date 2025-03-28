@@ -53,3 +53,9 @@ variable "slack_signing_secret" {
   type        = string
   sensitive   = true
 }
+=======
+variable "prefix" {
+  description = "Prefix to use for resource naming"
+  type        = string
+}
+

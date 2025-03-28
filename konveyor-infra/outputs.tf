@@ -47,3 +47,44 @@ output "bot_service_name" {
   description = "Azure Bot Service name"
   value       = module.bot_service.bot_service_name
 }
+
+output "document_intelligence_id" {
+  description = "Document Intelligence Service ID"
+  value       = module.document_intelligence.id
+}
+
+output "document_intelligence_endpoint" {
+  description = "Document Intelligence Service endpoint"
+  value       = module.document_intelligence.endpoint
+}
+
+output "storage_account_id" {
+  description = "Storage Account ID"
+  value       = module.storage.storage_account_id
+}
+
+output "storage_account_name" {
+  description = "Storage Account name"
+  value       = module.storage.storage_account_name
+}
+
+output "storage_connection_string" {
+  description = "Storage Account connection string for environment configuration"
+  value       = module.storage.storage_connection_string
+  sensitive   = true
+}
+
+output "storage_container_name" {
+  description = "Storage container name for environment configuration"
+  value       = module.storage.storage_container_name
+}
+
+output "openai_embeddings_deployment_id" {
+  description = "Azure OpenAI Embeddings deployment ID"
+  value       = module.openai.embeddings_deployment_id
+}
+
+output "openai_embeddings_deployment_name" {
+  description = "Azure OpenAI Embeddings deployment name"
+  value       = module.openai.embeddings_deployment_name
+}
