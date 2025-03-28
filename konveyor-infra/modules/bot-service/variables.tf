@@ -37,7 +37,25 @@ variable "tags" {
   }
 }
 
+variable "slack_client_id" {
+  description = "Slack Client ID for bot channel configuration"
+  type        = string
+}
+
+variable "slack_client_secret" {
+  description = "Slack Client Secret for bot channel configuration"
+  type        = string
+  sensitive   = true
+}
+
+variable "slack_signing_secret" {
+  description = "Slack Signing Secret for bot channel configuration"
+  type        = string
+  sensitive   = true
+}
+=======
 variable "prefix" {
   description = "Prefix to use for resource naming"
   type        = string
 }
+
