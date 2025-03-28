@@ -1,0 +1,69 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "botName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the bot"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources"
+            }
+        },
+        "slackClientId": {
+            "type": "string",
+            "metadata": {
+                "description": "Slack Client ID"
+            }
+        },
+        "slackClientSecret": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Slack Client Secret"
+            }
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.BotService/botServices",
+            "apiVersion": "2021-05-01-preview",
+            "name": "[parameters('botName')]",
+            "location": "global",
+            "sku": {
+                "name": "F0"
+            },
+            "kind": "sdk",
+            "properties": {
+                "displayName": "[parameters('botName')]",
+                "endpoint": "[concat('https://', parameters('botName'), '.azurewebsites.net/api/messages')]",
+                "msaAppId": "",
+                "developerAppInsightKey": "",
+                "luisAppIds": []
+            },
+            "resources": [
+                {
+                    "type": "channels",
+                    "apiVersion": "2021-05-01-preview",
+                    "name": "SlackChannel",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.BotService/botServices', parameters('botName'))]"
+                    ],
+                    "properties": {
+                        "channelName": "SlackChannel",
+                        "location": "global",
+                        "properties": {
+                            "clientId": "[parameters('slackClientId')]",
+                            "clientSecret": "[parameters('slackClientSecret')]",
+                            "isEnabled": true
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}
