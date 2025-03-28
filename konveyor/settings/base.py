@@ -130,6 +130,12 @@ LOGGING = {
     },
 }
 
+# Load all Azure settings
+from .settings_loader import load_settings
+
+# Load and update settings
+azure_settings = load_settings()
+
 # Core Azure Settings (common across all environments)
 AZURE_CORE_SETTINGS = {
     'AZURE_LOCATION': os.getenv('AZURE_LOCATION', 'eastus'),
@@ -138,19 +144,20 @@ AZURE_CORE_SETTINGS = {
 }
 
 # Azure Search Settings - Single source of truth
-AZURE_SEARCH_ENDPOINT = os.getenv('AZURE_SEARCH_ENDPOINT')  # Use single env variable name
-AZURE_SEARCH_API_KEY = os.getenv('AZURE_SEARCH_API_KEY')
-AZURE_SEARCH_INDEX_NAME = os.getenv('AZURE_SEARCH_INDEX_NAME', 'konveyor-documents')
+AZURE_SEARCH_ENDPOINT = azure_settings['AZURE_SEARCH_ENDPOINT']
+AZURE_SEARCH_API_KEY = azure_settings['AZURE_SEARCH_API_KEY']
+AZURE_SEARCH_INDEX_NAME = azure_settings['AZURE_SEARCH_INDEX_NAME']
 
 # For backward compatibility and clarity, set both names
 AZURE_COGNITIVE_SEARCH_ENDPOINT = AZURE_SEARCH_ENDPOINT
 
 # Azure Service Configuration
-AZURE_OPENAI_ENDPOINT = os.environ.get('AZURE_OPENAI_ENDPOINT')
-AZURE_OPENAI_API_KEY = os.environ.get('AZURE_OPENAI_API_KEY')
-AZURE_OPENAI_API_VERSION = os.environ.get('AZURE_OPENAI_API_VERSION', '2024-11-20')
+AZURE_OPENAI_ENDPOINT = azure_settings['AZURE_OPENAI_ENDPOINT']
+AZURE_OPENAI_API_KEY = azure_settings['AZURE_OPENAI_API_KEY']
+AZURE_OPENAI_API_VERSION = azure_settings['AZURE_OPENAI_API_VERSION']
 
-AZURE_STORAGE_CONNECTION_STRING = os.environ.get('AZURE_STORAGE_CONNECTION_STRING')
-AZURE_STORAGE_CONTAINER_NAME = os.environ.get('AZURE_STORAGE_CONTAINER_NAME', 'documents')
+AZURE_STORAGE_CONNECTION_STRING = azure_settings['AZURE_STORAGE_CONNECTION_STRING']
+AZURE_STORAGE_CONTAINER_NAME = azure_settings['AZURE_STORAGE_CONTAINER_NAME']
 
-AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT = os.environ.get('AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT')
+AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT = azure_settings['AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT']
+AZURE_DOCUMENT_INTELLIGENCE_API_KEY = azure_settings['AZURE_DOCUMENT_INTELLIGENCE_API_KEY']
