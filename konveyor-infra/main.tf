@@ -17,12 +17,21 @@ module "openai" {
   source              = "./modules/openai"
   name                = "${var.prefix}-openai"
   resource_group_name = module.resource_group.name
-  location            = "swedencentral"
-  sku_name            = "S0"
-  model_name          = "gpt-4o"
-  model_version       = "2024-05-13"
-  capacity            = 1
-  deploy_model        = true
+  location            = var.location
+  sku_name            = var.openai_sku_name
+  
+  # GPT model configuration
+  model_name          = var.openai_model_name
+  model_version       = var.openai_model_version
+  capacity            = var.openai_capacity
+  deploy_model        = var.openai_deploy_model
+  
+  # Embeddings model configuration
+  deploy_embeddings        = var.openai_deploy_embeddings
+  embeddings_model_name    = var.openai_embeddings_model_name
+  embeddings_model_version = var.openai_embeddings_model_version
+  embeddings_capacity      = var.openai_embeddings_capacity
+  
   tags                = var.tags
 }
 
@@ -40,9 +49,27 @@ module "cognitive_search" {
 module "bot_service" {
   source              = "./modules/bot-service"
   name                = "${var.prefix}-bot"
+  prefix              = var.prefix
   resource_group_name = module.resource_group.name
   location            = "global"
   sku                 = "F0"
   microsoft_app_id    = var.microsoft_app_id
+  tags                = var.tags
+}
+
+module "document_intelligence" {
+  source              = "./modules/document-intelligence"
+  name                = "${var.prefix}-docint"
+  resource_group_name = module.resource_group.name
+  location            = var.location
+  sku_name            = "S0"
+  tags                = var.tags
+}
+
+module "storage" {
+  source              = "./modules/storage"
+  name                = "${var.prefix}storage"
+  resource_group_name = module.resource_group.name
+  location            = var.location
   tags                = var.tags
 }

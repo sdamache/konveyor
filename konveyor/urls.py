@@ -23,12 +23,14 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('konveyor.apps.core.urls')),
     path('api/', include('konveyor.apps.api.urls')),
+    path('documents/', include('konveyor.apps.documents.urls')),  # Modified this line
     # TODO: Add other app-specific URLs when implemented
 ]
 
 # Add static/media URL mappings for development
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     import debug_toolbar
     urlpatterns += [
         path('__debug__/', include(debug_toolbar.urls)),

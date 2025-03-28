@@ -36,3 +36,8 @@ variable "tags" {
     environment = "test"
   }
 }
+
+variable "prefix" {
+  description = "Prefix to use for resource naming"
+  type        = string
+}

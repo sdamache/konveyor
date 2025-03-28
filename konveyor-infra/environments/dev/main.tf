@@ -45,3 +45,12 @@ module "bot_service" {
   microsoft_app_id    = var.microsoft_app_id
   tags                = var.tags
 }
+
+module "document_intelligence" {
+  source              = "../../modules/document-intelligence"
+  name                = "${var.prefix}-dev-docint"
+  resource_group_name = module.resource_group.name
+  location            = var.location
+  sku_name            = "S0"
+  tags                = var.tags
+}

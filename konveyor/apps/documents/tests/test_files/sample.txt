@@ -1,0 +1,13 @@
+Sample Text Document for Konveyor Integration Tests
+
+This is a test document created to test document processing functionality.
+
+It contains multiple paragraphs to ensure chunking works correctly.
+
+Azure Document Intelligence can process various document formats including text, PDF, and Microsoft Office formats.
+
+This document has enough content to generate multiple chunks when processed by the DocumentService.
+
+Konveyor is an AI-powered solution designed to streamline knowledge discovery and onboarding for software engineers.
+
+Document ID: SAMPLE-TEXT-001 
