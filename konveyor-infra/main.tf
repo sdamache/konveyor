@@ -73,3 +73,15 @@ module "storage" {
   location            = var.location
   tags                = var.tags
 }
+
+# RAG infrastructure for conversation storage and caching
+module "rag" {
+  source              = "./modules/rag"
+  prefix              = var.prefix
+  environment         = var.environment
+  resource_group_name = module.resource_group.name
+  location            = var.location
+  tags                = merge(var.tags, {
+    component = "rag"
+  })
+}

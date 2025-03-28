@@ -48,6 +48,10 @@ class AzureConfig:
     It handles loading configuration from environment variables and provides methods to access
     service-specific configuration.
     
+    Required Environment Variables:
+        AZURE_OPENAI_EMBEDDING_DEPLOYMENT: Deployment name for embeddings model
+        AZURE_OPENAI_API_VERSION: API version for Azure OpenAI (defaults to 2024-12-01-preview)
+    
     The class will attempt to initialize Azure credentials in the following order:
     1. DefaultAzureCredential
     2. AzureCliCredential
@@ -76,6 +80,8 @@ class AzureConfig:
         if not hasattr(self, 'initialized'):
             self._initialize_credentials()
             self._load_configuration()
+            self.cosmos_connection_string = os.environ.get('AZURE_COSMOS_CONNECTION_STRING')
+            self.redis_connection_string = os.environ.get('AZURE_REDIS_CONNECTION_STRING')
             self.initialized = True
             
     def _initialize_credentials(self):
@@ -94,6 +100,9 @@ class AzureConfig:
                 
     def _load_configuration(self):
         """Load configuration from environment."""
+        # Load OpenAI configuration
+        self.openai_embedding_deployment = os.environ.get('AZURE_OPENAI_EMBEDDING_DEPLOYMENT', 'embeddings')
+        self.openai_api_version = os.environ.get('AZURE_OPENAI_API_VERSION', '2024-12-01-preview')
         # Core configuration
         self.key_vault_url = os.getenv('AZURE_KEY_VAULT_URL')
         
@@ -186,6 +195,28 @@ class AzureConfig:
             )
             
         return None
+        
+    def get_cosmos_connection_string(self) -> Optional[str]:
+        """Get Azure Cosmos DB connection string.
+        
+        Returns:
+            Optional[str]: Cosmos DB connection string if configured, None otherwise
+            
+        Environment Variables:
+            AZURE_COSMOS_CONNECTION_STRING: Cosmos DB connection string
+        """
+        return self.cosmos_connection_string
+        
+    def get_redis_connection_string(self) -> Optional[str]:
+        """Get Redis connection string.
+        
+        Returns:
+            Optional[str]: Redis connection string if configured, None otherwise
+            
+        Environment Variables:
+            AZURE_REDIS_CONNECTION_STRING: Redis connection string
+        """
+        return self.redis_connection_string
         
     def validate_required_config(self, service: str) -> None:
         """Validate that all required configuration exists for a service.

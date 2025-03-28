@@ -24,8 +24,11 @@ class Command(BaseCommand):
                 
             # Create the index
             self.stdout.write("Creating search index...")
-            index = search_service.create_search_index()
-            self.stdout.write(f"Successfully created index '{index.name}'")
+            success = search_service.create_search_index()
+            if success:
+                self.stdout.write(f"Successfully created index '{search_service.index_name}'")
+            else:
+                self.stdout.write("Failed to create search index")
 
         except Exception as e:
             self.stdout.write(f"Error: {str(e)}")

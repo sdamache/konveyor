@@ -5,24 +5,25 @@ import os
 import pytest
 from unittest.mock import Mock, patch
 from django.test import TestCase
-from konveyor.apps.documents.services.document_service import DocumentService
+from konveyor.apps.documents.services.document_adapter import DjangoDocumentService
 
-class TestDocumentService(TestCase):
+class TestDjangoDocumentService(TestCase):
     """Test cases for DocumentService."""
     
     def setUp(self):
         """Set up test environment."""
         # Using actual implementation as requested
-        self.service = DocumentService()
+        self.service = DjangoDocumentService()
             
     def test_parse_pdf(self):
         """Test PDF parsing."""
         # Using actual implementation with real PDF content
         # Note: This test will require actual Azure credentials to be set up
         
-        # Test parsing
-        # Create a simple PDF file for testing
-        pdf_content = io.BytesIO(b"%PDF-1.4\n1 0 obj\n<</Type/Catalog/Pages 2 0 R>>\nendobj\n2 0 obj\n<</Type/Pages/Kids[3 0 R]/Count 1>>\nendobj\n3 0 obj\n<</Type/Page/MediaBox[0 0 612 792]/Resources<<>>>>\nendobj\ntrailer\n<</Root 1 0 R>>\n")
+        # Test parsing using actual PDF file
+        pdf_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'services', 'documents', 'tests', 'test_files', 'sample.pdf')
+        with open(pdf_path, 'rb') as f:
+            pdf_content = io.BytesIO(f.read())
         content, metadata = self.service._parse_pdf(pdf_content)
         
         # Verify basic structure without checking exact content
