@@ -18,25 +18,27 @@ output "key_vault_name" {
   value       = module.key_vault.key_vault_name
 }
 
-output "openai_id" {
-  description = "Azure OpenAI Service ID"
-  value       = module.openai.cognitive_account_id
-}
+# Commented out OpenAI outputs (cost optimization)
+# output "openai_id" {
+#   description = "Azure OpenAI Service ID"
+#   value       = module.openai.cognitive_account_id
+# }
 
-output "openai_name" {
-  description = "Azure OpenAI Service name"
-  value       = module.openai.cognitive_account_name
-}
+# output "openai_name" {
+#   description = "Azure OpenAI Service name"
+#   value       = module.openai.cognitive_account_name
+# }
 
-output "cognitive_search_id" {
-  description = "Azure Cognitive Search Service ID"
-  value       = module.cognitive_search.search_service_id
-}
+# Commented out Cognitive Search outputs (cost optimization)
+# output "cognitive_search_id" {
+#   description = "Azure Cognitive Search Service ID"
+#   value       = module.cognitive_search.search_service_id
+# }
 
-output "cognitive_search_name" {
-  description = "Azure Cognitive Search Service name"
-  value       = module.cognitive_search.search_service_name
-}
+# output "cognitive_search_name" {
+#   description = "Azure Cognitive Search Service name"
+#   value       = module.cognitive_search.search_service_name
+# }
 
 output "bot_service_id" {
   description = "Azure Bot Service ID"
@@ -79,12 +81,13 @@ output "storage_container_name" {
   value       = module.storage.storage_container_name
 }
 
-output "openai_embeddings_deployment_id" {
-  description = "Azure OpenAI Embeddings deployment ID"
-  value       = module.openai.embeddings_deployment_id
-}
+# Commented out OpenAI Embeddings outputs (cost optimization)
+# output "openai_embeddings_deployment_id" {
+#   description = "Azure OpenAI Embeddings deployment ID"
+#   value       = module.openai.embeddings_deployment_id
+# }
 
-output "openai_embeddings_deployment_name" {
-  description = "Azure OpenAI Embeddings deployment name"
-  value       = module.openai.embeddings_deployment_name
-}
+# output "openai_embeddings_deployment_name" {
+#   description = "Azure OpenAI Embeddings deployment name"
+#   value       = module.openai.embeddings_deployment_name
+# }
