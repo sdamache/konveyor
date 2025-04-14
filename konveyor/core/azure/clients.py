@@ -270,7 +270,7 @@ class AzureClientManager:
             AZURE_REDIS_CONNECTION_STRING: Redis connection string
         """
         try:
-            from konveyor.core.azure.storage import AzureStorageManager
+            from konveyor.services.conversation.storage import AzureStorageManager
             
             cosmos_conn_str = self.config.get_cosmos_connection_string()
             redis_conn_str = self.config.get_redis_connection_string()

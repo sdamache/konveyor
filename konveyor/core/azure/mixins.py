@@ -8,7 +8,7 @@ from azure.search.documents import SearchClient
 from azure.search.documents.indexes import SearchIndexClient
 from azure.ai.documentintelligence import DocumentIntelligenceClient
 from openai import AzureOpenAI
-from konveyor.core.azure.openai_client import AzureOpenAIClient
+from konveyor.services.azure.openai.client import AzureOpenAIClient
 
 logger = logging.getLogger(__name__)
 
