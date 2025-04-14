@@ -294,37 +294,28 @@ class SearchService(AzureService):
         """
         self.log_success(f"Generating embedding for text ({len(text)} chars)...")
         
-        if self.openai_client:
-            # Use Azure OpenAI client
-            try:
-                # Get deployment name from environment variable
-                embedding_deployment = os.getenv('AZURE_OPENAI_EMBEDDING_DEPLOYMENT', 'embeddings')
-                self.log_success(f"Using embedding deployment: {embedding_deployment}")
-                
-                response = self.openai_client.embeddings.create(
-                    model=embedding_deployment,
-                    input=text
-                )
-                return response.data[0].embedding
-            except Exception as e:
-                self.log_error("Failed to generate embedding with Azure OpenAI client", e)
-                raise
-        
         if not self.openai_client:
-            error_msg = "Azure OpenAI client not configured correctly"
+            error_msg = "Azure OpenAI client not configured or initialization failed."
             self.log_error(error_msg)
             raise ValueError(error_msg)
-        
+
+        # Use Azure OpenAI client
         try:
+            # Get deployment name from environment variable
+            embedding_deployment = os.getenv('AZURE_OPENAI_EMBEDDING_DEPLOYMENT', 'embeddings')
+            self.log_success(f"Using embedding deployment: {embedding_deployment}")
+            
             # Truncate text if too long (OpenAI has token limits)
-            truncated_text = text[:8000]  # Adjust limit based on your needs
+            # Simple truncation, consider more sophisticated chunking for production
+            truncated_text = text[:8191]  # Max tokens for ada-002 is 8191
             if len(truncated_text) < len(text):
-                logger.info(f"Truncated text from {len(text)} to {len(truncated_text)} chars")
-            
-            # Get deployment name
-            embedding_deployment = os.getenv('AZURE_OPENAI_EMBEDDING_DEPLOYMENT', 'text-embedding-ada-002')
-            
-            # Generate embedding
+                logger.info(f"Truncated text from {len(text)} to {len(truncated_text)} chars for embedding")
+
+            logger.info(
+                f"Calling OpenAI Embeddings API: Endpoint='{self.openai_client.base_url}', "
+                f"API Version='{self.openai_client._api_version}', Deployment='{embedding_deployment}'"
+            )
+
             response = self.openai_client.embeddings.create(
                 model=embedding_deployment,
                 input=truncated_text
@@ -332,21 +323,15 @@ class SearchService(AzureService):
             embedding = response.data[0].embedding
             self.log_success(f"Generated embedding with {len(embedding)} dimensions")
             return embedding
-            
         except Exception as e:
-            error_msg = f"Error generating embedding: {str(e)}"
-            self.log_error(error_msg)
-            raise
-            
-            # Additional diagnostic info
-            if "404" in str(e):
-                logger.error("404 error indicates the resource was not found. Check:")
-                logger.error("1. OpenAI endpoint URL is correct")
-                logger.error("2. API key is valid and has access to the embeddings model")
-                logger.error("3. The model name is correct (should match your Azure OpenAI deployment name)")
-                logger.error("4. The model is deployed to your OpenAI resource")
-                logger.error(f"Current model: {os.getenv('AZURE_OPENAI_EMBEDDING_DEPLOYMENT', 'embeddings')}")
-            
+            # Log specific details for 404 errors
+            if hasattr(e, 'status_code') and e.status_code == 404:
+                logger.error(
+                    f"404 error generating embedding. Check Azure OpenAI deployment '{embedding_deployment}'. "
+                    f"Verify endpoint, key, and deployment name/status in Azure portal."
+                )
+            logger.error(f"Full OpenAI API Error: {str(e)}")
+            self.log_error("Failed to generate embedding with Azure OpenAI client", e)
             raise
 
     def delete_index(self) -> None:
@@ -633,3 +618,5 @@ class SearchService(AzureService):
         except Exception as e:
             logger.error(f"Hybrid search failed: {str(e)}")
             raise 
+        
+        

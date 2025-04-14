@@ -22,10 +22,10 @@ from bs4 import BeautifulSoup
 import docx
 import markdown
 
-from azure.core.exceptions import AzureError
+from azure.core.exceptions import AzureError, ResourceExistsError
 from azure.core.credentials import AzureKeyCredential
 from azure.ai.documentintelligence import DocumentIntelligenceClient
-from konveyor.core.azure.mixins import ServiceLoggingMixin
+from konveyor.core.azure.mixins import ServiceLoggingMixin, AzureClientMixin
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 logger = logging.getLogger(__name__)
@@ -151,7 +151,9 @@ class DocumentService(ServiceLoggingMixin, AzureClientMixin):
         """
         try:
             # Get model name from environment or use default
-            model_name = os.getenv('AZURE_DOCUMENT_INTELLIGENCE_MODEL', 'prebuilt-document')
+            model_name = os.getenv('AZURE_DOCUMENT_INTELLIGENCE_MODEL', 'prebuilt-layout')
+            logger.info(f"Using Document Intelligence model: {model_name}")
+            
             poller = self.doc_intelligence_client.begin_analyze_document(
                 model_name,
                 body=file_obj
@@ -291,53 +293,95 @@ class DocumentService(ServiceLoggingMixin, AzureClientMixin):
             ValueError: If chunk has no blob_path
             Exception: If storage fails
         """
+        if not chunk.blob_path:
+            raise ValueError("Chunk has no blob_path")
+
         try:
-            if not chunk.blob_path:
-                raise ValueError("Chunk has no blob_path")
-            
-            # Get blob client
-            blob_client = self.client_manager.get_blob_client()
-            container_name = 'document-chunks'  # Using a fixed container for all chunks
-            
+            blob_service_client = self.client_manager.get_blob_client()
+            # Use test container name from env var if set, else default
+            container_name = os.getenv("AZURE_STORAGE_TEST_CONTAINER_NAME", 'document-chunks')
+            blob_name = chunk.blob_path
+
             # Get container client
-            container_client = blob_client.get_container_client(container_name)
+            container_client = blob_service_client.get_container_client(container_name)
             
-            # Create container if it doesn't exist with retry
-            max_retries = 3
-            retry_delay = 1  # Initial delay in seconds
+            # Create container if it doesn't exist with specific retry for ContainerBeingDeleted
+            max_retries = 5
+            retry_delay = 2
+            container_exists_or_created = False
             
             for attempt in range(max_retries):
                 try:
-                    if not container_client.exists():
+                    if container_client.exists():
+                        logger.info(f"Container {container_name} already exists.")
+                        container_exists_or_created = True
+                        break
+                    else:
+                        logger.info(f"Attempting to create container {container_name}...")
                         container_client.create_container()
-                    break
+                        self.log_success(f"Container {container_name} created successfully.")
+                        container_exists_or_created = True
+                        break # Exit loop on successful creation
+                except ResourceExistsError as e:
+                    # Check if the error is specifically "ContainerBeingDeleted"
+                    if "ContainerBeingDeleted" in str(e):
+                        if attempt == max_retries - 1:
+                            self.log_error(f"Failed to create container {container_name} after {max_retries} attempts due to ContainerBeingDeleted.", e)
+                            raise # Re-raise the final error if all retries fail
+                        logger.warning(f"Attempt {attempt + 1} failed: Container {container_name} is being deleted. Retrying in {retry_delay}s...")
+                        import time
+                        time.sleep(retry_delay)
+                        retry_delay *= 2  # Exponential backoff
+                    else:
+                        # If it's another ResourceExistsError (like ContainerAlreadyExists, which is fine if caught by exists()), 
+                        # or some other unexpected ResourceExistsError, log and re-raise immediately.
+                        if "ContainerAlreadyExists" in str(e):
+                             # This case should ideally be caught by container_client.exists(), but handle defensively
+                             logger.info(f"Container {container_name} already exists (caught in exception). Proceeding.")
+                             container_exists_or_created = True
+                             break # Container exists, proceed
+                        else:
+                             self.log_error(f"Unexpected ResourceExistsError during container creation check/attempt", e)
+                             raise # Re-raise unexpected ResourceExistsError
                 except Exception as e:
+                    # Catch any other unexpected exceptions during container creation/check
+                    self.log_error(f"Unexpected error checking or creating container {container_name} on attempt {attempt + 1}", e) 
                     if attempt == max_retries - 1:
-                        raise
-                    self.log_warning(f"Attempt {attempt + 1} failed to create container: {str(e)}. Retrying...")
-                    import time
-                    time.sleep(retry_delay)
-                    retry_delay *= 2  # Exponential backoff
-            
-            # Get blob client for this chunk
-            blob_client = container_client.get_blob_client(chunk.blob_path)
-            
-            # Upload content with retry
-            for attempt in range(max_retries):
-                try:
-                    blob_client.upload_blob(content.encode('utf-8'), overwrite=True)
-                    self.log_success(f"Successfully stored content for chunk {chunk.id}")
-                    break
-                except Exception as e:
-                    if attempt == max_retries - 1:
-                        raise
-                    self.log_warning(f"Attempt {attempt + 1} failed to upload blob: {str(e)}. Retrying...")
+                        raise # Re-raise after final attempt
                     import time
                     time.sleep(retry_delay)
                     retry_delay *= 2
             
+            if not container_exists_or_created:
+                 raise Exception(f"Failed to ensure container {container_name} exists after {max_retries} attempts.")
+
+            # Get blob client for this specific chunk within the container
+            blob_client = container_client.get_blob_client(blob_name)
+            
+            # Upload content with retry (existing retry logic seems okay for upload)
+            max_retries_upload = 3
+            retry_delay_upload = 1
+            upload_successful = False
+            for attempt in range(max_retries_upload):
+                try:
+                    blob_client.upload_blob(content.encode('utf-8'), overwrite=True)
+                    self.log_success(f"Successfully stored content for chunk {chunk.id} in {container_name}/{blob_name}")
+                    upload_successful = True
+                    break
+                except Exception as e:
+                    if attempt == max_retries_upload - 1:
+                        self.log_error(f"Failed to upload blob {blob_name} after {max_retries_upload} attempts.", e)
+                        raise
+                    logger.warning(f"Attempt {attempt + 1} failed to upload blob {blob_name}: {str(e)}. Retrying in {retry_delay_upload}s...")
+                    import time
+                    time.sleep(retry_delay_upload)
+                    retry_delay_upload *= 2
+
+            if not upload_successful:
+                raise Exception(f"Failed to upload blob {blob_name} after {max_retries_upload} attempts.")
+
         except Exception as e:
-            self.log_error(f"Failed to store content for chunk {chunk.id}", e)
+            self.log_error(f"Failed to store content for chunk {chunk.id}: {str(e)}", e)
             raise
             
     def get_chunk_content(self, chunk) -> str:
@@ -358,14 +402,16 @@ class DocumentService(ServiceLoggingMixin, AzureClientMixin):
                 raise ValueError("Chunk has no blob_path")
             
             # Get blob client
-            blob_client = self.client_manager.get_blob_client()
-            container_name = 'document-chunks'
-            
+            blob_service_client = self.client_manager.get_blob_client()
+            # Use test container name from env var if set, else default
+            container_name = os.getenv("AZURE_STORAGE_TEST_CONTAINER_NAME", 'document-chunks')
+            blob_name = chunk.blob_path
+
             # Get container client
-            container_client = blob_client.get_container_client(container_name)
+            container_client = blob_service_client.get_container_client(container_name)
             
             # Get blob client for this chunk
-            blob_client = container_client.get_blob_client(chunk.blob_path)
+            blob_client = container_client.get_blob_client(blob_name)
             
             # Download content with retry
             max_retries = 3

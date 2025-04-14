@@ -4,7 +4,7 @@ Handles high-level RAG operations including context retrieval and response gener
 """
 import os
 from typing import List, Dict, Optional
-from konveyor.core.azure.rag_templates import RAGPromptManager
+from konveyor.services.rag.templates import RAGPromptManager
 from konveyor.core.azure.clients import AzureClientManager
 from .context_service import ContextService
 
