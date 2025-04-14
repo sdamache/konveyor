@@ -156,6 +156,11 @@ class TestIndexingService(TestCase):
         cls.test_run_id = uuid.uuid4().hex[:8]
         logger.info(f"Test run ID: {cls.test_run_id}")
         
+        # Generate unique test container name
+        cls.test_container_name = f"test-chunks-{cls.test_run_id}"
+        os.environ["AZURE_STORAGE_TEST_CONTAINER_NAME"] = cls.test_container_name
+        logger.info(f"Set test container name: {cls.test_container_name}")
+
         # Check Azure services
         if not cls.check_azure_services():
             pytest.skip("Skipping tests due to missing Azure services configuration")
@@ -263,7 +268,7 @@ class TestIndexingService(TestCase):
         
         try:
             # Delete test index using AzureClientManager
-            if hasattr(cls, 'test_index_name') and cls.test_index_name:
+            if hasattr(cls, 'test_index_name') and cls.test_index_name and hasattr(cls, 'azure_client_manager'):
                 logger.info(f"Deleting test index: {cls.test_index_name}")
                 try:
                     # Get index client from AzureClientManager
@@ -272,7 +277,23 @@ class TestIndexingService(TestCase):
                     logger.info(f"Successfully deleted test index: {cls.test_index_name}")
                 except Exception as delete_error:
                     logger.error(f"Failed to delete test index: {str(delete_error)}")
+        
+            # Delete test container
+            if hasattr(cls, 'test_container_name') and cls.test_container_name and hasattr(cls, 'azure_client_manager'):
+                logger.info(f"Deleting test container: {cls.test_container_name}")
+                try:
+                    blob_service_client = cls.azure_client_manager.get_blob_client()
+                    blob_service_client.delete_container(cls.test_container_name)
+                    logger.info(f"Successfully deleted test container: {cls.test_container_name}")
+                except Exception as delete_container_error:
+                    # Log error, but don't fail teardown if container doesn't exist or other issue
+                    logger.warning(f"Could not delete test container '{cls.test_container_name}': {str(delete_container_error)}")
             
+                # Unset test container name environment variable
+                if "AZURE_STORAGE_TEST_CONTAINER_NAME" in os.environ:
+                    del os.environ["AZURE_STORAGE_TEST_CONTAINER_NAME"]
+                    logger.info("Unset AZURE_STORAGE_TEST_CONTAINER_NAME environment variable")
+
             # Restore original index name
             if hasattr(cls, 'original_index_name'):
                 os.environ["AZURE_SEARCH_INDEX_NAME"] = cls.original_index_name

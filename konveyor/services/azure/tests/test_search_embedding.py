@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO,
 logger = logging.getLogger(__name__)
 
 from konveyor.apps.search.services.search_service import SearchService
-from konveyor.utils.azure.openai_client import AzureOpenAIClient
+from konveyor.services.azure.openai.client import AzureOpenAIClient
 
 def test_search_service_embedding():
     """Test embedding generation through SearchService."""
