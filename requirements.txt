@@ -1,0 +1,8 @@
+python-dotenv
+django
+openai>=1.0.0
+azure-identity
+azure-ai-formrecognizer
+azure-search-documents>=11.4.0
+azure-storage-blob
+# Add other specific dependencies as needed
