@@ -1,6 +1,6 @@
 output "cosmos_connection_string" {
   description = "Cosmos DB connection string"
-  value       = azurerm_cosmosdb_account.konveyor_db.connection_strings[0]
+  value       = azurerm_cosmosdb_account.konveyor_db.primary_mongodb_connection_string
   sensitive   = true
 }
 

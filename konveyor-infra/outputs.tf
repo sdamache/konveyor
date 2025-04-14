@@ -34,11 +34,31 @@ output "key_vault_name" {
 #   description = "Azure Cognitive Search Service ID"
 #   value       = module.cognitive_search.search_service_id
 # }
+output "openai_endpoint" {
+  description = "Azure OpenAI Service endpoint"
+  value       = module.openai.cognitive_account_endpoint
+}
+
+output "openai_primary_key" {
+  description = "Azure OpenAI Service primary key"
+  value       = module.openai.cognitive_account_primary_key
+  sensitive   = true
+}
 
 # output "cognitive_search_name" {
 #   description = "Azure Cognitive Search Service name"
 #   value       = module.cognitive_search.search_service_name
 # }
+output "cognitive_search_endpoint" {
+  description = "Azure Cognitive Search Service endpoint"
+  value       = module.cognitive_search.search_service_endpoint
+}
+
+output "cognitive_search_primary_key" {
+  description = "Azure Cognitive Search Service primary key"
+  value       = module.cognitive_search.search_service_primary_key
+  sensitive   = true
+}
 
 output "bot_service_id" {
   description = "Azure Bot Service ID"
@@ -58,6 +78,12 @@ output "document_intelligence_id" {
 output "document_intelligence_endpoint" {
   description = "Document Intelligence Service endpoint"
   value       = module.document_intelligence.endpoint
+}
+
+output "document_intelligence_primary_key" {
+  description = "Document Intelligence Service primary key"
+  value       = module.document_intelligence.primary_key
+  sensitive   = true
 }
 
 output "storage_account_id" {

@@ -20,10 +20,39 @@ module "openai" {
   location            = var.location
   sku_name            = "S0"
   model_name          = "gpt-4o"
-  model_version       = "1106-Preview"
+  model_version       = "2024-05-13" # Use valid YYYY-MM-DD format
   capacity            = 1
   tags                = var.tags
 }
+
+module "document_intelligence" {
+  source              = "../../modules/document-intelligence"
+  name                = "${var.prefix}-test-docint" # Added -test suffix
+  resource_group_name = module.resource_group.name
+  location            = var.location
+  sku_name            = "S0" # Assuming S0 is okay for test
+  tags                = var.tags
+}
+
+module "storage" {
+  source              = "../../modules/storage"
+  name                = "${var.prefix}teststorage" # Added test infix
+  resource_group_name = module.resource_group.name
+  location            = var.location
+  tags                = var.tags
+}
+
+# RAG infrastructure (includes Redis Cache) - Temporarily commented out for faster testing
+# module "rag" {
+#   source              = "../../modules/rag"
+#   prefix              = var.prefix
+#   environment         = "test" # Explicitly set environment for RAG module if needed
+#   resource_group_name = module.resource_group.name
+#   location            = var.location
+#   tags                = merge(var.tags, {
+#     component = "rag"
+#   })
+# }
 
 module "cognitive_search" {
   source              = "../../modules/cognitive-search"
@@ -36,12 +65,14 @@ module "cognitive_search" {
   tags                = var.tags
 }
 
-module "bot_service" {
-  source              = "../../modules/bot-service"
-  name                = "${var.prefix}-test-bot"
-  resource_group_name = module.resource_group.name
-  location            = "global"
-  sku                 = "F0"
-  microsoft_app_id    = var.microsoft_app_id
-  tags                = var.tags
-}
+# Temporarily commenting out Bot Service due to persistent 500 errors during apply
+# module "bot_service" {
+#   source              = "../../modules/bot-service"
+#   name                = "${var.prefix}-test-bot"
+#   prefix              = var.prefix
+#   resource_group_name = module.resource_group.name
+#   location            = "global"
+#   sku                 = "F0"
+#   microsoft_app_id    = var.microsoft_app_id
+#   tags                = var.tags
+# }

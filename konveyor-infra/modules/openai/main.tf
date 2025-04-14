@@ -23,7 +23,7 @@ resource "azurerm_cognitive_deployment" "gpt_deployment" {
   }
 
   scale {
-    type     = "GlobalStandard"
+    type     = "GlobalStandard" # Correct type based on previous state/provider version
     capacity = var.capacity
   }
 
@@ -42,7 +42,7 @@ resource "azurerm_cognitive_deployment" "embeddings" {
   }
 
   scale {
-    type     = "Standard"
+    type     = "GlobalStandard" # Correct type based on previous state/provider version
     capacity = var.embeddings_capacity
   }
 
