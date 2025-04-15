@@ -42,52 +42,51 @@ Analysis revealed Azure-related code scattered across multiple locations, leadin
 
 ```mermaid
 graph TD
-    A[Start: Scattered Code & Naming Issues] --> B(Phase 1: Create Azure Target Dirs);
-    B --> B1(services/azure/openai/tests);
-    B --> B2(services/azure/tests);
-    B --> B3(services/conversation);
-    B --> B4(services/rag/templates);
-    B --> C(Phase 2: Move & Delete Azure Code);
-    C --> C1(Move openai_client.py);
-    C --> C2(Move storage.py -> conversation/storage.py);
-    C --> C3(Move rag_templates.py -> rag/templates.py);
-    C --> C4(Move tests from utils/azure);
-    C --> C5(Delete config/azure.py);
-    C --> C6(Delete config/azure/ dir);
-    C --> C7(Delete utils/azure/ dir);
-    C --> D(Phase 3: Update Imports);
-    D --> D1(Search for old import paths);
-    D --> D2(Update imports to new paths);
-    D --> E(Phase 3.1: Initial Verification Issues);
-    E --> E1(Document Intelligence PDF Parsing Errors);
-    E --> E2(Document Intelligence Invalid Content Type);
-    E --> E3(OpenAI Embedding Generation Failure (404 Not Found));
-    E --> E4(Terraform Workspace Cleanup Error);
-    E --> F(Phase 4: Directory Naming & Convention Review);
-    F --> F1(Analyze Current Structure);
-    F --> F2(Discuss/Decide 'azure' dir names);
-    F --> F3(Discuss/Decide 'services' dir name);
-    F --> F4(Document Conventions);
-    F --> G(Phase 5: Implement Naming Changes & Final Verification);
-    G --> G1(Rename Dirs);
-    G --> G2(Update Global Imports);
-    G --> G3(Run Final Tests);
-    G --> G4(Update Docs);
-    G4 --> H[End: Cleaned Structure & Names];
+    A[Start: Scattered Code & Ambiguous Structure] --> B(Phase 1: Initial Azure File Moves & Deletes);
+    B --> B1(Move Azure files to services/*);
+    B --> B2(Delete utils/azure, config/azure, config.py);
+    B --> C(Phase 2: Initial Import Update & Verification);
+    C --> C1(Update imports for Phase 1);
+    C --> C2(Run Tests - Encountered Issues);
+    C --> D(Phase 3: Troubleshooting & Resolution);
+    D --> D1(Fix Terraform issues);
+    D --> D2(Fix Test issues);
+    D --> D3(Tests Pass - 16/16);
+    D --> E(Phase 4: Consolidate services into core & Refine Naming);
+    E --> E1(Discuss structure: core vs services);
+    E --> E2(Decide: Merge services into core);
+    E --> E3(Decide: Rename core/azure -> core/azure_utils);
+    E --> E4(Decide: Create core/azure_adapters);
+    E --> F(Phase 5: Implement Consolidation & Final Verification);
+    F --> F1(Rename core/azure);
+    F --> F2(Move files from services/* to core/*);
+    F --> F3(Move files from azure_utils to adapters/domain);
+    F --> F4(Delete services/ directory);
+    F --> F5(Update Global Imports);
+    F --> F6(Run Tests - Passed with 1 known failure);
+    F --> F7(Fix final test path error);
+    F --> G(Phase 6: Documentation & Future Refinement);
+    G --> G1(Update architecture docs);
+    G --> G2(Remove directory_cleanup.md);
+    G --> G3(Defer apps/core decision);
+    G --> H[End: Consolidated Core Structure];
 
-    subgraph "Final Structure Highlights (Post-Phase 5)"
+    subgraph "Final Structure Highlights"
         direction LR
-        FS1["konveyor/core/azure_utils (Example)"] --> FS1_1(config.py);
-        FS1 --> FS1_2(mixins.py);
-        FS1 --> FS1_3(retry.py);
-        FS1 --> FS1_4(service.py);
-        FS1 --> FS1_5(clients.py);
-        FS2["konveyor/services/azure_adapters/openai (Example)"] --> FS2_1(client.py);
-        FS2 --> FS2_2(tests/);
-        FS3[konveyor/services/conversation] --> FS3_1(storage.py);
-        FS4[konveyor/services/rag] --> FS4_1(templates.py);
-        FS5[konveyor/config/azure.py] --> FS5_X{Deleted};
-        FS6[konveyor/utils/azure] --> FS6_X{Deleted};
+        FS1["konveyor/core/azure_utils"] --> FS1_1(config.py);
+        FS1 --> FS1_2(clients.py);
+        FS1 --> FS1_3(mixins.py);
+        FS1 --> FS1_4(retry.py);
+        FS1 --> FS1_5(service.py);
+        FS2["konveyor/core/azure_adapters"] --> FS2_1(openai/client.py);
+        FS2 --> FS2_2(...other adapters);
+        FS3["konveyor/core/documents"] --> FS3_1(document_service.py);
+        FS4["konveyor/core/rag"] --> FS4_1(rag_service.py);
+        FS4 --> FS4_2(templates.py);
+        FS5["konveyor/core/conversation"] --> FS5_1(storage.py);
+        FS6[konveyor/services] --> FS6_X{Deleted};
+        FS7[konveyor/utils/azure] --> FS7_X{Deleted};
+        FS8[konveyor/config/azure] --> FS8_X{Deleted};
     end
 ```
 
@@ -156,16 +155,15 @@ Resolve persistent PDF parsing errors (`InvalidContent` exceptions) and ensure t
 #### Outcome
 The refactoring efforts successfully addressed the `InvalidContent` errors related to PDF parsing by updating the Azure Document Intelligence model configuration. Additionally, issues within the search service tests were resolved by correcting environment variable usage, method calls, and simplifying test logic. The integration test suite now passes reliably, validating the core document processing and search functionalities against actual Azure services.
 
-### Phase 4: Directory Naming & Convention Review
+### Phase 4: Consolidate `services` into `core` & Refine Naming [Decision Phase]
 
-1.  **Analyze Current Structure:** Review the overall structure post-Phase 3 (`konveyor/` containing `apps/`, `core/`, `services/`, etc.).
-2.  **Address `azure` Naming:**
-    *   Discuss the roles of `konveyor/core/azure` (common utilities, config, base classes, client factory) and `konveyor/services/azure` (specific service logic wrappers).
-    *   Propose and decide on potentially clearer names. Examples: `konveyor/core/azure_utils/`, `konveyor/core/integrations/azure/`, `konveyor/services/azure_adapters/`.
-3.  **Address `services` Naming:**
-    *   Evaluate if the top-level `konveyor/services/` directory name clearly represents its contents (core, framework-agnostic business logic/domain services like RAG, Documents, Conversation Storage).
-    *   Propose and decide on alternatives if needed. Examples: `konveyor/domain/`, `konveyor/business_logic/`, `konveyor/modules/`.
-4.  **Define Conventions:** Document the chosen naming conventions and the intended purpose of the main top-level directories (`apps`, `core`, `services` (or its new name), etc.) within this document or a dedicated `CONTRIBUTING.md` or `ARCHITECTURE.md`.
+*   **Discussion:** Reviewed the structure after initial Azure cleanup (Phases 1-3). Identified ambiguity between `core/azure` and `services/azure`, and the potentially unclear role of the top-level `services` directory which held framework-agnostic domain logic (`documents`, `rag`, `conversation`) alongside specific Azure client implementations (`services/azure`). Considered alternatives like renaming `services` to `domain` or `business_logic`.
+*   **Decision (Merge):** To simplify the top-level structure and group all framework-agnostic logic, the `konveyor/services/` directory will be merged entirely into `konveyor/core/`. This places domain logic alongside core utilities.
+*   **Naming Decision (Azure Dirs):**
+    *   Rename `konveyor/core/azure` to **`konveyor/core/azure_utils`**. This directory will hold foundational Azure utilities (config loading, client factory, base service class, retry logic, common mixins).
+    *   Create **`konveyor/core/azure_adapters`**. This directory will hold specific client implementations/wrappers for Azure services (e.g., the detailed OpenAI client).
+*   **Naming Decision (Top-Level):** Keep the top-level `konveyor/core/` name for the consolidated logic. Defer decisions on refining `konveyor/apps/core`.
+*   **Next Step:** Proceed to Phase 5 to implement these structural changes and naming conventions.
 
 ### Phase 5: Implement Naming Changes & Final Verification
 
@@ -173,6 +171,75 @@ The refactoring efforts successfully addressed the `InvalidContent` errors relat
 2.  **Update Imports (Global):** Search and update *all* import statements across the entire project that are affected by the directory renames from this phase.
 3.  **Final Testing:** Run the full test suite again to ensure everything works correctly with the new structure and names.
 4.  **Documentation:** Update `docs/directory_structure.md` and potentially other relevant documentation to reflect the final, agreed-upon structure and conventions.
+
+---
+
+## Phase 6: Application Code Cleanup & Documentation Finalization
+
+### Overview
+
+With the core refactor and consolidation complete, the final phase focuses on:
+- Visualizing the new architecture for maintainability and onboarding
+- Systematically cleaning up redundant or legacy code in the application layers (`apps/search`, `apps/documents`, `apps/rag`, `apps/bot`)
+- Ensuring documentation is complete, accurate, and actionable
+
+---
+
+### Step 1: Architectural Visualization
+
+- **Goal:** Generate a comprehensive Mermaid diagram for the entire `core/` directory.
+  - The diagram should include:
+    - All modules/files in `core/`
+    - All top-level classes/functions in each file
+    - Brief descriptions (from docstrings) for each function/class
+- **How:** Use CLI tools (e.g., `tree`, `pyment`, or custom scripts) to extract the structure, then convert to Mermaid syntax.
+- **Action:** Add the diagram to this document and/or `docs/directory_structure.md` for future reference.
+
+---
+
+### Step 2: Systematic Application Code Cleanup
+
+#### a. Search & Documents Apps
+
+- Review all code in `apps/search/` and `apps/documents/`
+- Remove or refactor:
+  - Legacy parsing, chunking, storage, or Azure logic now handled by `core/`
+  - Redundant models, services, or utility functions
+  - Any direct Azure SDK usage that should be routed through core adapters/utilities
+- Update imports to use the new modular core code
+- Ensure Django adapters/services in `apps/` act as thin wrappers over `core/`
+
+#### b. RAG & Bot Apps
+
+- Repeat the above process for `apps/rag/` and any bot-related apps
+- Focus on removing duplicated RAG logic, context management, or prompt handling
+- Ensure all LLM and search integrations use the new core adapters/utilities
+
+---
+
+### Step 3: Implementation & Testing
+
+- Clean up two apps at a time (e.g., `search` + `documents`, then `rag` + `bot`), testing after each round
+- Run the full suite of unit and integration tests after each major cleanup
+- Update or add docstrings, and keep the architectural diagram in sync with any changes
+
+---
+
+### Step 4: Finalize and Document
+
+- Update this document with:
+  - Cleanup steps, rationale, and any major changes
+  - The new mermaid diagram(s)
+- Optionally, add a "project history" or "refactoring journey" section for future maintainers
+
+---
+
+**Next Steps:**  
+1. Generate the architectural diagram for `core/` using CLI tools  
+2. Begin systematic cleanup of `apps/search/` and `apps/documents/`  
+3. Continue as described above
+
+---
 
 ## 4. Next Steps & Future Considerations
 

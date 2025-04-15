@@ -3,138 +3,88 @@
 ## Core Directory Structure
 
 ```
-konveyor/
-├── apps/              # Django applications
-│   ├── documents/     # Document management Django app
-│   │   ├── services/
-│   │   │   └── document_adapter.py  # Django adapter for document service
-│   │   ├── migrations/
-│   │   ├── tests/
-│   │   │   ├── conftest.py
-│   │   │   └── test_document_service.py
-│   │   ├── models.py
-│   │   └── views.py
-│   ├── rag/          # RAG interface Django app
-│   │   ├── models.py
-│   │   ├── urls.py
-│   │   └── views.py
-│   └── search/       # Search functionality Django app
-│       ├── services/
-│       │   ├── indexing_service.py
-│       │   └── search_service.py
-│       ├── management/
-│       │   └── commands/
-│       │       └── setup_search_index.py
-│       ├── migrations/
-│       ├── tests/
-│       ├── models.py
-│       └── views.py
-├── core/             # Core functionality
-│   └── azure/        # Common Azure utilities
-│       ├── mixins.py    # Shared service mixins (logging, client init)
-│       └── config.py    # Basic configuration utilities
-├── services/         # Core services
-│   └── documents/    # Document processing service
-│       ├── document_service.py
-│       └── tests/
-│           ├── test_files/
-│           └── test_document_service.py
-│   └── azure/        # Azure service implementations
-│       ├── clients.py     # Azure client implementations
-│       ├── config.py      # Service-specific configurations
-│       ├── mixins.py      # Service-specific mixins
-│       ├── openai_client.py  # OpenAI integration
-│       ├── rag_templates.py  # RAG prompt templates
-│       ├── retry.py       # Azure retry policies
-│       ├── service.py     # Azure service classes
-│       └── storage.py     # Azure storage operations
-├── services/         # Core business logic
-│   ├── documents/    # Document processing service
-│   │   ├── document_service.py
-│   │   └── tests/
-│   │       └── test_document_service.py
-│   └── rag/         # RAG implementation
-│       ├── context_service.py
-│       └── rag_service.py
-└── utils/           # Utility functions
-```
+ konveyor/
+ ├── apps/              # Django applications (UI, API endpoints, Django-specific logic)
+ │   ├── documents/     # Document management Django app
+ │   │   ├── services/  # Django-specific services/adapters
+ │   │   │   └── document_adapter.py  # Adapts core document service for Django
+ │   │   ├── migrations/
+ │   │   ├── tests/     # Tests for this Django app
+ │   │   │   └── test_document_service.py # Tests the adapter
+ │   │   ├── models.py  # Django models (e.g., Document metadata)
+ │   │   └── views.py   # Django views/API endpoints
+ │   ├── rag/           # RAG interface Django app
+ │   │   ├── models.py
+ │   │   ├── urls.py
+ │   │   └── views.py
+ │   └── search/        # Search functionality Django app
+ │       ├── services/  # Django-specific services/adapters
+ │       │   ├── indexing_service.py # Integrates with core indexing logic
+ │       │   └── search_service.py   # Integrates with core search logic
+ │       ├── management/
+ │       │   └── commands/
+ │       │       └── setup_search_index.py
+ │       ├── migrations/
+ │       ├── tests/     # Tests for this Django app
+ │       ├── models.py
+ │       └── views.py
+ ├── core/              # Core, framework-agnostic functionality
+ │   ├── azure_utils/   # Foundational Azure utilities
+ │   │   ├── __init__.py
+ │   │   ├── clients.py    # Azure SDK client factory/manager
+ │   │   ├── config.py     # Central Azure configuration loading
+ │   │   ├── mixins.py     # Common mixins (e.g., logging)
+ │   │   ├── retry.py      # Retry decorator/logic
+ │   │   └── service.py    # Base Azure service class
+ │   ├── azure_adapters/ # Specific Azure service client implementations/wrappers
+ │   │   ├── __init__.py
+ │   │   └── openai/
+ │   │       ├── __init__.py
+ │   │       ├── client.py # Detailed OpenAI client logic
+ │   │       └── tests/    # Tests for the OpenAI adapter
+ │   │           └── test_integration.py
+ │   │   └── tests/        # General tests for Azure adapters
+ │   │       └── test_search_embedding.py
+ │   ├── conversation/  # Conversation domain logic
+ │   │   ├── __init__.py
+ │   │   └── storage.py    # Conversation storage (CosmosDB/Redis)
+ │   ├── documents/     # Document processing domain logic
+ │   │   ├── __init__.py
+ │   │   ├── document_service.py # Core document parsing/processing
+ │   │   └── tests/        # Tests for core document service
+ │   │       └── test_document_service.py
+ │   ├── rag/           # RAG domain logic
+ │   │   ├── __init__.py
+ │   │   ├── context_service.py
+ │   │   ├── rag_service.py
+ │   │   └── templates.py  # RAG prompt templates
+ │   └── __init__.py
+ └── # (Other project root files: settings/, urls.py, etc.)
+ ```
 
-## Core/Azure Module Details
+## Core/Azure Utils Module (`core/azure_utils/`) Details
 
-The `core/azure` module contains essential Azure service integrations and utilities used throughout the Konveyor project.
+The `core/azure_utils` module contains foundational, shared utilities for interacting with Azure services across the Konveyor project.
 
 ### Files Overview
 
-1. `__init__.py`
-   - Module initialization file
-   - Exports key classes and functions for Azure integration
+1.  **`__init__.py`**: Standard Python package marker.
+2.  **`clients.py`**: Defines `AzureClientManager`, a factory class responsible for creating configured Azure SDK client instances (e.g., `SearchClient`, `DocumentIntelligenceClient`, `BlobServiceClient`) based on loaded configuration. It centralizes client instantiation logic.
+3.  **`config.py`**: Defines `AzureConfig`, a Singleton class that loads Azure service credentials, endpoints, and other settings from environment variables, providing a unified way to access configuration.
+4.  **`mixins.py`**: Contains reusable Python mixin classes offering common Azure-related functionalities (e.g., standardized logging, base client access patterns) that can be incorporated into other classes.
+5.  **`retry.py`**: Implements retry logic (e.g., using the `tenacity` library) via decorators like `@azure_retry` to handle transient Azure API errors gracefully.
+6.  **`service.py`**: Defines a base class (`AzureService`) that other Azure-interacting services *can* inherit from, providing common initialization patterns involving `AzureConfig` and `AzureClientManager`, plus standardized logging methods.
 
-2. `clients.py`
-   - Core client management for Azure services
-   - Key Classes:
-     - `AzureClientManager`: Central manager for Azure service clients
-       - `get_search_clients()`: Returns SearchIndexClient and SearchClient
-       - `get_openai_client()`: Returns configured AzureOpenAI client
-       - `get_document_intelligence_client()`: Returns DocumentIntelligenceClient
-       - `get_blob_service_client()`: Returns BlobServiceClient
-       - `get_keyvault_client()`: Returns SecretClient
-   - Implements retry logic and error handling for all client operations
+## Core/Azure Adapters Module (`core/azure_adapters/`) Details
 
-3. `config.py`
-   - Azure service configuration management
-   - Key Classes:
-     - `AzureConfig`: Configuration settings for Azure services
-       - Manages endpoint URLs, API keys, and deployment names
-       - Handles environment variable loading for:
-         - AZURE_OPENAI_ENDPOINT
-         - AZURE_OPENAI_API_KEY
-         - AZURE_OPENAI_CHAT_DEPLOYMENT
-         - AZURE_OPENAI_EMBEDDING_DEPLOYMENT
-         - AZURE_SEARCH_ENDPOINT
-         - AZURE_SEARCH_KEY
-         - Other Azure service configurations
+The `core/azure_adapters` module contains specific, detailed implementations or wrappers around individual Azure service clients. These adapters handle the direct interaction logic with Azure APIs.
 
-4. `mixins.py`
-   - Reusable mixins for Azure service integration
-   - Classes:
-     - `AzureClientMixin`: Base mixin for Azure client access
-     - `SearchClientMixin`: Mixin for search operations
-     - `OpenAIClientMixin`: Mixin for OpenAI operations
+### Submodules
 
-5. `openai_client.py`
-   - Azure OpenAI service integration
-   - Key Functions:
-     - `generate_embeddings()`: Creates embeddings using Azure OpenAI
-     - `generate_chat_completion()`: Handles chat completions
-     - `create_openai_client()`: Configures OpenAI client with proper settings
-
-6. `rag_templates.py`
-   - Templates and prompts for RAG implementation
-   - Contains:
-     - System prompts for chat completions
-     - Context injection templates
-     - Response formatting templates
-
-7. `retry.py`
-   - Retry logic for Azure service calls
-   - Features:
-     - `azure_retry` decorator for automatic retries
-     - Exponential backoff implementation
-     - Error categorization and handling
-     - Configurable retry counts and delays
-
-8. `service.py`
-   - Base service classes for Azure integration
-   - Classes:
-     - `BaseAzureService`: Abstract base class for Azure services
-     - `AzureServiceMixin`: Common service functionality
-
-9. `storage.py`
-   - Azure storage service integration
-   - Key Functions:
-     - Blob container management
-     - File upload/download operations
-     - Storage access configuration
+1.  **`openai/`**:
+    *   **`client.py`**: Contains the `AzureOpenAIClient` class, providing methods like `generate_embedding` and `generate_completion` that make direct calls to the Azure OpenAI REST APIs, including handling different API versions and request formatting.
+    *   **`tests/`**: Contains integration tests specifically for the `AzureOpenAIClient`.
+2.  **(Future Adapters):** This directory would house similar detailed client wrappers for other Azure services as needed (e.g., `storage/`, `search/`, `doc_intelligence/`).
 
 ## Apps/Documents Module Details
 
@@ -142,31 +92,19 @@ The `apps/documents` module handles document management and processing in the Ko
 
 ### Key Components
 
-1. `services/document_service.py`
-   - Primary document processing service
-   - Key Functions:
-     - `process_document()`: Main document processing pipeline
-     - `parse_file()`: File parsing with Azure Document Intelligence
-     - `extract_text()`: Text extraction from parsed documents
+1. `services/document_adapter.py`
+   - Adapts the core document service (`core.documents.document_service`) for use within the Django framework.
+   - Handles Django-specific objects (e.g., `UploadedFile`).
+   - May add Django-specific logic (e.g., saving results to Django models) before or after calling the core service.
 
-2. `services/chunk_service.py`
-   - Document chunking and segmentation
-   - Key Functions:
-     - `chunk_document()`: Splits documents into processable chunks
-     - `optimize_chunks()`: Optimizes chunk size for embedding
+2. `models.py`
+   - Django models for document management (e.g., `Document` model storing metadata).
+3. `views.py`
+   - API endpoints (e.g., for document upload, status checks) using Django REST Framework or standard Django views.
+4. `tests/`
+   - Tests specifically for the Django `documents` app, focusing on the adapter, views, and models.
 
-3. `models.py`
-   - Django models for document management
-   - Models:
-     - `Document`: Stores document metadata and processing status
-     - `DocumentChunk`: Represents segmented document chunks
-
-4. `views.py`
-   - API endpoints for document operations
-   - Endpoints:
-     - Document upload
-     - Processing status
-     - Document retrieval
+*(Removed redundant model/view descriptions)*
 
 ## Apps/Search Module Details
 
@@ -175,18 +113,13 @@ The `apps/search` module implements search functionality using Azure Cognitive S
 ### Key Components
 
 1. `services/search_service.py`
-   - Core search functionality
-   - Key Functions:
-     - `search()`: Performs vector and keyword search
-     - `hybrid_search()`: Combines vector and keyword search results
-     - `get_document_by_id()`: Retrieves specific documents
+   - Django-specific service that integrates with the core search logic (likely now in `core/search` or similar, TBD).
+   - Provides methods used by Django views/commands.
+   - Handles interaction with Django models if needed.
 
 2. `services/indexing_service.py`
-   - Manages search index operations
-   - Key Functions:
-     - `create_index()`: Sets up search index schema
-     - `index_document()`: Indexes document chunks
-     - `update_index()`: Updates existing index entries
+   - Django-specific service that integrates with core document processing (`core/documents`) and core search indexing logic.
+   - Likely orchestrates the flow from a Django signal or view to parsing, chunking, embedding, and indexing via core components.
 
 3. `management/commands/setup_search_index.py`
    - Django management command
@@ -206,142 +139,37 @@ The `apps/search` module implements search functionality using Azure Cognitive S
      - Index management
      - Result retrieval
 
-## Config/Azure Module Details
+## Core/Documents Module (`core/documents/`) Details
 
-The configuration module for Azure services, split across two locations:
-
-### 1. `config/azure.py`
-   - Main Azure configuration file
-   - Key Components:
-     - Package dependency checks and imports
-     - `AzureConfig` class:
-       - Credential management
-       - Client initialization methods
-       - Environment variable handling
-     - Service client factory methods:
-       - `get_document_intelligence_client()`
-       - `get_openai_client()`
-       - `get_search_client()`
-       - `get_storage_client()`
-
-### 2. `config/azure/` Directory
-   1. `config.py`
-      - Detailed Azure service configurations
-      - Environment variable management
-      - Service-specific settings
-
-   2. `service.py`
-      - Base service configurations
-      - Common service utilities
-      - Authentication helpers
-
-## Services/RAG Module Details
-
-The `services/rag` module implements the Retrieval Augmented Generation functionality.
+The `core/documents` module contains the framework-agnostic logic for processing and managing documents.
 
 ### Key Components
 
-1. `rag_service.py`
-   - Core RAG implementation
-   - Key Functions:
-     - `generate_response()`: Main RAG pipeline
-     - `process_query()`: Query processing
-     - `retrieve_context()`: Context retrieval from vector store
-     - `generate_completion()`: Response generation with context
+1.  **`document_service.py`**: Implements the core `DocumentService` class responsible for parsing different file types (PDF, DOCX, MD, TXT) using appropriate libraries or Azure services (like Document Intelligence), extracting content, and potentially handling chunking logic (or delegating to a chunking service).
+2.  **`tests/`**: Contains tests specifically for the core `DocumentService`, likely including integration tests that hit Azure Document Intelligence.
 
-2. `context_service.py`
-   - Context management for RAG
-   - Key Functions:
-     - `get_relevant_context()`: Retrieves relevant document chunks
-     - `format_context()`: Formats context for prompt injection
-     - `rank_contexts()`: Ranks context by relevance
+## Core/RAG Module (`core/rag/`) Details
+
+The `core/rag` module implements the core Retrieval Augmented Generation functionality, independent of the Django framework.
+
+### Key Components
+
+1.  **`rag_service.py`**: Contains the main `RAGService` class orchestrating the RAG pipeline: processing queries, retrieving relevant context (likely interacting with search functionality), and generating completions using the context and an LLM.
+2.  **`context_service.py`**: Manages context retrieval and formatting. Interacts with search services (potentially via `apps/search` or a core search component) to find relevant document chunks based on the query.
+3.  **`templates.py`**: Defines prompt templates (`RAGPromptManager`, `PromptTemplate`) used for constructing requests to the LLM.
 
 ### Integration Points
 
-- Uses `apps/search` for vector search
-- Uses `core/azure/openai_client.py` for embeddings and completions
-- Uses `apps/documents` for document processing
+*   Uses search functionality (potentially via `apps/search` services or a future `core/search` component) for context retrieval.
+*   Uses the Azure OpenAI adapter (`core/azure_adapters/openai/client.py`) for generating embeddings and chat completions.
+*   Uses core document services (`core/documents/`) for accessing processed document content/chunks.
 
-## Services Module Details
+## Core/Conversation Module (`core/conversation/`) Details
 
-The `services` module contains core business logic implementations separate from Django apps.
+The `core/conversation` module handles the storage and retrieval of conversation history.
 
-### Directory Structure
+### Key Components
 
-```
-services/
-├── documents/           # Document processing core service
-│   ├── __init__.py
-│   ├── document_service.py
-│   └── tests/
-│       └── test_document_service.py
-└── rag/                # RAG implementation service
-    ├── __init__.py
-    ├── context_service.py
-    └── rag_service.py
-```
+1.  **`storage.py`**: Defines `AzureStorageManager` responsible for interacting with Azure Cosmos DB (MongoDB API) for persistent storage and Azure Cache for Redis for caching recent messages. Provides methods like `create_conversation`, `add_message`, `get_conversation_messages`.
 
-### 1. Documents Service (`services/documents/`)
-
-Core document processing implementation, independent of Django.
-
-#### Key Components:
-
-1. `document_service.py`
-   - Document processing using Azure Document Intelligence
-   - Key Functions:
-     - `parse_file()`: Main document parsing pipeline
-     - `_parse_pdf()`: PDF parsing with Azure Document Intelligence
-     - `_parse_docx()`: DOCX parsing
-     - `_parse_markdown()`: Markdown parsing
-     - `_parse_text()`: Plain text parsing
-   - Features:
-     - Error handling and logging
-     - Azure client management
-     - Multiple format support
-
-2. `tests/test_document_service.py`
-   - Unit tests for document processing
-   - Test cases for different file formats
-   - Azure integration testing
-
-### 2. RAG Service (`services/rag/`)
-
-Retrieval Augmented Generation implementation.
-
-#### Key Components:
-
-1. `rag_service.py`
-   - Core RAG implementation
-   - Key Functions:
-     - `generate_response()`: Main RAG pipeline
-     - `process_query()`: Query preprocessing
-     - `retrieve_context()`: Context retrieval
-     - `generate_completion()`: Response generation
-   - Features:
-     - Integration with Azure OpenAI
-     - Context management
-     - Response formatting
-
-2. `context_service.py`
-   - Context handling for RAG
-   - Key Functions:
-     - `get_relevant_context()`: Context retrieval
-     - `format_context()`: Context formatting
-     - `rank_contexts()`: Context ranking
-   - Features:
-     - Vector similarity search
-     - Context optimization
-     - Relevance scoring
-
-### Integration Flow
-
-1. Document Processing Flow:
-   ```
-   Document -> DocumentService -> Chunks -> Search Index
-   ```
-
-2. RAG Query Flow:
-   ```
-   Query -> RAGService -> ContextService -> Search -> OpenAI -> Response
-   ```
+*(Note: The `utils/` directory was removed as its contents were consolidated or deemed unnecessary).*
