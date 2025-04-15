@@ -81,3 +81,28 @@ The search app should act as a thin adapter/wrapper over the core `AzureOpenAICl
 ---
 
 *This document should be updated iteratively as you proceed with the systematic cleanup and modernization of the search app.*
+
+---
+
+## 4. Modernization Progress (as of 2025-04-15)
+
+The following refactoring steps, aligned with the recommendations above, have been completed:
+
+- **`SearchService` (`apps/search/services/search_service.py`):**
+    - Replaced direct `os.getenv` calls with `self.config.get_setting()` for configuration management.
+    - Removed manual instantiation of `AzureKeyCredential` and `SearchClient` in `create_search_index`, ensuring reliance on `AzureClientManager`.
+    - Standardized logging to use `self.log_*` methods inherited from `AzureService`.
+    - Removed `tenacity` retry decorators, relying on underlying `@azure_retry` or SDK mechanisms.
+    - Removed the redundant `semantic_search` method.
+    - Cleaned up unused imports (`os`, `time`, `logging`, `dotenv`, etc.).
+- **`IndexingService` (`apps/search/services/indexing_service.py`):**
+    - Standardized logging to use `self.log_*` methods.
+    - Removed custom `while` loop retry logic in `_index_chunk_batch`, relying on `SearchService` methods' retry handling.
+    - Cleaned up unused imports (`logging`, `time`).
+- **Tests (`apps/search/tests/`):**
+    - Updated `test_search_service.py` and `test_indexing_service.py` to reflect service changes (e.g., removal of `semantic_search` reference).
+    - Standardized test output using `print()` and removed unused imports (`logging`, `time`, `dotenv`).
+
+**Next Steps:**
+- Verify functionality through integration testing once the environment is ready.
+- Continue auditing other app components for similar modernization opportunities.
