@@ -5,16 +5,16 @@ from botbuilder.schema import Activity
 import sys
 import traceback
 from bot import KonveyorBot
-import os
-from dotenv import load_dotenv
+from konveyor.core.azure_utils.config import AzureConfig
 
-# Load environment variables
-load_dotenv()
-
+# Load configuration using AzureConfig
+config = AzureConfig()
+# Ensure required Bot Framework settings are present
+config.validate_required_settings(['MICROSOFT_APP_ID', 'MICROSOFT_APP_PASSWORD'])
 # Bot Framework setup
 SETTINGS = BotFrameworkAdapterSettings(
-    os.getenv('MICROSOFT_APP_ID'),
-    os.getenv('MICROSOFT_APP_PASSWORD')
+    config.get_setting('MICROSOFT_APP_ID'),
+    config.get_setting('MICROSOFT_APP_PASSWORD')
 )
 ADAPTER = BotFrameworkAdapter(SETTINGS)
 BOT = KonveyorBot()
