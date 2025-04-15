@@ -3,7 +3,6 @@
 import io
 import os
 import pytest
-from unittest.mock import Mock, patch
 from django.test import TestCase
 from konveyor.apps.documents.services.document_adapter import DjangoDocumentService
 

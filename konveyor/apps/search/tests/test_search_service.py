@@ -7,8 +7,7 @@ functionality for document search using Azure Cognitive Search.
 import os
 import uuid
 import json
-import time
-import logging
+# Removed time and logging imports
 import pytest
 from datetime import datetime
 from pathlib import Path
@@ -17,7 +16,7 @@ from unittest.mock import Mock, patch
 
 from django.test import TestCase
 from django.conf import settings
-from dotenv import load_dotenv
+# Removed dotenv import
 
 from azure.search.documents.indexes.models import SearchIndex, SearchFieldDataType
 from konveyor.apps.search.services.search_service import SearchService
@@ -26,10 +25,9 @@ from konveyor.apps.search.services.indexing_service import IndexingService
 from konveyor.core.azure_utils.clients import AzureClientManager
 
 # Load environment variables
-load_dotenv()
+# Removed load_dotenv() call
 
-# Configure logging
-logger = logging.getLogger(__name__)
+# Removed module-level logger configuration
 
 class SearchServiceTests(TestCase):
     """Test cases for SearchService.
@@ -37,7 +35,7 @@ class SearchServiceTests(TestCase):
     Tests the functionality of the SearchService class, including:
     - Index creation and management
     - Document indexing
-    - Search operations (semantic, vector, hybrid)
+    - Search operations (vector, hybrid)
     
     Attributes:
         test_run_id (str): Unique ID for this test run
@@ -193,7 +191,7 @@ class SearchServiceTests(TestCase):
         print(f"✓ Document {document_id} processed and indexed")
         
         # Wait for indexing to complete
-        time.sleep(2)
+        # Removed time.sleep(2)
         
         return document_id  # For use in search tests
 
@@ -206,7 +204,7 @@ class SearchServiceTests(TestCase):
         
         # Test queries
         test_queries = [
-            "What is the main topic?",  # Semantic search
+            "What is the main topic?",  # Example query
             "document processing",      # Keyword search
             "system architecture"       # Vector search
         ]
