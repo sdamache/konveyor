@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, project_root)
 
-from konveyor.services.documents.document_service import DocumentService
+from konveyor.core.documents.document_service import DocumentService
 from azure.core.exceptions import HttpResponseError
 
 # Configure logging
