@@ -1,8 +1,0 @@
-This is a sample text file for testing the Konveyor document service.
-
-It contains multiple lines of text to test the text parsing functionality.
-
-The service should:
-1. Extract the text content
-2. Count lines and characters
-3. Return appropriate metadata

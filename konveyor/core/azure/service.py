@@ -23,8 +23,8 @@ Example:
 
 import logging
 from typing import Optional, Any
-from konveyor.core.azure.config import AzureConfig
-from konveyor.core.azure.clients import AzureClientManager
+from konveyor.core.azure_utils.config import AzureConfig
+from konveyor.core.azure_utils.clients import AzureClientManager
 
 logger = logging.getLogger(__name__)
 
