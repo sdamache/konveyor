@@ -7,7 +7,7 @@ delegating core document processing to the framework-agnostic service.
 
 from typing import BinaryIO, Dict, Any
 from django.core.exceptions import ValidationError
-from konveyor.services.documents.document_service import DocumentService
+from konveyor.core.documents.document_service import DocumentService
 from ..models import Document, DocumentChunk
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from concurrent.futures import ThreadPoolExecutor

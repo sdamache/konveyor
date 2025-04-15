@@ -46,11 +46,11 @@ from azure.core.exceptions import AzureError
 from azure.storage.blob import BlobServiceClient
 from django.utils import timezone
 
-from konveyor.core.azure.service import AzureService
-from konveyor.services.documents.document_service import DocumentService
+from konveyor.core.azure_utils.service import AzureService
+from konveyor.core.documents.document_service import DocumentService
 from konveyor.apps.documents.models import DocumentChunk
-from konveyor.core.azure.retry import azure_retry
-from konveyor.core.azure.mixins import ServiceLoggingMixin, AzureClientMixin, AzureServiceConfig
+from konveyor.core.azure_utils.retry import azure_retry
+from konveyor.core.azure_utils.mixins import ServiceLoggingMixin, AzureClientMixin, AzureServiceConfig
 
 logger = logging.getLogger(__name__)
 

@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
-from konveyor.services.rag.rag_service import RAGService
-from konveyor.services.rag.context_service import ContextService
-from konveyor.core.azure.storage import AzureStorageManager
+from konveyor.core.rag.rag_service import RAGService
+from konveyor.core.rag.context_service import ContextService
+from konveyor.core.azure_utils.storage import AzureStorageManager
 
 @pytest.fixture
 async def rag_service():

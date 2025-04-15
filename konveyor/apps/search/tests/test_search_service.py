@@ -21,9 +21,9 @@ from dotenv import load_dotenv
 
 from azure.search.documents.indexes.models import SearchIndex, SearchFieldDataType
 from konveyor.apps.search.services.search_service import SearchService
-from konveyor.services.documents.document_service import DocumentService
+from konveyor.core.documents.document_service import DocumentService
 from konveyor.apps.search.services.indexing_service import IndexingService
-from konveyor.core.azure.clients import AzureClientManager
+from konveyor.core.azure_utils.clients import AzureClientManager
 
 # Load environment variables
 load_dotenv()

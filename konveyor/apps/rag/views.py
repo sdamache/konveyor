@@ -4,8 +4,8 @@ Views for the RAG Django app using Azure storage.
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from konveyor.core.azure.client_manager import AzureClientManager
-from konveyor.services.rag.rag_service import RAGService
+from konveyor.core.azure_utils.client_manager import AzureClientManager
+from konveyor.core.rag.rag_service import RAGService
 from .models import ConversationManager, MESSAGE_TYPE_USER, MESSAGE_TYPE_ASSISTANT
 
 class ConversationViewSet(viewsets.ViewSet):

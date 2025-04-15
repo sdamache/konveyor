@@ -4,9 +4,9 @@ from django.core.exceptions import ValidationError, ImproperlyConfigured
 from django.conf import settings
 from ..models import Document, DocumentChunk
 import logging
-from konveyor.core.azure.config import AzureConfig
-from konveyor.core.azure.mixins import ServiceLoggingMixin, AzureClientMixin
-from konveyor.core.azure.retry import azure_retry
+from konveyor.core.azure_utils.config import AzureConfig
+from konveyor.core.azure_utils.mixins import ServiceLoggingMixin, AzureClientMixin
+from konveyor.core.azure_utils.retry import azure_retry
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from azure.ai.documentintelligence import DocumentIntelligenceClient
 from azure.core.credentials import AzureKeyCredential

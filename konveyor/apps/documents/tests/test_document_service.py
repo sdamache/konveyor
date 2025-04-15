@@ -21,7 +21,8 @@ class TestDjangoDocumentService(TestCase):
         # Note: This test will require actual Azure credentials to be set up
         
         # Test parsing using actual PDF file
-        pdf_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'services', 'documents', 'tests', 'test_files', 'sample.pdf')
+        # Correct path after merging services into core
+        pdf_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'core', 'documents', 'tests', 'test_files', 'sample.pdf')
         with open(pdf_path, 'rb') as f:
             pdf_content = io.BytesIO(f.read())
         content, metadata = self.service._parse_pdf(pdf_content)

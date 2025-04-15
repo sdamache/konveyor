@@ -17,17 +17,17 @@ from unittest.mock import Mock, patch
 from dotenv import load_dotenv
 
 # Import Azure client manager
-from konveyor.core.azure.clients import AzureClientManager
-from konveyor.core.azure.config import AzureConfig
+from konveyor.core.azure_utils.clients import AzureClientManager
+from konveyor.core.azure_utils.config import AzureConfig
 
 # Load environment variables
 load_dotenv()
 
 from konveyor.apps.documents.models import Document, DocumentChunk
-from konveyor.services.documents.document_service import DocumentService
+from konveyor.core.documents.document_service import DocumentService
 from konveyor.apps.search.services.indexing_service import IndexingService
 from konveyor.apps.search.services.search_service import SearchService
-from konveyor.core.azure.clients import AzureClientManager
+from konveyor.core.azure_utils.clients import AzureClientManager
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +75,7 @@ class TestIndexingService(TestCase):
         
         # Use AzureConfig to check service availability
         try:
-            from konveyor.core.azure.config import AzureConfig
+            from konveyor.core.azure_utils.config import AzureConfig
             config = AzureConfig()
             
             # Print a simplified summary of available services using AzureConfig

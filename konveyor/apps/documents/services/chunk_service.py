@@ -20,7 +20,7 @@ Example:
 import logging
 from typing import List, Dict, Any, Optional, Iterator
 from dataclasses import dataclass
-from konveyor.core.azure.service import AzureService
+from konveyor.core.azure_utils.service import AzureService
 
 logger = logging.getLogger(__name__)
 
