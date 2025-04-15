@@ -185,6 +185,22 @@ With the core refactor and consolidation complete, the final phase focuses on:
 
 ---
 
+### Progress Tracker
+
+| Step                                      | Status         | Notes/Next Actions                                                                 |
+|-------------------------------------------|---------------|-----------------------------------------------------------------------------------|
+| **Architectural diagram for `core/`**     | ⚠ Pending     | Mermaid diagram not yet generated or added to docs.                               |
+| **Search app modernization**              | ✔ Complete    | Cleanup done. Modernization doc at `docs/app_modernization/search_app_modernization.md` |
+| **Documents app modernization**           | ✔ Complete    | Cleanup done. Modernization doc at `docs/app_modernization/documents_app_modernization.md` |
+| **RAG app modernization**                 | ✔ Complete    | Cleanup done. Modernization doc at `docs/app_modernization/rag_app_modernization.md` |
+| **Bot app modernization**                 | ✔ Complete    | Cleanup done. Modernization doc at `docs/app_modernization/bot_app_modernization.md` |
+| **Run tests after each cleanup**          | ✔ In Progress | Continue after each major change.                                                 |
+| **Update/refactor docstrings**            | ✔ In Progress | Continue as code changes.                                                         |
+| **Keep architectural docs in sync**       | ⚠ Pending     | Update with new diagram and any structure changes.                                |
+| **Add "project history" section**        | ⚠ Optional    | For future maintainers.                                                           |
+
+---
+
 ### Step 1: Architectural Visualization
 
 - **Goal:** Generate a comprehensive Mermaid diagram for the entire `core/` directory.
@@ -236,8 +252,8 @@ With the core refactor and consolidation complete, the final phase focuses on:
 
 **Next Steps:**  
 1. Generate the architectural diagram for `core/` using CLI tools  
-2. Begin systematic cleanup of `apps/search/` and `apps/documents/`  
-3. Continue as described above
+2. Continue to keep modernization docs up to date in `docs/app_modernization/`  
+3. Continue systematic cleanup and documentation as described above
 
 ---
 
