@@ -38,6 +38,8 @@ from typing import Optional, Dict, Any
 from azure.identity import DefaultAzureCredential, AzureCliCredential
 from azure.core.credentials import AzureKeyCredential, TokenCredential
 from django.core.exceptions import ImproperlyConfigured
+from dotenv import load_dotenv, find_dotenv
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -155,7 +157,56 @@ class AzureConfig:
             Optional[str]: Service API key if configured, None otherwise
         """
         return self.keys.get(service)
+
+    def get_setting(self, var_name: str, default: Any = None, required: bool = False) -> Any:
+        """
+        Retrieve an environment variable with remediation and logging.
         
+        | Step | Action Taken | 
+        |--------------|----  | 
+        | 1. Env  | Checks os.environ | 
+        | 2. .env | Loads from .env if not found | 
+        | 3. Settings | Checks Django settings, logs which module is used | 
+        | 4. Default | Uses default if still not found | 
+        | 5. Logging | Logs source and value (hides secrets/keys) | 
+        | 6. Required | Raises error if required and missing/empty |
+
+        """
+        logger = logging.getLogger(__name__)
+        value = os.environ.get(var_name)
+        source = "environment"
+
+        if value is None or value == "":
+            # Try loading from .env if python-dotenv is available
+            if load_dotenv and find_dotenv:
+                dotenv_path = find_dotenv()
+                if dotenv_path:
+                    load_dotenv(dotenv_path, override=False)
+                    value = os.environ.get(var_name)
+                    if value:
+                        source = f".env ({dotenv_path})"
+            # Try Django settings if available
+            try:
+                settings_module = getattr(settings, 'SETTINGS_MODULE', None) or os.environ.get('DJANGO_SETTINGS_MODULE')
+                if hasattr(settings, var_name):
+                    value = getattr(settings, var_name)
+                    source = f"Django settings ({settings_module})"
+            except ImportError:
+                pass
+
+        # Use default if still not found
+        if (value is None or value == "") and default is not None:
+            value = default
+            source = "default"
+
+        # Log the outcome
+        logger.info(f"Config: '{var_name}' loaded from {source} with value: {'<hidden>' if 'KEY' in var_name or 'SECRET' in var_name else value}")
+
+        # Raise if required and still missing/empty
+        if required and (value is None or value == ""):
+            raise ImproperlyConfigured(f"Required environment variable '{var_name}' is missing or empty (checked {source}).")
+
+        return value
     def get_key_vault_url(self) -> Optional[str]:
         """Get Azure Key Vault URL.
         

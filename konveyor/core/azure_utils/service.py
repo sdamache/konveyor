@@ -89,28 +89,39 @@ class AzureService:
             ```
         """
         logger.info(f"{self.service_name}: {message}")
+
+    def log_info(self, message: str) -> None:
+        """
+        Log an informational message for the service.
+
+        This method provides a standardized way to log informational events and status updates
+        for Azure services. All subclasses should use this method for non-error, non-warning
+        messages that are relevant for debugging, configuration, or operational transparency.
+
+        Args:
+            message (str): Informational message to log
         
-    def log_error(self, message: str, error: Optional[Exception] = None) -> None:
-        """Log an error message with optional exception.
+        Example:
+            ```python
+            self.log_info("Search index initialized successfully.")
+            ```
+        """
+        logger.info(f"{self.service_name}: {message}")
         
+    def log_error(self, message: str, error: Optional[Exception] = None, exc_info: Optional[Exception] = None) -> None:
+        """
+        Log an error message with optional exception and exc_info for stack trace.
         Args:
             message (str): Error message to log
             error (Optional[Exception]): Exception object if available
-            
-        Example:
-            ```python
-            try:
-                # Some operation
-            except Exception as e:
-                self.log_error("Operation failed", e)
-            ```
+            exc_info (Optional[Exception]): Exception for stack trace (passed to logger)
         """
         if error:
-            logger.error(f"{self.service_name}: {message} - {str(error)}")
+            logger.error(f"{self.service_name}: {message} - {str(error)}", exc_info=exc_info)
         else:
-            logger.error(f"{self.service_name}: {message}")
-            
-    def log_warning(self, message: str) -> None:
+            logger.error(f"{self.service_name}: {message}", exc_info=exc_info)
+
+    def log_warning(self, message: str, exc_info: Optional[Exception] = None) -> None:
         """Log a warning message.
         
         Args:
@@ -121,9 +132,12 @@ class AzureService:
             self.log_warning("Resource usage above 80%")
             ```
         """
-        logger.warning(f"{self.service_name}: {message}")
+        if exc_info:
+            logger.warning(f"{self.service_name}: {message} - {str(exc_info)}", exc_info=exc_info)
+        else:
+            logger.warning(f"{self.service_name}: {message}")
         
-    def log_debug(self, message: str) -> None:
+    def log_debug(self, message: str, exc_info: Optional[Exception] = None) -> None:
         """Log a debug message.
         
         Args:
@@ -134,7 +148,10 @@ class AzureService:
             self.log_debug("Processing item 1 of 10")
             ```
         """
-        logger.debug(f"{self.service_name}: {message}")
+        if exc_info:
+            logger.debug(f"{self.service_name}: {message} - {str(exc_info)}", exc_info=exc_info)
+        else:
+            logger.debug(f"{self.service_name}: {message}")
         
     def log_azure_credentials(self, service: str, endpoint: str, key: str) -> None:
         """Log Azure credential information safely.
