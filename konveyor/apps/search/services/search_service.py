@@ -224,31 +224,18 @@ class SearchService(AzureService):
                 "vectorSearch": vector_search
             }
             
-            # Try to create index using different methods
             self.log_info(f"Attempting to create index '{index_name}' in Azure...")
             try:
-                # First try using create_or_update_index with dictionary
-                self.index_client.create_or_update_index(index_definition)
-                self.log_success(f"Successfully created/updated index '{index_name}' using dictionary approach.")
-            except Exception as e1:
-                self.log_warning(f"Dictionary-based index creation/update failed for '{index_name}'. Trying SearchIndex object.", exc_info=e1)
-                try:
-                    # Try with SearchIndex object if dictionary approach failed
-                    from azure.search.documents.indexes.models import SearchIndex
-                    index = SearchIndex.deserialize(index_definition)
-                    self.index_client.create_index(index)
-                    self.log_success(f"Successfully created index '{index_name}' using SearchIndex object.")
-                except Exception as e2:
-                    self.log_error(f"Both index creation methods failed for '{index_name}'. Last error:", exc_info=e2)
-                    # Check if index was created despite errors
-                    try:
-                        existing_indices = [index.name for index in self.index_client.list_indexes()]
-                        if index_name in existing_indices:
-                            self.log_info(f"Index '{index_name}' exists despite creation errors, proceeding.")
-                            return True
-                    except Exception:
-                        pass
-                    raise e2
+                # Use SearchIndex object directly for creation/update
+                from azure.search.documents.indexes.models import SearchIndex
+                index = SearchIndex.deserialize(index_definition)
+                # Use create_or_update_index for idempotency, but with the SearchIndex object
+                self.index_client.create_or_update_index(index)
+                self.log_success(f"Successfully created/updated index '{index_name}' using SearchIndex object.")
+            except Exception as e:
+                self.log_error(f"Index creation/update failed for '{index_name}'.", exc_info=e)
+                # Re-raise the exception after logging
+                raise e
             
             # Removed manual update of self.search_client.
             # The client obtained in __init__ via AzureClientManager should be used.
@@ -301,7 +288,7 @@ class SearchService(AzureService):
 
             self.log_info(
                 f"Calling OpenAI Embeddings API: Endpoint='{self.openai_client.base_url}', "
-                f"API Version='{self.openai_client.api_version}', Deployment='{embedding_deployment}'" # Use public api_version if available
+                f"API Version='{self.openai_client._api_version}', Deployment='{embedding_deployment}'" # Use private _api_version
             )
 
             response = self.openai_client.embeddings.create(

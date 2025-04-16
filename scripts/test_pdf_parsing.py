@@ -32,7 +32,7 @@ def test_pdf_parsing():
     pdf_file_path = os.path.join(
         project_root,
         'konveyor',
-        'services', # Corrected path segment
+        'core',     # Correct path segment should be 'core'
         'documents',
         'tests',
         'test_files',

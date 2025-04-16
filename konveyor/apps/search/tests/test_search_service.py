@@ -99,9 +99,18 @@ class SearchServiceTests(TestCase):
             print(f"Creating test index: {cls.test_index_name}...")
             cls.search_service.create_search_index(cls.test_index_name)
             print(f"Test index {cls.test_index_name} created successfully")
+
+            # Explicitly get and set the search client for the *test* index
+            try:
+                print(f"Re-fetching search client for test index: {cls.test_index_name}")
+                _, test_search_client = cls.search_service.client_manager.get_search_clients(cls.test_index_name)
+                cls.search_service.search_client = test_search_client # Update the client on the service instance
+                print(f"Successfully updated search client for index {cls.test_index_name}")
+            except Exception as client_error:
+                print(f"Failed to get search client for test index {cls.test_index_name}: {client_error}")
+                pytest.skip(f"Could not get search client for test index: {client_error}")
         except Exception as e:
             print(f"Warning: Could not create test index: {str(e)}")
-            # Skip tests if we can't create the index
             pytest.skip(f"Could not create test index: {str(e)}")
         
         # Search service is already initialized via the indexing service
