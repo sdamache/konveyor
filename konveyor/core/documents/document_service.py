@@ -14,8 +14,8 @@ Example:
     ```
 """
 
-import os
 import logging
+import time
 from functools import wraps
 from typing import Dict, Any, List, Optional, BinaryIO, Tuple, Callable, TypeVar
 from bs4 import BeautifulSoup
@@ -23,16 +23,17 @@ import docx
 import markdown
 
 from azure.core.exceptions import AzureError, ResourceExistsError
-from azure.core.credentials import AzureKeyCredential
-from azure.ai.documentintelligence import DocumentIntelligenceClient
-from konveyor.core.azure_utils.mixins import ServiceLoggingMixin, AzureClientMixin
+# Removed AzureKeyCredential, DocumentIntelligenceClient imports
+from konveyor.core.azure_utils.service import AzureService # Import base service
+from konveyor.core.azure_utils.clients import AzureClientManager # Import client manager
+# Removed ServiceLoggingMixin, AzureClientMixin imports
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
-logger = logging.getLogger(__name__)
+# Removed module-level logger
 
-from konveyor.core.azure_utils.mixins import ServiceLoggingMixin, AzureClientMixin
+# Removed duplicate mixin import
 
-class DocumentService(ServiceLoggingMixin, AzureClientMixin):
+class DocumentService(AzureService): # Inherit from AzureService
     """Service for handling document operations.
     
     This service provides methods for:
@@ -43,10 +44,7 @@ class DocumentService(ServiceLoggingMixin, AzureClientMixin):
     It uses Azure Document Intelligence for document processing.
     """
     
-    def log_warning(self, message: str) -> None:
-        """Log a warning message."""
-        logger.warning(message)
-        
+    # Removed redundant log_warning method (provided by AzureService base class)
     """Service for processing documents using Azure Document Intelligence.
     
     This service provides methods to parse and process various document formats using
@@ -61,39 +59,19 @@ class DocumentService(ServiceLoggingMixin, AzureClientMixin):
     """
     
     def __init__(self):
-        """Initialize document service with Azure Document Intelligence client."""
-        self.log_init("DocumentService")
-        
-        # Initialize Azure client manager
-        from konveyor.core.azure_utils.clients import AzureClientManager
-        self.client_manager = AzureClientManager()
-        
-        # Get configuration
-        self.endpoint = os.getenv('AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT')
-        self.api_key = os.getenv('AZURE_DOCUMENT_INTELLIGENCE_API_KEY')
-        
-        # Validate configuration
-        if not self.endpoint or not self.api_key:
-            error_msg = "Missing required environment variables for Document Intelligence"
-            self.log_error(error_msg)
-            raise ValueError(error_msg)
-        
-        # Initialize Document Intelligence client
-        try:
-            self.doc_intelligence_client = self.initialize_document_intelligence_client()
-            self.log_success("Successfully initialized Document Intelligence client")
-        except Exception as e:
-            self.log_error("Failed to initialize Document Intelligence client", e)
-            raise
-    
+        """Initialize document service using AzureService base."""
+        # Call parent constructor - handles config, client manager, validation
+        super().__init__('DOCUMENT_INTELLIGENCE')
+        self.log_init("DocumentService") # Keep specific component log
 
-    
-    def initialize_document_intelligence_client(self) -> DocumentIntelligenceClient:
-        """Initialize Azure Document Intelligence client."""
-        return DocumentIntelligenceClient(
-            endpoint=self.endpoint,
-            credential=AzureKeyCredential(self.api_key)
-        )
+        # Get clients from the manager inherited from AzureService
+        # Ensure 'DOCUMENT_INTELLIGENCE' is configured in AzureConfig validation map
+        self.doc_intelligence_client = self.client_manager.get_document_intelligence_client()
+        # Blob client is retrieved on demand in storage methods using self.client_manager
+
+        self.log_success("DocumentService initialized using AzureService base")
+
+    # Removed initialize_document_intelligence_client method
     
     def parse_file(self, file_obj: BinaryIO, content_type: str) -> Tuple[str, Dict[str, Any]]:
         """Parse a document file and extract its content and metadata.
@@ -150,13 +128,14 @@ class DocumentService(ServiceLoggingMixin, AzureClientMixin):
             Exception: If PDF parsing fails
         """
         try:
-            # Get model name from environment or use default
-            model_name = os.getenv('AZURE_DOCUMENT_INTELLIGENCE_MODEL', 'prebuilt-layout')
-            logger.info(f"Using Document Intelligence model: {model_name}")
+            # Get model name from config or use default
+            model_name = self.config.get_setting('AZURE_DOCUMENT_INTELLIGENCE_MODEL', default='prebuilt-layout')
+            self.log_debug(f"Using Document Intelligence model: {model_name}") # Use debug level
             
             poller = self.doc_intelligence_client.begin_analyze_document(
                 model_name,
-                body=file_obj
+                body=file_obj,
+                content_type='application/pdf' # Explicitly set content type
             )
             result = poller.result()
             
@@ -299,7 +278,7 @@ class DocumentService(ServiceLoggingMixin, AzureClientMixin):
         try:
             blob_service_client = self.client_manager.get_blob_client()
             # Use test container name from env var if set, else default
-            container_name = os.getenv("AZURE_STORAGE_TEST_CONTAINER_NAME", 'document-chunks')
+            container_name = self.config.get_setting('AZURE_STORAGE_CONTAINER_NAME', default='document-chunks')
             blob_name = chunk.blob_path
 
             # Get container client
@@ -313,11 +292,11 @@ class DocumentService(ServiceLoggingMixin, AzureClientMixin):
             for attempt in range(max_retries):
                 try:
                     if container_client.exists():
-                        logger.info(f"Container {container_name} already exists.")
+                        self.log_debug(f"Container {container_name} already exists.") # Use debug
                         container_exists_or_created = True
                         break
                     else:
-                        logger.info(f"Attempting to create container {container_name}...")
+                        self.log_debug(f"Attempting to create container {container_name}...") # Use debug
                         container_client.create_container()
                         self.log_success(f"Container {container_name} created successfully.")
                         container_exists_or_created = True
@@ -328,8 +307,8 @@ class DocumentService(ServiceLoggingMixin, AzureClientMixin):
                         if attempt == max_retries - 1:
                             self.log_error(f"Failed to create container {container_name} after {max_retries} attempts due to ContainerBeingDeleted.", e)
                             raise # Re-raise the final error if all retries fail
-                        logger.warning(f"Attempt {attempt + 1} failed: Container {container_name} is being deleted. Retrying in {retry_delay}s...")
-                        import time
+                        self.log_warning(f"Attempt {attempt + 1} failed: Container {container_name} is being deleted. Retrying in {retry_delay}s...")
+                        # import time # Moved import to top level
                         time.sleep(retry_delay)
                         retry_delay *= 2  # Exponential backoff
                     else:
@@ -337,7 +316,7 @@ class DocumentService(ServiceLoggingMixin, AzureClientMixin):
                         # or some other unexpected ResourceExistsError, log and re-raise immediately.
                         if "ContainerAlreadyExists" in str(e):
                              # This case should ideally be caught by container_client.exists(), but handle defensively
-                             logger.info(f"Container {container_name} already exists (caught in exception). Proceeding.")
+                             self.log_debug(f"Container {container_name} already exists (caught in exception). Proceeding.") # Use debug
                              container_exists_or_created = True
                              break # Container exists, proceed
                         else:
@@ -348,7 +327,7 @@ class DocumentService(ServiceLoggingMixin, AzureClientMixin):
                     self.log_error(f"Unexpected error checking or creating container {container_name} on attempt {attempt + 1}", e) 
                     if attempt == max_retries - 1:
                         raise # Re-raise after final attempt
-                    import time
+                    # import time # Moved import to top level
                     time.sleep(retry_delay)
                     retry_delay *= 2
             
@@ -372,8 +351,8 @@ class DocumentService(ServiceLoggingMixin, AzureClientMixin):
                     if attempt == max_retries_upload - 1:
                         self.log_error(f"Failed to upload blob {blob_name} after {max_retries_upload} attempts.", e)
                         raise
-                    logger.warning(f"Attempt {attempt + 1} failed to upload blob {blob_name}: {str(e)}. Retrying in {retry_delay_upload}s...")
-                    import time
+                    self.log_warning(f"Attempt {attempt + 1} failed to upload blob {blob_name}: {str(e)}. Retrying in {retry_delay_upload}s...")
+                    # import time # Moved import to top level
                     time.sleep(retry_delay_upload)
                     retry_delay_upload *= 2
 
@@ -404,7 +383,7 @@ class DocumentService(ServiceLoggingMixin, AzureClientMixin):
             # Get blob client
             blob_service_client = self.client_manager.get_blob_client()
             # Use test container name from env var if set, else default
-            container_name = os.getenv("AZURE_STORAGE_TEST_CONTAINER_NAME", 'document-chunks')
+            container_name = self.config.get_setting('AZURE_STORAGE_CONTAINER_NAME', default='document-chunks')
             blob_name = chunk.blob_path
 
             # Get container client
@@ -426,7 +405,7 @@ class DocumentService(ServiceLoggingMixin, AzureClientMixin):
                     if attempt == max_retries - 1:
                         raise
                     self.log_warning(f"Attempt {attempt + 1} failed to download blob: {str(e)}. Retrying...")
-                    import time
+                    # import time # Moved import to top level
                     time.sleep(retry_delay)
                     retry_delay *= 2
             
