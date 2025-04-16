@@ -46,7 +46,7 @@ This section details the specific steps for the initial refactoring phase focusi
 
 1.  **Centralize Configuration:** Replace all direct `os.getenv()` and `load_dotenv()` calls related to Azure/Slack settings with usage of `core.azure_utils.config.AzureConfig`.
 2.  **Centralize Client Initialization:** Replace direct Azure SDK client instantiations (`ClientSecretCredential`, `SecretClient`, potentially `AzureBotService` credential handling) with usage of `core.azure_utils.clients.AzureClientManager`.
-3.  **Standardize Services:** Use `core.azure.service.AzureService` as a base class or incorporate relevant mixins from `core.azure_utils.mixins` into the bot services for consistent structure, logging, and access to core utilities.
+3.  **Standardize Services:** Use `core.azure_utils.service.AzureService` as a base class or incorporate relevant mixins from `core.azure_utils.mixins` into the bot services for consistent structure, logging, and access to core utilities.
 4.  **Simplify Scripts:** Remove redundant environment checks and `load_dotenv` calls from helper scripts (`initialize_slack.py`, `setup_secure_storage.py`), relying on the refactored services to handle their own configuration internally.
 
 ### Detailed Refactoring Steps
@@ -54,7 +54,7 @@ This section details the specific steps for the initial refactoring phase focusi
 1.  **General Service Refactoring (`services/*.py`):**
     *   **Files:** `BotSettingsService`, `SecureCredentialService`, `SlackChannelService`.
     *   **Action:**
-        *   Make each service inherit from `core.azure.service.AzureService`.
+        *   Make each service inherit from `core.azure_utils.service.AzureService`.
         *   Add `super().__init__(service_name='...', required_config=[...])` calls in their `__init__` methods, specifying relevant required configuration keys for validation (e.g., `AZURE_KEY_VAULT_URL`, `AZURE_SUBSCRIPTION_ID`, Slack keys if needed at init). This provides access to `self.config` (AzureConfig) and `self.client_manager` (AzureClientManager).
         *   Remove any `load_dotenv()` calls within the services.
 

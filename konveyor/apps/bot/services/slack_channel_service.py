@@ -1,5 +1,5 @@
 from azure.mgmt.botservice import AzureBotService
-from konveyor.core.azure.service import AzureService
+from konveyor.core.azure_utils.service import AzureService
 
 class SlackChannelService(AzureService):
     def __init__(self):

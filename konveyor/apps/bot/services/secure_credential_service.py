@@ -1,4 +1,4 @@
-from konveyor.core.azure.service import AzureService
+from konveyor.core.azure_utils.service import AzureService
 
 class SecureCredentialService(AzureService):
     """Service for securely managing bot credentials using Azure Key Vault"""

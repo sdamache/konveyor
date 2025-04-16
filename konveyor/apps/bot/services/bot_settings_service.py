@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Dict, Any
-from konveyor.core.azure.service import AzureService
+from konveyor.core.azure_utils.service import AzureService
 
 @dataclass
 class BotSettings:
