@@ -63,12 +63,46 @@ The documents app should act as a thin adapter/wrapper over the core `DocumentSe
 
 ---
 
-## 3. Next Steps
+## 3. Detailed Refactoring Plan (Approved 2025-04-15)
 
-1. Audit each function in `apps/documents/services/` for direct Azure SDK/config usage or legacy parsing/chunking.
-2. Refactor to use core adapters/utilities, removing legacy code.
-3. Keep this document updated as modernization progresses.
-4. Sync architectural diagrams and documentation with code changes.
+This plan involves two phases: first refactoring the core service for consistency, then refactoring the app layer to use the improved core service.
+
+### Phase A: Refactor Core Service (`konveyor/core/documents/document_service.py`)
+
+1.  **Inheritance:** Change class to inherit from `konveyor.core.azure_utils.service.AzureService`.
+2.  **Refactor `__init__`:**
+    *   Call `super().__init__('DOCUMENT_INTELLIGENCE')`.
+    *   Get clients via `self.client_manager` (e.g., `self.doc_intelligence_client = self.client_manager.get_document_intelligence_client()`).
+3.  **Remove Redundant Code:**
+    *   Delete manual `AzureClientManager` instantiation.
+    *   Delete direct `os.getenv` calls for endpoint/key.
+    *   Delete manual validation logic.
+    *   Delete `try/except` block around client initialization.
+    *   Delete `initialize_document_intelligence_client` method.
+4.  **Refactor Storage Methods:** Update `store_chunk_content` and `get_chunk_content` to use `self.config.get_setting('AZURE_STORAGE_CONTAINER_NAME', default='document-chunks')` instead of `os.getenv`.
+5.  **Standardize Logging:** Replace `logger.*` calls with `self.log_success`, `self.log_error`, etc.
+6.  **Clean Imports:** Remove unused imports (`os`, `AzureKeyCredential`, etc.).
+
+### Phase B: Refactor App Layer (`konveyor/apps/documents/services/*`)
+
+1.  **Simplify/Remove `apps/.../document_service.py`:**
+    *   Evaluate if this file can be deleted entirely.
+    *   If kept, remove all parsing, storage, search, and helper methods, delegating calls to the core service instance.
+    *   Refactor `__init__` to only instantiate the core service if needed for delegation.
+    *   Remove internal `DocumentParser` and `BatchProcessor` classes.
+    *   Clean up imports drastically.
+2.  **Update `apps/.../document_adapter.py`:**
+    *   Ensure `__init__` instantiates the *core* `DocumentService` (`konveyor.core.documents.document_service.DocumentService`).
+    *   Refactor `process_document` to call the core service for parsing/chunking/storage, receiving necessary data back, and only handling Django model creation/updates.
+    *   Remove `_get_content_type` and `_create_chunks` methods.
+    *   Clean up imports.
+3.  **Delete `.bak` Files:** Remove `document_service.py.bak` from both `core/documents/` and `apps/documents/services/` upon successful completion and testing.
+
+### Implementation Notes:
+
+*   Implement Phase A first, test thoroughly.
+*   Then implement Phase B, test thoroughly.
+*   Keep this document updated if any deviations from the plan occur during implementation.
 
 ---
 

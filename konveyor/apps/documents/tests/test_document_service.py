@@ -3,6 +3,7 @@
 import io
 import os
 import pytest
+import logging # Add logging import
 from django.test import TestCase
 from konveyor.apps.documents.services.document_adapter import DjangoDocumentService
 
@@ -10,6 +11,8 @@ class TestDjangoDocumentService(TestCase):
     """Test cases for DocumentService."""
     
     def setUp(self):
+        # Configure logging for tests
+        self.logger = logging.getLogger(__name__)
         """Set up test environment."""
         # Using actual implementation as requested
         self.service = DjangoDocumentService()
@@ -23,8 +26,12 @@ class TestDjangoDocumentService(TestCase):
         # Correct path after merging services into core
         pdf_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'core', 'documents', 'tests', 'test_files', 'sample.pdf')
         with open(pdf_path, 'rb') as f:
-            pdf_content = io.BytesIO(f.read())
-        content, metadata = self.service._parse_pdf(pdf_content)
+            pdf_bytes = f.read()
+            self.logger.info(f"Read {len(pdf_bytes)} bytes from {pdf_path}")
+            pdf_content_stream = io.BytesIO(pdf_bytes)
+            self.logger.info(f"Created BytesIO stream with size: {pdf_content_stream.getbuffer().nbytes}")
+            
+        content, metadata = self.service._parse_pdf(pdf_content_stream) # Pass the stream
         
         # Verify basic structure without checking exact content
         assert isinstance(content, str)
@@ -89,8 +96,12 @@ class TestDjangoDocumentService(TestCase):
     def test_parse_file_error_handling(self):
         """Test error handling in parse_file."""
         # Test with invalid content to trigger an error
+        # This test likely causes the "15 bytes" log and subsequent InvalidContent error
+        # because it passes invalid data *as* application/pdf
+        self.logger.warning("Testing expected failure for invalid PDF content.")
+        invalid_stream = io.BytesIO(b"invalid content")
         with pytest.raises(Exception):
             self.service.parse_file(
-                io.BytesIO(b"invalid content"),
+                invalid_stream,
                 "application/pdf"
             )
