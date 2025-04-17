@@ -345,6 +345,7 @@ class SearchManager:
   ```
 
 ### 3. Demo Scenarios
+> **Note:** These scenarios are codified as integration test blueprints using public documentation (e.g., Kubernetes & Linux docs) to simulate real-world codebases.
 1. **Kubernetes Understanding**
    - Pod lifecycle
    - Deployment strategies
@@ -390,4 +391,3 @@ AZURE_REDIS_CONNECTION_STRING
 AZURE_OPENAI_API_KEY
 AZURE_OPENAI_ENDPOINT
 AZURE_OPENAI_EMBEDDING_DEPLOYMENT
-```

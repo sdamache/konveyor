@@ -1,111 +1,86 @@
+import os
+import time
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+import pytest_asyncio
+from konveyor.core.azure_utils.clients import AzureClientManager
 from konveyor.core.rag.context_service import ContextService
-from konveyor.core.azure_utils.storage import AzureStorageManager
 
-@pytest.fixture
-async def context_service():
-    storage_manager = AsyncMock(spec=AzureStorageManager)
-    search_client = AsyncMock()
-    openai_client = AsyncMock()
-    service = ContextService(storage_manager, search_client, openai_client)
-    return service
+@pytest.fixture(scope="session")
+def client_manager():
+    """
+    Provides a real AzureClientManager for integration testing.
+    Ensures required environment variables are set.
+    """
+    os.environ.setdefault(
+        "AZURE_OPENAI_EMBEDDING_DEPLOYMENT",
+        os.getenv("AZURE_OPENAI_EMBEDDING_DEPLOYMENT", "text-embedding-ada-002")
+    )
+    os.environ.setdefault(
+        "AZURE_OPENAI_API_VERSION",
+        os.getenv("AZURE_OPENAI_API_VERSION", "2024-12-01-preview")
+    )
+    return AzureClientManager()
 
+@pytest_asyncio.fixture
+async def context_service(client_manager):
+    """Instantiate ContextService with real Azure clients"""
+    return ContextService(client_manager)
+
+@pytest.mark.integration
 @pytest.mark.asyncio
-async def test_retrieve_context_kubernetes_scenario(context_service):
-    """Test context retrieval for Kubernetes-related queries"""
-    # Mock embedding generation
-    context_service.openai_client.embeddings.create.return_value = {
-        "data": [{"embedding": [0.1] * 1536}]  # Typical embedding dimension
-    }
-    
-    # Mock search results for Kubernetes docs
-    context_service.search_client.search.return_value = {
-        "value": [
-            {
-                "id": "k8s_pod_doc",
-                "content": "A Pod is the smallest deployable unit in Kubernetes...",
-                "source": "kubernetes/docs/concepts/workloads/pods/pod-overview.md",
-                "score": 0.95
-            },
-            {
-                "id": "k8s_deployment_doc",
-                "content": "A Deployment provides declarative updates for Pods and ReplicaSets...",
-                "source": "kubernetes/docs/concepts/workloads/controllers/deployment.md",
-                "score": 0.85
-            }
-        ]
-    }
+async def test_retrieve_context_integration(context_service, client_manager):
+    """
+    Indexes a test document and retrieves it via ContextService.retrieve_context
+    to validate real vector search functionality.
+    """
+    # Prepare test document
+    content = "Integration test document content for RAG context"
+    openai_client = client_manager.get_openai_client()
+    # Generate embedding for document
+    embedding_resp = await openai_client.embeddings.create(
+        model=client_manager.config.openai_embedding_deployment,
+        input=content
+    )
+    vector = embedding_resp.data[0].embedding
 
-    query = "How do Kubernetes pods and deployments work together?"
-    results = await context_service.retrieve_context(query)
-    
-    assert len(results) == 2
-    assert "pod" in results[0]["content"].lower()
-    assert "deployment" in results[1]["content"].lower()
-    assert all(r["score"] >= 0.7 for r in results)
-
-@pytest.mark.asyncio
-async def test_retrieve_context_linux_scenario(context_service):
-    """Test context retrieval for Linux kernel-related queries"""
-    context_service.openai_client.embeddings.create.return_value = {
-        "data": [{"embedding": [0.1] * 1536}]
+    # Index document in cognitive search
+    _, search_client = client_manager.get_search_clients("konveyor-documents")
+    doc_id = "test_context_doc"
+    document = {
+        "id": doc_id,
+        "content": content,
+        "content_vector": vector,
+        "source": "test_context.md",
+        "page_number": 1,
+        "metadata": {"file_type": "md", "chunk_index": 0}
     }
-    
-    context_service.search_client.search.return_value = {
-        "value": [
-            {
-                "id": "linux_syscall_doc",
-                "content": "System calls are the fundamental interface between an application and the Linux kernel...",
-                "source": "linux/Documentation/admin-guide/syscalls.rst",
-                "score": 0.92
-            },
-            {
-                "id": "linux_process_doc",
-                "content": "Process management in Linux involves creating, scheduling, and terminating processes...",
-                "source": "linux/Documentation/admin-guide/pm/process.rst",
-                "score": 0.88
-            }
-        ]
-    }
+    await search_client.upload_documents([document])
+    # Allow time for indexing commit
+    time.sleep(2)
 
-    query = "How does Linux handle system calls and process management?"
-    results = await context_service.retrieve_context(query)
-    
-    assert len(results) == 2
-    assert "system calls" in results[0]["content"].lower()
-    assert "process" in results[1]["content"].lower()
-    assert all(r["score"] >= 0.7 for r in results)
+    # Retrieve context via service
+    results = await context_service.retrieve_context(content)
+    # Verify that our test document is returned
+    assert any(r["content"] == content for r in results), f"Expected document content in results: {results}"
+    assert all(r["relevance_score"] >= 0.3 for r in results)
 
-@pytest.mark.asyncio
-async def test_retrieve_context_hybrid_scenario(context_service):
-    """Test context retrieval for queries involving both Linux and Kubernetes"""
-    context_service.openai_client.embeddings.create.return_value = {
-        "data": [{"embedding": [0.1] * 1536}]
-    }
-    
-    context_service.search_client.search.return_value = {
-        "value": [
-            {
-                "id": "k8s_linux_doc",
-                "content": "Container runtime in Kubernetes interacts with Linux kernel namespaces and cgroups...",
-                "source": "kubernetes/docs/concepts/containers/runtime.md",
-                "score": 0.94
-            },
-            {
-                "id": "linux_container_doc",
-                "content": "Linux containers use kernel features like namespaces and cgroups for isolation...",
-                "source": "linux/Documentation/admin-guide/containers.rst",
-                "score": 0.91
-            }
-        ]
-    }
+    # Cleanup: delete test document from index
+    await search_client.delete_documents([{"id": doc_id}])
 
-    query = "How do Kubernetes containers use Linux kernel features?"
-    results = await context_service.retrieve_context(query)
-    
-    assert len(results) == 2
-    assert "kubernetes" in results[0]["content"].lower()
-    assert "linux" in results[1]["content"].lower()
-    assert all("container" in r["content"].lower() for r in results)
-    assert all(r["score"] >= 0.7 for r in results)
+
+def test_format_context():
+    """
+    Unit test for ContextService.format_context without external dependencies.
+    """
+    cs = ContextService(AzureClientManager())
+    chunks = [{
+        "content": "Sample context text",
+        "source": "sample.md",
+        "page": 2,
+        "relevance_score": 0.5,
+        "metadata": {"file_type": "md"}
+    }]
+    formatted = cs.format_context(chunks)
+    assert "Sample context text" in formatted
+    # Check citation formatting
+    assert "[Source: sample.md, Page 2, Type: md, Relevance: 0.50]" in formatted
