@@ -1,294 +1,273 @@
-# Konveyor Architecture
+# Konveyor Architecture (v2.0)
 
-## Overview
+## Table of Contents
 
-Konveyor follows a modular architecture with clear separation of concerns. The system is built with Django as the backend framework, with a focus on API-driven development to support multiple frontends.
-
-## Components
-
-### Backend (Django)
-
-- **Core App**: Base functionality, utilities, and shared models
-- **Users App**: User management, profiles, and authentication
-- **API App**: REST API endpoints for integration with frontends and Azure services
-
-### Azure Services
-
-- **Azure OpenAI**: Provides AI capabilities for question answering and knowledge extraction
-- **Azure Cognitive Search**: Indexes documents for efficient retrieval
-- **Azure Blob Storage**: Stores static files and documents
-- **Azure Database for PostgreSQL**: Persistent data storage
-- **Azure Key Vault**: Secure storage of secrets and credentials
-- **Azure Application Insights**: Monitoring and observability
-
-## Data Flow
-
-1. User submits a query or uploads a document
-2. Django backend processes the request
-3. For knowledge queries:
-   - Query is sent to Azure OpenAI
-   - Azure OpenAI processes the query using the organization's knowledge base
-   - Results are returned to the user
-4. For document uploads:
-   - Document is stored in Azure Blob Storage
-   - Document is indexed by Azure Cognitive Search
-   - Azure OpenAI extracts key information from the document
-
-## Security
-
-- All communication is secured via HTTPS
-- Authentication is handled via OAuth 2.0
-- Sensitive configuration is stored in Azure Key Vault
-- Access control is implemented at the API level
-
-
-## Apps Structure
-
-```text
-konveyor/apps/
-├── search/
-│   ├── ...
-├── documents/
-│   ├── ...
-```
-
-### Search App: Key Classes & Functions
-
-- **IndexingService** (indexing_service.py) ✅
-  - Service for indexing documents and chunks in Azure Cognitive Search.
-  - Methods:
-    - `__init__`: Initializes with search and document services, batch size config.
-    - `index_all_documents`: Bulk indexes all documents.
-    - `index_document`: Indexes all chunks for a document.
-    - `_index_chunk_batch`: Batch indexes chunks with retry logic.
-    - `_calculate_batch_size`: Estimates optimal batch size for Azure limits.
-- **SearchService** (search_service.py) ✅
-  - Service for interacting with Azure Cognitive Search and OpenAI.
-  - Methods:
-    - `__init__`: Sets up Azure/OpenAI clients, creates index, tests embedding.
-    - `create_search_index`: Creates search index with detailed config.
-    - `get_index`: Fetches index config.
-    - `delete_index`: Deletes index.
-    - `generate_embedding`: Generates embeddings via Azure OpenAI.
-    - `hybrid_search`: Combines vector and text search.
-    - `vector_similarity_search`: Pure vector search.
-    - `semantic_search`: Semantic hybrid search (may duplicate hybrid_search) ⚠️ (legacy/overlap)
-    - `index_document_chunk`: Indexes a single chunk.
-    - `get_chunk_content`: Loads chunk content via DocumentService.
-
-### Documents App: Key Classes & Functions
-
-- **DocumentService** (document_service.py) ⚠️/✅
-  - Handles document storage, parsing, and chunking. (Some logic is legacy, see .bak)
-  - Methods:
-    - `__init__`: Initializes Azure config, blob client.
-    - `process_document`: Stores and parses document, creates chunks. ⚠️ (legacy in .bak, refactor to use core)
-    - `parse_file`: Parses file by MIME type (moved to DocumentParser in refactor).
-    - `get_chunk_content`: Retrieves chunk from blob storage.
-    - `_parse_pdf`, `_parse_docx`, `_parse_markdown`, `_parse_text`: File parsers (now in DocumentParser).
-    - `store_document`, `store_chunk`: Store doc/chunk in blob/db.
-- **DocumentParser** (document_service.py) ✅
-  - Modern parser using Azure Document Intelligence.
-  - Methods:
-    - `parse_file`: Dispatches to correct parser.
-    - `_parse_pdf`, `_parse_docx`, `_parse_markdown`, `_parse_text`: File parsing logic.
-- **DjangoDocumentService** (document_adapter.py) ✅
-  - Thin Django adapter over DocumentService for integration.
-  - Methods:
-    - `process_document`: Stores, splits, and chunks documents for Django models.
-- **ChunkService** (chunk_service.py) ✅
-  - Handles chunking logic for documents.
-  - Methods:
-    - `__init__`: Configures chunking parameters.
+1. [Overview](#overview)
+2. [High-Level Architecture](#high-level-architecture)
+3. [Module Descriptions](#module-descriptions)
+   - [3.1 konveyor/apps/documents](#konveyorappsdocuments)
+   - [3.2 konveyor/apps/search](#konveyorappssearch)
+   - [3.3 konveyor/apps/rag](#konveyorappsrag)
+   - [3.4 konveyor/apps/bot](#konveyorappsbot)
+   - [3.5 konveyor/core](#konveyorcore)
+   - [3.6 Konveyor-infra](#konveyor-infra)
+   - [3.7 tests](#tests)
+4. [Data Flow](#data-flow)
+5. [Deployment & Infrastructure](#deployment--infrastructure)
+6. [Security](#security)
+7. [Future Enhancements](#future-enhancements)
 
 ---
 
-## RAG & Bot Apps Structure
+## 1. Overview
 
-```text
-konveyor/apps/
-├── rag/
-│   ├── __init__.py
-│   ├── models.py
-│   ├── urls.py
-│   ├── views.py
-├── bot/
-│   ├── app.py
-│   ├── bot-template.json
-│   ├── bot.py
-│   ├── initialize_slack.py
-│   ├── services/
-│   │   ├── bot_settings_service.py
-│   │   ├── secure_credential_service.py
-│   │   ├── slack_channel_service.py
-│   ├── setup_secure_storage.py
-│   ├── slack_manifest.json
+Konveyor is an AI-driven knowledge discovery and onboarding platform built on Django and Azure. It aggregates documents, indexes them for vector search, and provides RAG (Retrieve–Augment–Generate) capabilities via Azure OpenAI.
+
+Key technologies:
+- Django REST Framework for APIs
+- Azure OpenAI for embeddings & chat
+- Azure Cognitive Search for vector store
+- Azure Blob Storage for document storage
+- Infrastructure-as-Code (Terraform/ARM) for provisioning
+
+---
+
+## 2. High-Level Architecture
+
+```mermaid
+graph TD
+  UI[User & Bots]
+  UI -->|HTTP/REST| API[Konveyor API]
+  subgraph Backend[Django]
+    API --> DocsApp((Documents App))
+    API --> SearchApp((Search App))
+    API --> RAGApp((RAG App))
+    API --> BotApp((Bot App))
+    subgraph Core[core]
+      DocumentsApp-->DocumentService
+      SearchApp-->SearchService
+      RAGApp-->RAGService
+      BotApp-->BotService
+      DocumentService-- Azure SDK --> AzureServices
+      SearchService-- Azure SDK --> AzureServices
+      RAGService-- OpenAI --> AzureServices
+    end
+  end
+  subgraph AzureServices[Azure]
+    CognitiveSearch[(Cognitive Search)]
+    BlobStorage[(Blob Storage)]
+    OpenAI[(Azure OpenAI)]
+    KeyVault[(Key Vault)]
+    PostgreSQL[(PostgreSQL)]
+  end
+  Core --> CognitiveSearch
+  Core --> BlobStorage
+  Core --> OpenAI
+  Core --> KeyVault
+  Core --> PostgreSQL
+  subgraph Infra[TFC/ARM]
+    AzureServices
+  end
 ```
 
-### RAG App: Key Classes & Functions
+---
 
-- **ConversationManager** (models.py) ✅
-  - Manages conversations using Azure storage (CosmosDB/Redis).
-  - Methods:
-    - `__init__`: Sets up Azure storage manager.
-    - `create_conversation`: Creates new conversation.
-    - `add_message`: Adds message to conversation.
-    - `get_conversation_messages`: Retrieves messages for a conversation.
-- **ConversationViewSet** (views.py) ✅
-  - Django ViewSet for conversation and RAG response APIs.
-  - Methods:
-    - `create`: Starts a new conversation.
-    - `ask`: Handles user queries and generates responses.
-    - `history`: Retrieves conversation history.
-    - `list`: (Stub) List conversations for user.
+## 3. Module Descriptions
 
-### Bot App: Key Classes & Functions
+### 3.1 konveyor/apps/documents {#konveyorappsdocuments}
+Handles document ingestion, parsing (PDF, DOCX, Markdown, text), chunking, Blob upload, and indexing via Django adapter over core logic.
 
-- **KonveyorBot** (bot.py) ✅
-  - Main bot logic for handling messages and member events.
-  - Methods:
-    - `on_message_activity`: Handles incoming user messages.
-    - `on_members_added_activity`: Handles new member joins.
-- **BotSettingsService** (services/bot_settings_service.py) ✅
-  - Provides bot configuration and channel settings.
-  - Methods:
-    - `get_settings`: Returns bot settings dataclass.
-    - `get_channel_config`: Returns Azure Bot Service channel config.
-- **SecureCredentialService** (services/secure_credential_service.py) ✅
-  - Manages bot credentials using Azure Key Vault.
-  - Methods:
-    - `store_bot_credentials`: Stores credentials in Key Vault.
-    - `get_bot_credentials`: Retrieves credentials from Key Vault.
-    - `_set_secret`, `_get_secret`: Internal helpers for secret management.
-- **SlackChannelService** (services/slack_channel_service.py) ✅
-  - Configures and verifies Slack channel integration with Azure Bot Service.
-  - Methods:
-    - `configure_channel`: Sets up Slack channel in Azure.
-    - `verify_channel`: Checks Slack channel status.
+**Structure**:
+```text
+konveyor/apps/documents/
+├─ apps.py                 # Django app configuration
+├─ config.py               # Document settings (extensions, chunk sizes)
+├─ urls.py                 # HTTP routes (health check, upload_document)
+├─ views.py                # Function-based views (`index`, `upload_document`)
+├─ models.py               # `Document`, `DocumentChunk` models
+├─ services/
+│  ├─ document_adapter.py  # `DjangoDocumentService` adapter to core
+│  ├─ chunk_service.py     # Chunk processing helpers
+│  └─ document_service.py  # App-layer stub redirecting to core
+└─ tests/
+   ├─ test_document_service.py
+   ├─ conftest.py
+   └─ run_tests.sh
+```
 
-**Legend:**
-- ✅ = Modern/clean code, uses new core or best practices
-- ⚠️ = Legacy/redundant/overlapping logic (should be refactored or already migrated)
+**Key Components**:
+- `upload_document` view: handles file uploads via `DjangoDocumentService.process_document`
+- `DjangoDocumentService`: delegates parsing, chunking, and storage to core `DocumentService`
+- `Document` & `DocumentChunk` models: store metadata and chunk content
 
-## Core Directory Structure & Key Functions
+### 3.2 konveyor/apps/search {#konveyorappssearch}
+Manages semantic search and document indexing via REST API endpoints.
 
-Below is the current structure of the `konveyor/core/` directory, along with high-level classes/functions and their roles. For full details and rationale, see [Refactoring Plan](./refactoring_plan.md).
+**Structure**:
+```text
+konveyor/apps/search/
+├─ admin.py                # Django admin configuration
+├─ apps.py                 # Django app configuration
+├─ models.py               # `SearchDocument` model tracking indexing status
+├─ urls.py                 # Endpoints (`api/query/`, `api/index-document/`, `api/reindex-all/`, `simple/`)
+├─ views.py                # `QuerySearchView`, `SimpleSearchView`
+├─ services/
+│  ├─ indexing_service.py  # Batch indexing logic to Azure Cognitive Search
+│  └─ search_service.py    # Wrapper over core `SearchService`
+└─ tests/
+   ├─ test_indexing_service.py
+   └─ test_search_service.py
+```
 
+**Key Components**:
+- `QuerySearchView` & `SimpleSearchView`: endpoints for semantic search
+- `IndexingService`: batch indexing of document chunks to Cognitive Search
+- `SearchService`: semantic and hybrid search logic via core service
+- `SearchDocument`: Django model recording index status and metadata
+
+### 3.3 konveyor/apps/rag {#konveyorappsrag}
+Orchestrates RAG workflows using conversation management and core service.
+
+**Structure**:
+```text
+konveyor/apps/rag/
+├─ models.py               # `ConversationManager`, message type constants
+├─ urls.py                 # Router registration for `ConversationViewSet`
+├─ views.py                # `ConversationViewSet` (create, ask, history)
+```
+
+**Key Components**:
+- `ConversationViewSet`: handles conversation lifecycle (`create`, `ask`, `history`)
+- `ConversationManager`: persists messages via `AzureStorageManager`
+- Core `RAGService`: retrieves context, formats prompts, and generates OpenAI chat responses
+
+### 3.4 konveyor/apps/bot {#konveyorappsbot}
+Handles Bot Framework and Slack integration for chat interactions.
+
+**Structure**:
+```text
+konveyor/apps/bot/
+├─ app.py                     # Bot entrypoint (`/api/messages`) with BotFrameworkAdapter
+├─ bot.py                     # `KonveyorBot` class implementing activity logic
+├─ initialize_slack.py        # Slack app initialization
+├─ setup_secure_storage.py    # Secure credential storage setup
+├─ services/
+│  ├─ bot_settings_service.py
+│  ├─ secure_credential_service.py
+│  └─ slack_channel_service.py
+├─ bot-template.json          # Bot Framework template definition
+└─ slack_manifest.json        # Slack app manifest
+```
+
+**Key Components**:
+- `ADAPTER` & `BOT` in `app.py`: configure BotFrameworkAdapter and bot handler
+- Slack initializer and service modules for multi-platform support
+
+### 3.5 konveyor/core {#konveyorcore}
+Contains shared utilities, Azure adapters, and core business logic.
+
+**Structure**:
 ```text
 konveyor/core/
-├── __init__.py
-├── azure/
-│   └── service.py
-│       └── AzureService
-│           - Base class for Azure services with logging and client management.
-│           - Methods:
-│           • __init__: Initializes service with name and Azure clients.
-│           • log_init/log_success/log_error/log_warning/log_debug: Logging utilities.
-│           • log_azure_credentials: Logs endpoint/key safely.
-│           • _validate_config: Validates required config for the service.
-├── azure_adapters/
-│   ├── openai/
-│   │   ├── client.py
-│   │   │   └── AzureOpenAIClient
-│   │   │       - Client for interacting with Azure OpenAI API.
-│   │   │       - Methods:
-│   │   │           • __init__: Initializes the client with API key, endpoint, versions, and deployment names.
-│   │   │           • generate_embedding: Generates an embedding for given text, with retry logic and error handling.
-│   │   │           • generate_completion: Generates a chat completion response for a list of messages.
-│   │   └── tests/
-│   └── tests/
-│       └── test_search_embedding.py
-├── azure_utils/
-│   ├── __init__.py
-│   ├── clients.py
-│   │   └── AzureClientManager
-│   │       - Manages Azure client initialization and configuration.
-│   │       - Provides methods to initialize clients for various Azure services, using retry logic.
-│   ├── config.py
-│   │   └── AzureConfig
-│   │       - Unified Azure configuration management (Singleton).
-│   │       - Handles environment variable loading, service-specific config, and key retrieval.
-│   ├── mixins.py
-│   │   └── AzureClientMixin
-│   │       - Mixin providing Azure client initialization methods.
-│   │       - Methods to initialize OpenAI, Search, and Document Intelligence clients.
-│   │   └── AzureServiceConfig
-│   │       - Configuration manager for Azure services.
-│   │       - Loads and validates endpoint/key for a given Azure service.
-│   │   └── ServiceLoggingMixin
-│   │       - Mixin providing standardized logging methods for services.
-│   │       - Methods for logging init, credentials, success, and errors.
-│   ├── retry.py
-│   │   └── azure_retry
-│   │       - Decorator for retrying Azure operations with exponential backoff.
-│   │       - Used to wrap Azure SDK calls for resilience.
-│   └── service.py
-│       └── AzureService
-│           - Base class for Azure services with logging and client management.
-│           - Standardizes config, logging, and client management for all Azure services.
-├── conversation/
-│   └── storage.py
-│       └── AzureStorageManager
-│           - Manages interactions with Azure storage (Cosmos DB/MongoDB and Redis).
-│           - Methods:
-│           • __init__: Sets up MongoDB/Cosmos and Redis clients, collections, and indexes.
-│           • create_conversation: Creates a new conversation (async).
-│           • add_message: Adds message to conversation, stores in DB and Redis (async).
-│           • get_conversation_messages: Retrieves messages from Redis or DB (async).
-│           • delete_conversation: Deletes conversation/messages from DB and cache (async).
-│           • initialize/_ensure_database_exists: Ensures DB/collections/indexes exist (async).
-│           • __aenter__/__aexit__: Async context manager for resource cleanup.
-│           • _convert_mongodb_to_cosmos_connection_string: Converts connection strings.
-│       └── MongoJSONEncoder
-│           - JSON encoder for MongoDB ObjectId serialization.
-│           - Method:
-│           • default: Converts ObjectId to string for JSON.
-├── documents/
-│   ├── __init__.py
-│   ├── document_service.py
-│   │   └── DocumentService
-│   │       - Service for handling document operations using Azure Document Intelligence.
-│   │       - Methods:
-│   │           • __init__: Initializes with Azure Document Intelligence client.
-│   │           • parse_file: Parses PDF, DOCX, Markdown, or text using Azure.
-│   │           • _parse_pdf/_parse_docx/_parse_markdown/_parse_text: File-type specific parsing with error handling and metadata extraction.
-│   │           • store_chunk_content/get_chunk_content: Store/retrieve doc chunks in Azure Blob Storage.
-│   │           • initialize_document_intelligence_client: Sets up Azure client.
-│   │           • log_init/log_success/log_error/log_warning: Logging utilities.
-│   ├── document_service.py.bak
-│   └── tests/
-│       ├── __init__.py
-│       ├── test_document_service.py
-│       └── test_files/
-├── rag/
-│   └── templates.py
-│       └── RAGPromptManager
-│           - Manages prompt templates for different RAG scenarios.
-│           - Methods:
-│           • __init__: Initializes default templates (knowledge, code).
-│           • get_template: Retrieves a prompt template by type.
-│           • add_template: Adds a new prompt template.
-│           • format_prompt: Formats a template with parameters.
-│       └── PromptTemplate
-│           - Base class for RAG prompt templates.
-│           - Fields: system_message, user_message.
-│           - Method:
-│           • format: Formats the template with given parameters.
+├─ azure_utils/
+│  ├─ config.py        # `AzureConfig` for environment variable management
+│  ├─ clients.py       # `AzureClientManager` for service clients (OpenAI, Search)
+│  ├─ mixins.py        # Logging and retry mixins
+│  ├─ retry.py         # Retry policy implementation
+│  └─ service.py       # Base `AzureService` class
+├─ azure_adapters/
+│  └─ openai/
+│     ├─ client.py     # Azure OpenAI adapter
+│     └─ tests/        # Adapter tests
+├─ conversation/
+│  └─ storage.py       # `AzureStorageManager` for conversation history
+├─ documents/
+│  └─ document_service.py # Core document parsing and processing
+├─ rag/
+│  ├─ context_service.py  # Document processing & context retrieval
+│  ├─ templates.py        # Prompt templates & RAGPromptManager
+│  └─ rag_service.py      # Core RAG orchestration logic
+└─ [no core/bot directory; bot logic resides in apps/bot]
 ```
 
+**Key Classes**:
+- `AzureConfig`, `AzureClientManager`, `AzureService`
+- Core services: `DocumentService`, `SearchService`, `RAGService`, `ContextService`, `RAGPromptManager`
 
-### Example Key Functions (abbreviated)
+### 3.6 Konveyor-infra {#konveyor-infra}
+Infrastructure-as-Code for Azure resource provisioning.
 
-- **AzureConfig.get_endpoint(service)**: Returns endpoint for given Azure service
-- **AzureClientManager.get_openai_client()**: Returns configured Azure OpenAI client
-- **AzureClientMixin.initialize_openai_client()**: Initializes OpenAI clients
-- **AzureOpenAIClient.generate_embedding(text)**: Returns embedding vector for input
-- **AzureOpenAIClient.generate_completion(messages)**: Returns chat completion for messages
+**Structure**:
+```text
+Konveyor-infra/
+├─ backend.tf
+├─ main.tf
+├─ outputs.tf
+├─ providers.tf
+├─ variables.tf
+├─ modules/             # Reusable Terraform modules
+├─ environments/        # Workspace-specific configurations
+├─ terraform/           # Terraform state and env configs
+├─ .gitignore
+├─ .terraform.lock.hcl
+└─ README.md
+```
 
-For a full, up-to-date architectural map (including class/function docstrings), see the [Refactoring Plan](./refactoring_plan.md#phase-6-application-code-cleanup--documentation-finalization).
+**Provisioned Resources**:
+- Azure App Service / Functions
+- Cognitive Search
+- Blob Storage
+- PostgreSQL
+- Key Vault
 
-## Future Enhancements
+### 3.7 tests {#tests}
+Describes the test suite structure covering unit tests, service-level integration tests, API endpoint tests, and end-to-end tests.
 
-- Real-time notifications via WebSockets
-- Integration with Microsoft Teams
-- Mobile application support
+**Structure**:
+```text
+tests/
+├─ core/
+│  └─ rag/
+│     ├─ test_context_service.py
+│     └─ test_rag_service.py
+├─ services/
+│  └─ rag/
+│     ├─ test_context_service.py
+│     ├─ test_rag_service.py
+│     └─ test_rag_api.py
+└─ integration/
+   └─ test_rag_e2e.py
+```
+
+---
+
+## 4. Data Flow {#data-flow}
+1. **Document Ingestion**: upload → parse chunks → Blob Storage → index in Cognitive Search
+2. **Query**: user query → SearchService → top-k chunks
+3. **RAG**: retrieved chunks + prompt → OpenAI chat → response
+4. **Bot**: external event → BotService → RAGService → reply
+
+---
+
+## 5. Deployment & Infrastructure {#deployment--infrastructure}
+- CI: GitHub Actions (lint, tests, build)
+- CD: Terraform apply → Azure resource provisioning
+- Backend deploy: Azure App Service Docker container
+- Bot deploy: Azure Functions
+
+---
+
+## 6. Security {#security}
+- HTTPS enforced
+- OAuth2 / JWT for API auth
+- Secrets managed in Azure Key Vault
+- RBAC roles in Azure for resource access
+
+---
+
+## 7. Future Enhancements {#future-enhancements}
+- Real-time updates via WebSockets or SignalR
+- Multi-tenant onboarding
+- UI/UX: React SPA
+- Additional document types (PPTX, CSV)
+- Analytics & usage dashboards
