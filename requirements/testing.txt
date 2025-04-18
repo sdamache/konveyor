@@ -1,0 +1,8 @@
+-r base.txt
+
+# Testing dependencies
+pytest>=7.4.0
+pytest-django>=4.7.0
+factory-boy>=3.3.0
+coverage>=7.4.0
+pytest-mock>=3.12.0 
