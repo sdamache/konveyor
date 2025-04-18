@@ -5,7 +5,7 @@ Integrates Azure Document Intelligence, AI Search, and OpenAI for document proce
 import os
 from typing import List, Dict, Optional, Tuple
 from openai import AzureOpenAI
-from konveyor.core.azure.clients import AzureClientManager
+from konveyor.core.azure_utils.clients import AzureClientManager
 
 class ContextService:
     """Service for document processing and context retrieval using Azure services."""

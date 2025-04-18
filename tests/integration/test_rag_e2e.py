@@ -19,8 +19,6 @@ load_settings()
 
 # Now import the rest
 from konveyor.core.rag.rag_service import RAGService
-from konveyor.core.rag.context_service import ContextService
-from konveyor.core.azure_utils.storage import AzureStorageManager
 from konveyor.core.azure_utils.clients import AzureClientManager
 from konveyor.apps.search.services.indexing_service import IndexingService
 from konveyor.apps.search.services.search_service import SearchService

@@ -1,7 +1,7 @@
 import os
 import logging
 from dotenv import load_dotenv
-from openai_client import AzureOpenAIClient
+from konveyor.core.azure_adapters.openai.client import AzureOpenAIClient
 
 # Set up logging
 logging.basicConfig(level=logging.INFO,
