@@ -23,7 +23,7 @@ The $30,000+ cost per engineer onboarding is derived from:
 - Training resources and materials
 - Opportunity costs from delayed project contributions
 
-For a mid-level software engineer with a $120,000 annual salary, this can easily exceed $30,000 when accounting for all these factors, especially considering that full productivity might not be reached for 3-6 months.
+For a mid-level software engineer with a \$120,000 annual salary, this can easily exceed \$30,000 when accounting for all these factors, especially considering that full productivity might not be reached for 3-6 months.
 
 ## MVP Scope
 

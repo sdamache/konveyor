@@ -2,20 +2,22 @@
 
 ## Table of Contents
 
-1. [Overview](#overview)
-2. [High-Level Architecture](#high-level-architecture)
-3. [Module Descriptions](#module-descriptions)
-   - [3.1 konveyor/apps/documents](#konveyorappsdocuments)
-   - [3.2 konveyor/apps/search](#konveyorappssearch)
-   - [3.3 konveyor/apps/rag](#konveyorappsrag)
-   - [3.4 konveyor/apps/bot](#konveyorappsbot)
-   - [3.5 konveyor/core](#konveyorcore)
-   - [3.6 Konveyor-infra](#konveyor-infra)
-   - [3.7 tests](#tests)
-4. [Data Flow](#data-flow)
-5. [Deployment & Infrastructure](#deployment--infrastructure)
-6. [Security](#security)
-7. [Future Enhancements](#future-enhancements)
+- [Konveyor Architecture (v2.0)](#konveyor-architecture-v20)
+  - [Table of Contents](#table-of-contents)
+  - [1. Overview](#1-overview)
+  - [2. High-Level Architecture](#2-high-level-architecture)
+  - [3. Module Descriptions](#3-module-descriptions)
+    - [3.1 konveyor/apps/documents {#konveyorappsdocuments}](#31-konveyorappsdocuments-konveyorappsdocuments)
+    - [3.2 konveyor/apps/search {#konveyorappssearch}](#32-konveyorappssearch-konveyorappssearch)
+    - [3.3 konveyor/apps/rag {#konveyorappsrag}](#33-konveyorappsrag-konveyorappsrag)
+    - [3.4 konveyor/apps/bot {#konveyorappsbot}](#34-konveyorappsbot-konveyorappsbot)
+    - [3.5 konveyor/core {#konveyorcore}](#35-konveyorcore-konveyorcore)
+    - [3.6 Konveyor-infra {#konveyor-infra}](#36-konveyor-infra-konveyor-infra)
+    - [3.7 tests {#tests}](#37-tests-tests)
+  - [4. Data Flow {#data-flow}](#4-data-flow-data-flow)
+  - [5. Deployment \& Infrastructure {#deployment--infrastructure}](#5-deployment--infrastructure-deployment--infrastructure)
+  - [6. Security {#security}](#6-security-security)
+  - [7. Future Enhancements {#future-enhancements}](#7-future-enhancements-future-enhancements)
 
 ---
 
@@ -200,17 +202,20 @@ Infrastructure-as-Code for Azure resource provisioning.
 **Structure**:
 ```text
 Konveyor-infra/
-├─ backend.tf
-├─ main.tf
-├─ outputs.tf
-├─ providers.tf
-├─ variables.tf
-├─ modules/             # Reusable Terraform modules
-├─ environments/        # Workspace-specific configurations
-├─ terraform/           # Terraform state and env configs
+├─ backend/              # Terraform backend configs
+├─ modules/              # Reusable Terraform modules
+├─ environments/         # test/dev/prod configs
+├─ scripts/              # deployment & helper scripts
+├─ tasks/                # task definitions
+├─ backend.tf            # backend configuration
+├─ main.tf               # root module
+├─ outputs.tf            # root outputs
+├─ providers.tf          # provider definitions
+├─ variables.tf          # input variables
+├─ terraform             # (empty file)
+├─ README.md             # infra readme
 ├─ .gitignore
-├─ .terraform.lock.hcl
-└─ README.md
+└─ .terraform.lock.hcl
 ```
 
 **Provisioned Resources**:
