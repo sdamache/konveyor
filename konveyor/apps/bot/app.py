@@ -4,13 +4,16 @@ from botbuilder.core import BotFrameworkAdapterSettings, BotFrameworkAdapter
 from botbuilder.schema import Activity
 import sys
 import traceback
-from bot import KonveyorBot
+from .bot import KonveyorBot
 from konveyor.core.azure_utils.config import AzureConfig
+from django.conf import settings
+
+
 
 # Load configuration using AzureConfig
 config = AzureConfig()
 # Ensure required Bot Framework settings are present
-config.validate_required_settings(['MICROSOFT_APP_ID', 'MICROSOFT_APP_PASSWORD'])
+config.validate_required_config('BOT')
 # Bot Framework setup
 SETTINGS = BotFrameworkAdapterSettings(
     config.get_setting('MICROSOFT_APP_ID'),

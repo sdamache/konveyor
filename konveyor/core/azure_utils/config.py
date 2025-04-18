@@ -113,14 +113,16 @@ class AzureConfig:
             'SEARCH': os.getenv('AZURE_SEARCH_ENDPOINT'),
             'OPENAI': os.getenv('AZURE_OPENAI_ENDPOINT'),
             'DOCUMENT_INTELLIGENCE': os.getenv('AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT'),
-            'STORAGE': os.getenv('AZURE_STORAGE_ACCOUNT_URL')
+            'STORAGE': os.getenv('AZURE_STORAGE_ACCOUNT_URL'),
+            'BOT': os.getenv('AZURE_BOT_ENDPOINT')
         }
         
         # Service keys
         self.keys = {
             'SEARCH': os.getenv('AZURE_SEARCH_API_KEY'),
             'OPENAI': os.getenv('AZURE_OPENAI_API_KEY'),
-            'DOCUMENT_INTELLIGENCE': os.getenv('AZURE_DOCUMENT_INTELLIGENCE_API_KEY')
+            'DOCUMENT_INTELLIGENCE': os.getenv('AZURE_DOCUMENT_INTELLIGENCE_API_KEY'),
+            'BOT': os.getenv('MICROSOFT_APP_PASSWORD')
         }
         
         # Storage specific config
@@ -151,7 +153,7 @@ class AzureConfig:
         """Get API key for a specific Azure service.
         
         Args:
-            service (str): Service identifier (SEARCH, OPENAI, DOCUMENT_INTELLIGENCE)
+            service (str): Service identifier (SEARCH, OPENAI, DOCUMENT_INTELLIGENCE, BOT)
             
         Returns:
             Optional[str]: Service API key if configured, None otherwise
@@ -286,6 +288,7 @@ class AzureConfig:
                                   AZURE_DOCUMENT_INTELLIGENCE_API_KEY
             STORAGE: Either AZURE_STORAGE_CONNECTION_STRING or
                      both AZURE_STORAGE_ACCOUNT_NAME and AZURE_STORAGE_ACCOUNT_KEY
+            BOT: MICROSOFT_APP_ID, MICROSOFT_APP_PASSWORD
         """
         if service == 'SEARCH':
             if not all([self.get_endpoint('SEARCH'), self.get_key('SEARCH')]):
@@ -300,3 +303,11 @@ class AzureConfig:
         elif service == 'STORAGE':
             if not self.get_storage_connection_string():
                 raise ImproperlyConfigured("Missing required Azure Storage configuration")
+        elif service == 'BOT':
+            # Require Bot Framework App ID and Password for adapter
+            if not all([self.get_setting('MICROSOFT_APP_ID'), self.get_setting('MICROSOFT_APP_PASSWORD')]):
+                raise ImproperlyConfigured("Missing required Bot Framework MICROSOFT_APP_ID or MICROSOFT_APP_PASSWORD")
+            # Optional: validate BOT endpoint if provided
+            bot_ep = self.get_endpoint('BOT')
+            if bot_ep and not bot_ep.startswith(('http://', 'https://')):
+                raise ImproperlyConfigured("AZURE_BOT_ENDPOINT must be a valid URL if set")
