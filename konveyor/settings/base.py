@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'konveyor.apps.api.apps.ApiConfig',
     'konveyor.apps.documents.apps.DocumentsConfig',
     'konveyor.apps.search.apps.SearchConfig',
+    'konveyor.apps.bot.apps.BotConfig',
 ]
 
 MIDDLEWARE = [

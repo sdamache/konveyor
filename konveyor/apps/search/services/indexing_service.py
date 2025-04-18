@@ -16,13 +16,12 @@ Example:
 
 from typing import Dict, Any, List
 from django.db import transaction
-import logging
-import time
+# Removed logging and time imports
 
 from konveyor.apps.documents.models import Document, DocumentChunk
-from konveyor.services.documents.document_service import DocumentService
+from konveyor.core.documents.document_service import DocumentService
 from konveyor.apps.search.services.search_service import SearchService
-from konveyor.core.azure.service import AzureService
+from konveyor.core.azure_utils.service import AzureService
 
 class IndexingService(AzureService):
     """Service for indexing documents in Azure Cognitive Search.
@@ -62,7 +61,7 @@ class IndexingService(AzureService):
             self.max_batch_size = 1000  # Azure Search limit
             self.max_batch_size_bytes = 16 * 1024 * 1024  # 16 MB Azure Search limit
             
-            self.log_success("Initialized with adaptive batch sizing")
+            self.log_info("Initialized with adaptive batch sizing") # Use log_info
             
         except Exception as e:
             self.log_error("Failed to initialize service", e)
@@ -81,12 +80,12 @@ class IndexingService(AzureService):
             int: Optimal batch size between min_batch_size and max_batch_size
         """
         if not chunks:
-            self.log_debug("No chunks provided, using minimum batch size")
+            self.log_debug("No chunks provided, using minimum batch size") # Keep as debug
             return self.min_batch_size
             
         # Sample first few chunks to estimate average size
         sample_size = min(10, len(chunks))
-        self.log_debug(f"Sampling {sample_size} chunks for size estimation")
+        self.log_debug(f"Sampling {sample_size} chunks for size estimation") # Keep as debug
         total_bytes = sum(len(chunk.content.encode('utf-8')) for chunk in chunks[:sample_size])
         avg_bytes_per_chunk = total_bytes / sample_size
         
@@ -100,7 +99,7 @@ class IndexingService(AzureService):
         Index all chunks of a document with improved batch processing and error handling.
         """
         try:
-            logger.info("Starting indexing for document_id=%s", document_id)
+            self.log_info(f"Starting indexing for document_id={document_id}")
             
             # Get the document and its chunks
             document = Document.objects.get(id=document_id)
@@ -110,15 +109,14 @@ class IndexingService(AzureService):
             if not total_chunks:
                 raise ValueError(f"No chunks found for document {document_id}")
             
-            logger.info(
-                "Found document '%s' with %d chunks to process",
-                document.title if hasattr(document, 'title') else document_id,
-                total_chunks
+            self.log_info(
+                f"Found document '{document.title if hasattr(document, 'title') else document_id}' "
+                f"with {total_chunks} chunks to process."
             )
             
             # Ensure search index exists with latest configuration
             self.search_service.create_search_index()
-            logger.debug("Verified search index exists")
+            self.log_debug("Verified search index exists") # Keep as debug
             
             # Initialize results tracking
             results = {
@@ -132,7 +130,7 @@ class IndexingService(AzureService):
                 "batch_stats": []
             }
             
-            start_time = time.time()
+            # Removed time import and start_time, processing time calculation will be removed
             
             # Process chunks with adaptive batch sizing
             chunk_list = list(chunks)
@@ -144,9 +142,8 @@ class IndexingService(AzureService):
                 batch_num = len(results["batch_stats"]) + 1
                 total_batches = (total_chunks + batch_size - 1) // batch_size
                 
-                logger.info(
-                    "Processing batch %d/%d for document %s (%d chunks)",
-                    batch_num, total_batches, document_id, len(batch)
+                self.log_info(
+                    f"Processing batch {batch_num}/{total_batches} for document {document_id} ({len(batch)} chunks)"
                 )
                 
                 batch_results = self._index_chunk_batch(batch)
@@ -164,97 +161,83 @@ class IndexingService(AzureService):
                     "retries": batch_results.get("retries", 0)
                 })
                 
-                logger.info(
-                    "Batch %d/%d completed. Success: %d, Failed: %d, Retries: %d",
-                    batch_num, total_batches, 
-                    batch_results["success"], 
-                    batch_results["failed"],
-                    batch_results.get("retries", 0)
+                self.log_info(
+                    f"Batch {batch_num}/{total_batches} completed. "
+                    f"Success: {batch_results['success']}, Failed: {batch_results['failed']}, "
+                    f"Retries: {batch_results.get('retries', 0)}"
                 )
             
-            end_time = time.time()
-            processing_time = end_time - start_time
-            results["processing_time"] = round(processing_time, 2)
+            # Removed end_time and processing_time calculation
+            # If timing is needed, consider adding it via a decorator or context manager
+            results["processing_time"] = "N/A" # Indicate timing was removed
             
             success_rate = (results["indexed_chunks"] / total_chunks) * 100 if total_chunks > 0 else 0
             
-            logger.info(
-                "Completed indexing document %s. Success rate: %.2f%% (%d/%d chunks) in %.2f seconds",
-                document_id, success_rate, results["indexed_chunks"], total_chunks, processing_time
+            self.log_info(
+                f"Completed indexing document {document_id}. "
+                f"Success rate: {success_rate:.2f}% ({results['indexed_chunks']}/{total_chunks} chunks)."
+                # Removed processing time from log message
             )
             
             if results["failed_chunks"] > 0:
-                logger.warning(
-                    "Failed to index %d chunks in document %s: %s",
-                    results["failed_chunks"], document_id, results["failed_chunk_ids"]
+                self.log_warning(
+                    f"Failed to index {results['failed_chunks']} chunks in document {document_id}: "
+                    f"{results['failed_chunk_ids']}"
                 )
             
             return results
             
         except Document.DoesNotExist:
             error_msg = f"Document {document_id} not found"
-            logger.error(error_msg)
+            self.log_error(error_msg)
             raise ValueError(error_msg)
         except Exception as e:
             error_msg = f"Error indexing document {document_id}: {str(e)}"
-            logger.error(error_msg, exc_info=True)
+            self.log_error(error_msg, exc_info=True)
             raise
 
     def _index_chunk_batch(self, chunks: List[DocumentChunk]) -> Dict[str, Any]:
         """
         Index a batch of document chunks with improved error handling and retries.
         """
-        results = {"success": 0, "failed": 0, "failed_ids": [], "retries": 0}
-        
+        # Removed custom retry logic (while loop, retry_count, time.sleep)
+        # Relying on @azure_retry on underlying SearchService methods
+        results = {"success": 0, "failed": 0, "failed_ids": []} # Removed retries from results
+
         for chunk in chunks:
-            max_retries = 3
-            retry_count = 0
-            
-            while retry_count < max_retries:
-                try:
-                    logger.debug(
-                        "Processing chunk %s (index: %d) from document %s",
-                        chunk.id, chunk.chunk_index, chunk.document.id
-                    )
-                    
-                    # Get chunk content from blob storage
-                    content = self.document_service.get_chunk_content(chunk)
-                    
-                    # Generate embedding with retry logic
-                    embedding = self.search_service.generate_embedding(content)
-                    logger.debug("Generated embedding for chunk %s", chunk.id)
-                    
-                    # Index the chunk with vector search support
-                    self.search_service.index_document_chunk(
-                        chunk_id=str(chunk.id),
-                        document_id=str(chunk.document.id),
-                        content=content,
-                        chunk_index=chunk.chunk_index,
-                        metadata=chunk.metadata,
-                        embedding=embedding
-                    )
-                    
-                    results["success"] += 1
-                    if retry_count > 0:
-                        results["retries"] += retry_count
-                    logger.debug("Successfully indexed chunk %s", chunk.id)
-                    break
-                    
-                except Exception as e:
-                    retry_count += 1
-                    if retry_count < max_retries:
-                        logger.warning(
-                            "Retry %d/%d for chunk %s after error: %s",
-                            retry_count, max_retries, chunk.id, str(e)
-                        )
-                        time.sleep(2 ** retry_count)  # Exponential backoff
-                    else:
-                        logger.error(
-                            "Failed to index chunk %s after %d retries: %s",
-                            chunk.id, max_retries, str(e), exc_info=True
-                        )
-                        results["failed"] += 1
-                        results["failed_ids"].append(str(chunk.id))
+            try:
+                self.log_debug(
+                    f"Processing chunk {chunk.id} (index: {chunk.chunk_index}) from document {chunk.document.id}"
+                )
+
+                # Get chunk content from blob storage
+                content = self.document_service.get_chunk_content(chunk)
+
+                # Generate embedding (SearchService.generate_embedding handles retries)
+                embedding = self.search_service.generate_embedding(content)
+                self.log_debug(f"Generated embedding for chunk {chunk.id}")
+
+                # Index the chunk (SearchService.index_document_chunk handles retries if needed)
+                self.search_service.index_document_chunk(
+                    chunk_id=str(chunk.id),
+                    document_id=str(chunk.document.id),
+                    content=content, # Pass full content, SearchService truncates if needed
+                    chunk_index=chunk.chunk_index,
+                    metadata=chunk.metadata,
+                    embedding=embedding
+                )
+
+                results["success"] += 1
+                self.log_debug(f"Successfully indexed chunk {chunk.id}")
+
+            except Exception as e:
+                # Log error if processing fails after underlying retries
+                self.log_error(
+                    f"Failed to index chunk {chunk.id} after potential retries",
+                    exc_info=e
+                )
+                results["failed"] += 1
+                results["failed_ids"].append(str(chunk.id))
         
         return results
     
@@ -265,18 +248,17 @@ class IndexingService(AzureService):
         Returns:
             List of indexing results for each document
         """
-        logger.info("Starting bulk indexing of all documents")
+        self.log_info("Starting bulk indexing of all documents")
         results = []
         documents = Document.objects.all()
         total_documents = documents.count()
         
-        logger.info("Found %d documents to index", total_documents)
+        self.log_info(f"Found {total_documents} documents to index")
         
         for i, document in enumerate(documents, 1):
             try:
-                logger.info(
-                    "Processing document %d/%d (ID: %s)",
-                    i, total_documents, document.id
+                self.log_info(
+                    f"Processing document {i}/{total_documents} (ID: {document.id})"
                 )
                 result = self.index_document(str(document.id))
                 results.append(result)
@@ -286,15 +268,14 @@ class IndexingService(AzureService):
                     "error": str(e)
                 }
                 results.append(error_result)
-                logger.error(
-                    "Failed to index document %s: %s",
-                    document.id, str(e), exc_info=True
+                self.log_error(
+                    f"Failed to index document {document.id}",
+                    exc_info=e
                 )
         
         successful_docs = len([r for r in results if "error" not in r])
-        logger.info(
-            "Bulk indexing completed. Successfully processed %d/%d documents",
-            successful_docs, total_documents
+        self.log_info(
+            f"Bulk indexing completed. Successfully processed {successful_docs}/{total_documents} documents"
         )
         
         return results 

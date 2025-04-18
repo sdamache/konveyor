@@ -44,7 +44,7 @@ resource "azurerm_redis_cache" "konveyor_cache" {
   capacity            = 0        # Smallest size
   family              = "C"      # Basic/Standard family
   sku_name           = "Basic"  # Most cost-effective tier
-  enable_non_ssl_port = false
+  # enable_non_ssl_port = false # This argument is no longer supported/needed; SSL is mandatory
 
   redis_configuration {
     maxmemory_policy = "volatile-lru"  # Evict least recently used keys first

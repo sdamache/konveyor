@@ -1,36 +1,32 @@
-from azure.keyvault.secrets import SecretClient
-from azure.identity import ClientSecretCredential
-import os
-from dotenv import load_dotenv
+from konveyor.core.azure_utils.service import AzureService
 
-class SecureCredentialService:
+class SecureCredentialService(AzureService):
     """Service for securely managing bot credentials using Azure Key Vault"""
-    
+
     def __init__(self):
-        load_dotenv()
-        
-        # Initialize Azure credentials
-        self.credential = ClientSecretCredential(
-            tenant_id=os.getenv('AZURE_TENANT_ID'),
-            client_id=os.getenv('AZURE_CLIENT_ID'),
-            client_secret=os.getenv('AZURE_CLIENT_SECRET')
+        super().__init__(
+            service_name='SecureCredentialService',
+            required_config=[
+                'AZURE_KEY_VAULT_URL',
+                'SLACK_CLIENT_ID',
+                'SLACK_CLIENT_SECRET',
+                'SLACK_SIGNING_SECRET',
+                'SLACK_BOT_TOKEN'
+            ]
         )
-        
-        # Initialize Key Vault client
-        self.key_vault_url = os.getenv('AZURE_KEY_VAULT_URL')
-        self.secret_client = SecretClient(
-            vault_url=self.key_vault_url,
-            credential=self.credential
-        )
+        # Get the secret client from the centralized manager
+        self.secret_client = self.client_manager.get_secret_client()
+        # Removed manual load_dotenv, credential, and client initialization
 
     def store_bot_credentials(self):
         """Store bot credentials in Azure Key Vault"""
         try:
             # Store Slack credentials
-            self._set_secret('slack-client-id', os.getenv('SLACK_CLIENT_ID'))
-            self._set_secret('slack-client-secret', os.getenv('SLACK_CLIENT_SECRET'))
-            self._set_secret('slack-signing-secret', os.getenv('SLACK_SIGNING_SECRET'))
-            self._set_secret('slack-bot-token', os.getenv('SLACK_BOT_TOKEN'))
+            # Fetch credentials from central config to store them
+            self._set_secret('slack-client-id', self.config.get_setting('SLACK_CLIENT_ID'))
+            self._set_secret('slack-client-secret', self.config.get_setting('SLACK_CLIENT_SECRET'))
+            self._set_secret('slack-signing-secret', self.config.get_setting('SLACK_SIGNING_SECRET'))
+            self._set_secret('slack-bot-token', self.config.get_setting('SLACK_BOT_TOKEN'))
             
             print("✓ Successfully stored bot credentials in Key Vault")
             return True

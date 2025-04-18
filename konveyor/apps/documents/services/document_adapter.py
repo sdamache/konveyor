@@ -5,12 +5,13 @@ It handles Django model integration and framework-specific features while
 delegating core document processing to the framework-agnostic service.
 """
 
+import os # Add os import for content type detection
 from typing import BinaryIO, Dict, Any
 from django.core.exceptions import ValidationError
-from konveyor.services.documents.document_service import DocumentService
+from konveyor.core.documents.document_service import DocumentService # Ensure this points to the core service
 from ..models import Document, DocumentChunk
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from concurrent.futures import ThreadPoolExecutor
+from langchain.text_splitter import RecursiveCharacterTextSplitter # Keep for now
+# Removed ThreadPoolExecutor import (unused)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -21,6 +22,7 @@ class DjangoDocumentService:
     def __init__(self):
         """Initialize the adapter with core document service."""
         self._service = DocumentService()
+        # Keep text_splitter initialization for now, as core service doesn't handle chunking orchestration yet.
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
             chunk_overlap=200
@@ -44,20 +46,45 @@ class DjangoDocumentService:
             ValidationError: If document processing fails
         """
         try:
+            # Determine content type (moved from helper)
+            content_type = self._determine_content_type(filename)
+
             # Create document model instance
             doc = Document.objects.create(
                 filename=filename,
-                size=file_obj.size if hasattr(file_obj, 'size') else 0
+                size=file_obj.size if hasattr(file_obj, 'size') else 0,
+                content_type=content_type # Store content type
             )
             
             # Process with core service
             content, metadata = self._service.parse_file(
-                file_obj,
-                self._get_content_type(filename)
+                file_obj=file_obj,
+                content_type=content_type
             )
-            
-            # Create chunks
-            chunks = self._create_chunks(doc, content)
+
+            # Create chunks (logic moved from helper)
+            chunk_models = []
+            try:
+                # Split content into chunks using the text splitter
+                texts = self.text_splitter.split_text(content)
+
+                # Create chunk model objects
+                for i, text in enumerate(texts):
+                    # TODO: Delegate chunk storage to core service if possible in future
+                    # For now, adapter creates Django models directly
+                    chunk = DocumentChunk.objects.create(
+                        document=doc,
+                        content=text, # Storing content directly in model for now
+                        sequence=i,
+                        # metadata could be added here if needed
+                    )
+                    chunk_models.append(chunk)
+                logger.info(f"Created {len(chunk_models)} chunks for document {doc.id}")
+
+            except Exception as e:
+                logger.error(f"Failed to create chunks for document {doc.id}: {str(e)}")
+                # Optionally update doc status to FAILED here
+                raise # Re-raise chunking error
             
             # Update document metadata
             doc.status = 'processed'
@@ -70,35 +97,22 @@ class DjangoDocumentService:
             logger.error(f"Failed to process document {filename}: {str(e)}")
             raise ValidationError(f"Document processing failed: {str(e)}")
     
-    def _get_content_type(self, filename: str) -> str:
+    # Method moved into process_document
+    # def _get_content_type(self, filename: str) -> str: ...
+
+    # Method moved into process_document
+    # def _create_chunks(self, doc: Document, content: str) -> list: ...
+
+    # Internal helper kept for now as it was moved from _get_content_type
+    def _determine_content_type(self, filename: str) -> str:
         """Get content type from filename extension."""
-        ext = filename.lower().split('.')[-1]
+        # Use os.path.splitext for robustness
+        _root, ext = os.path.splitext(filename)
+        ext = ext.lower()
         content_types = {
-            'pdf': 'application/pdf',
-            'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'md': 'text/markdown',
-            'txt': 'text/plain'
+            '.pdf': 'application/pdf',
+            '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            '.md': 'text/markdown',
+            '.txt': 'text/plain'
         }
         return content_types.get(ext, 'application/octet-stream')
-    
-    def _create_chunks(self, doc: Document, content: str) -> list:
-        """Create document chunks from content."""
-        chunks = []
-        try:
-            # Split content into chunks
-            texts = self.text_splitter.split_text(content)
-            
-            # Create chunk objects
-            for i, text in enumerate(texts):
-                chunk = DocumentChunk.objects.create(
-                    document=doc,
-                    content=text,
-                    sequence=i
-                )
-                chunks.append(chunk)
-                
-        except Exception as e:
-            logger.error(f"Failed to create chunks for document {doc.id}: {str(e)}")
-            raise
-            
-        return chunks

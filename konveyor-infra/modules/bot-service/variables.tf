@@ -25,7 +25,13 @@ variable "sku" {
 variable "microsoft_app_id" {
   description = "Microsoft App ID for the Azure Bot Service"
   type        = string
-  default     = "0eecb239-f1dc-4ab6-8ac7-5d60fd9102d1"
+  default     = "c8218a52-681c-4df2-b558-5fa8e5067b43"
+}
+
+variable "microsoft_app_password" {
+  description = "Microsoft App Password for the Azure Bot Service"
+  type        = string
+  sensitive   = true
 }
 
 variable "tags" {
@@ -37,25 +43,24 @@ variable "tags" {
   }
 }
 
-# variable "slack_client_id" {
-#   description = "Slack Client ID for bot channel configuration"
-#   type        = string
-# }
+variable "slack_client_id" {
+  description = "Slack Client ID for bot channel configuration"
+  type        = string
+}
 
-# variable "slack_client_secret" {
-#   description = "Slack Client Secret for bot channel configuration"
-#   type        = string
-#   sensitive   = true
-# }
+variable "slack_client_secret" {
+  description = "Slack Client Secret for bot channel configuration"
+  type        = string
+  sensitive   = true
+}
 
-# variable "slack_signing_secret" {
-#   description = "Slack Signing Secret for bot channel configuration"
-#   type        = string
-#   sensitive   = true
-# }
+variable "slack_signing_secret" {
+  description = "Slack Signing Secret for bot channel configuration"
+  type        = string
+  sensitive   = true
+}
 
 variable "prefix" {
   description = "Prefix to use for resource naming"
   type        = string
 }
-

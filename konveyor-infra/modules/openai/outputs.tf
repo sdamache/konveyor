@@ -8,6 +8,17 @@ output "cognitive_account_name" {
   value       = azurerm_cognitive_account.openai.name
 }
 
+output "cognitive_account_endpoint" {
+  description = "Azure OpenAI Service cognitive account endpoint"
+  value       = azurerm_cognitive_account.openai.endpoint
+}
+
+output "cognitive_account_primary_key" {
+  description = "Azure OpenAI Service cognitive account primary key"
+  value       = azurerm_cognitive_account.openai.primary_access_key
+  sensitive   = true
+}
+
 output "deployment_id" {
   description = "Azure OpenAI Service deployment ID"
   value       = var.deploy_model ? azurerm_cognitive_deployment.gpt_deployment[0].id : "deployment-not-created"

@@ -12,24 +12,23 @@ from datetime import datetime
 from django.conf import settings
 from django.test import TestCase
 from io import BytesIO
-import logging
+# Removed logging and dotenv imports
 from unittest.mock import Mock, patch
-from dotenv import load_dotenv
 
 # Import Azure client manager
-from konveyor.core.azure.clients import AzureClientManager
-from konveyor.core.azure.config import AzureConfig
+from konveyor.core.azure_utils.clients import AzureClientManager
+from konveyor.core.azure_utils.config import AzureConfig
 
 # Load environment variables
-load_dotenv()
+# Removed load_dotenv() call
 
 from konveyor.apps.documents.models import Document, DocumentChunk
-from konveyor.services.documents.document_service import DocumentService
+from konveyor.core.documents.document_service import DocumentService
 from konveyor.apps.search.services.indexing_service import IndexingService
 from konveyor.apps.search.services.search_service import SearchService
-from konveyor.core.azure.clients import AzureClientManager
+from konveyor.core.azure_utils.clients import AzureClientManager
 
-logger = logging.getLogger(__name__)
+# Removed module-level logger definition
 
 class TestIndexingService(TestCase):
     """Test cases for IndexingService.
@@ -75,7 +74,7 @@ class TestIndexingService(TestCase):
         
         # Use AzureConfig to check service availability
         try:
-            from konveyor.core.azure.config import AzureConfig
+            from konveyor.core.azure_utils.config import AzureConfig
             config = AzureConfig()
             
             # Print a simplified summary of available services using AzureConfig
@@ -91,7 +90,7 @@ class TestIndexingService(TestCase):
                 log_file.write(f"[{datetime.now()}] Using OpenAI endpoint: {config.get_endpoint('OPENAI')}\n")
                 log_file.write(f"[{datetime.now()}] Using embedding model: {os.environ.get('AZURE_OPENAI_EMBEDDING_DEPLOYMENT')}\n")
         except Exception as e:
-            logger.warning(f"Could not initialize AzureConfig: {str(e)}")
+            print(f"Warning: Could not initialize AzureConfig: {str(e)}")
             with open('logs/error.log', 'a') as log_file:
                 log_file.write(f"[{datetime.now()}] Could not initialize AzureConfig: {str(e)}\n")
         
@@ -132,7 +131,7 @@ class TestIndexingService(TestCase):
     def setUpClass(cls):
         """Set up test environment with real Azure services."""
         super().setUpClass()
-        logger.info("==== Setting up TestIndexingService ====")
+        print("==== Setting up TestIndexingService ====")
         
         # Check required environment variables
         required_vars = [
@@ -154,8 +153,13 @@ class TestIndexingService(TestCase):
         
         # Generate unique test ID
         cls.test_run_id = uuid.uuid4().hex[:8]
-        logger.info(f"Test run ID: {cls.test_run_id}")
+        print(f"Test run ID: {cls.test_run_id}")
         
+        # Generate unique test container name
+        cls.test_container_name = f"test-chunks-{cls.test_run_id}"
+        os.environ["AZURE_STORAGE_TEST_CONTAINER_NAME"] = cls.test_container_name
+        print(f"Set test container name: {cls.test_container_name}")
+
         # Check Azure services
         if not cls.check_azure_services():
             pytest.skip("Skipping tests due to missing Azure services configuration")
@@ -164,15 +168,15 @@ class TestIndexingService(TestCase):
         try:
             # Initialize Azure client manager
             cls.azure_client_manager = AzureClientManager()
-            logger.info("Successfully initialized AzureClientManager")
+            print("Successfully initialized AzureClientManager")
             
             # Initialize document service
             cls.document_service = DocumentService()
-            logger.info("Successfully initialized DocumentService")
+            print("Successfully initialized DocumentService")
             
             # Initialize indexing service
             cls.indexing_service = IndexingService()
-            logger.info("Successfully initialized IndexingService")
+            print("Successfully initialized IndexingService")
             
             # Generate unique test index name
             cls.original_index_name = os.getenv("AZURE_SEARCH_INDEX_NAME", "konveyor-documents")
@@ -180,48 +184,48 @@ class TestIndexingService(TestCase):
             
             # Update environment variable
             os.environ["AZURE_SEARCH_INDEX_NAME"] = cls.test_index_name
-            logger.info(f"Set test index name: {cls.test_index_name}")
+            print(f"Set test index name: {cls.test_index_name}")
             
             # Update the search service to use the test index
             cls.indexing_service.search_service.index_name = cls.test_index_name
             
             # Create the test index using the SearchService's method
             try:
-                logger.info(f"Creating test index: {cls.test_index_name}...")
+                print(f"Creating test index: {cls.test_index_name}...")
                 # Use the existing create_search_index method
                 cls.indexing_service.search_service.create_search_index(cls.test_index_name)
-                logger.info(f"Successfully created test index: {cls.test_index_name}")
+                print(f"Successfully created test index: {cls.test_index_name}")
             except Exception as e:
-                logger.warning(f"Could not create test index: {str(e)}")
+                print(f"Warning: Could not create test index: {str(e)}")
                 # Check if index exists despite the error
                 try:
                     # Get index client from AzureClientManager
                     index_client, _ = cls.azure_client_manager.get_search_clients(cls.test_index_name)
                     existing_indices = [index.name for index in index_client.list_indexes()]
                     if cls.test_index_name in existing_indices:
-                        logger.info(f"Index {cls.test_index_name} already exists, continuing with tests")
+                        print(f"Index {cls.test_index_name} already exists, continuing with tests")
                     else:
-                        logger.error(f"Index {cls.test_index_name} does not exist and could not be created")
+                        print(f"Error: Index {cls.test_index_name} does not exist and could not be created")
                         pytest.skip(f"Could not create test index: {str(e)}")
                 except Exception as check_e:
-                    logger.error(f"Could not check if index exists: {str(check_e)}")
+                    print(f"Error: Could not check if index exists: {str(check_e)}")
                     pytest.skip(f"Could not verify test index: {str(check_e)}")
             
         except Exception as e:
-            logger.error(f"Failed to initialize test environment: {e}")
+            print(f"Error: Failed to initialize test environment: {e}")
             raise
-        logger.info(f"Set environment variable AZURE_SEARCH_INDEX_NAME to {cls.test_index_name}")
+        print(f"Set environment variable AZURE_SEARCH_INDEX_NAME to {cls.test_index_name}")
         
         # Create a new search client for the test index using AzureClientManager
         try:
-            logger.info("Creating new search client for test index using AzureClientManager...")
+            print("Creating new search client for test index using AzureClientManager...")
             _, search_client = cls.azure_client_manager.get_search_clients(cls.test_index_name)
             
             # Update the search service to use the new client
             cls.indexing_service.search_service.search_client = search_client
-            logger.info(f"Created new search client for index {cls.test_index_name}")
+            print(f"Created new search client for index {cls.test_index_name}")
         except Exception as e:
-            logger.error(f"Failed to create new search client: {e}")
+            print(f"Error: Failed to create new search client: {e}")
             # Don't skip tests yet, as this might still work
         
         # 11. Set up test files directory
@@ -229,15 +233,15 @@ class TestIndexingService(TestCase):
             os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
             'documents', 'tests', 'test_files'
         )
-        logger.info(f"Test files directory: {cls.test_files_dir}")
+        print(f"Test files directory: {cls.test_files_dir}")
         
         # 12. Validate test files
         test_files = [f for f in os.listdir(cls.test_files_dir) if os.path.isfile(os.path.join(cls.test_files_dir, f))]
-        logger.info(f"Found {len(test_files)} test files: {', '.join(test_files)}")
+        print(f"Found {len(test_files)} test files: {', '.join(test_files)}")
         
         # Test embedding generation to ensure the service is working properly
         try:
-            logger.info("Testing embedding generation using AzureClientManager...")
+            print("Testing embedding generation using AzureClientManager...")
             # Get OpenAI client from AzureClientManager
             openai_client = cls.azure_client_manager.get_openai_client()
             
@@ -248,40 +252,56 @@ class TestIndexingService(TestCase):
                 model=deployment_name
             )
             embedding = response.data[0].embedding
-            logger.info(f"Successfully generated test embedding with {len(embedding)} dimensions")
+            print(f"Successfully generated test embedding with {len(embedding)} dimensions")
         except Exception as e:
-            logger.error(f"Test embedding generation failed: {str(e)}")
+            print(f"Error: Test embedding generation failed: {str(e)}")
             # Don't skip tests yet - individual tests can handle this
         
         # Setup complete
-        logger.info("==== TestIndexingService setup completed ====")
+        print("==== TestIndexingService setup completed ====")
     
     @classmethod
     def tearDownClass(cls):
         """Clean up test resources with detailed logging."""
-        logger.info("==== Tearing down TestIndexingService ====")
+        print("==== Tearing down TestIndexingService ====")
         
         try:
             # Delete test index using AzureClientManager
-            if hasattr(cls, 'test_index_name') and cls.test_index_name:
-                logger.info(f"Deleting test index: {cls.test_index_name}")
+            if hasattr(cls, 'test_index_name') and cls.test_index_name and hasattr(cls, 'azure_client_manager'):
+                print(f"Deleting test index: {cls.test_index_name}")
                 try:
                     # Get index client from AzureClientManager
                     index_client, _ = cls.azure_client_manager.get_search_clients(cls.test_index_name)
                     index_client.delete_index(cls.test_index_name)
-                    logger.info(f"Successfully deleted test index: {cls.test_index_name}")
+                    print(f"Successfully deleted test index: {cls.test_index_name}")
                 except Exception as delete_error:
-                    logger.error(f"Failed to delete test index: {str(delete_error)}")
+                    print(f"Error: Failed to delete test index: {str(delete_error)}")
+        
+            # Delete test container
+            if hasattr(cls, 'test_container_name') and cls.test_container_name and hasattr(cls, 'azure_client_manager'):
+                print(f"Deleting test container: {cls.test_container_name}")
+                try:
+                    blob_service_client = cls.azure_client_manager.get_blob_client()
+                    blob_service_client.delete_container(cls.test_container_name)
+                    print(f"Successfully deleted test container: {cls.test_container_name}")
+                except Exception as delete_container_error:
+                    # Log error, but don't fail teardown if container doesn't exist or other issue
+                    print(f"Warning: Could not delete test container '{cls.test_container_name}': {str(delete_container_error)}")
             
+                # Unset test container name environment variable
+                if "AZURE_STORAGE_TEST_CONTAINER_NAME" in os.environ:
+                    del os.environ["AZURE_STORAGE_TEST_CONTAINER_NAME"]
+                    print("Unset AZURE_STORAGE_TEST_CONTAINER_NAME environment variable")
+
             # Restore original index name
             if hasattr(cls, 'original_index_name'):
                 os.environ["AZURE_SEARCH_INDEX_NAME"] = cls.original_index_name
-                logger.info(f"Restored index name to: {cls.original_index_name}")
+                print(f"Restored index name to: {cls.original_index_name}")
                 
         except Exception as e:
-            logger.error(f"Error during teardown: {e}")
+            print(f"Error during teardown: {e}")
         
-        logger.info("==== TestIndexingService teardown completed ====")
+        print("==== TestIndexingService teardown completed ====")
         super().tearDownClass()
     
     def setUp(self):
@@ -304,22 +324,22 @@ class TestIndexingService(TestCase):
                 blobs = container_client.list_blobs()
                 for blob in blobs:
                     container_client.delete_blob(blob.name)
-                logger.info(f"Cleaned up all blobs in {container_name} container")
+                print(f"Cleaned up all blobs in {container_name} container")
                 
                 # Delete the container
                 container_client.delete_container()
-                logger.info(f"Deleted container {container_name}")
+                print(f"Deleted container {container_name}")
             except Exception as e:
-                logger.warning(f"Container {container_name} may not exist or error during cleanup: {str(e)}")
+                print(f"Warning: Container {container_name} may not exist or error during cleanup: {str(e)}")
         except Exception as e:
-            logger.error(f"Error during blob storage cleanup: {str(e)}")
+            print(f"Error during blob storage cleanup: {str(e)}")
     
     def test_index_existence_verification(self):
         """Test that index existence verification works correctly."""
         # Get search clients using AzureClientManager
         try:
             index_client, _ = self.azure_client_manager.get_search_clients(self.test_index_name)
-            logger.info("Successfully obtained search clients from AzureClientManager")
+            print("Successfully obtained search clients from AzureClientManager")
             
             # Check if our test index exists
             exists = self.test_index_name in [index.name for index in index_client.list_indexes()]
@@ -330,7 +350,7 @@ class TestIndexingService(TestCase):
             exists = fake_index_name in [index.name for index in index_client.list_indexes()]
             self.assertFalse(exists, "Non-existent index should return False")
         except Exception as e:
-            logger.error(f"Error checking index existence: {str(e)}")
+            print(f"Error checking index existence: {str(e)}")
             self.fail(f"Failed to verify index existence: {str(e)}")
     
     def test_single_document_indexing(self):
@@ -386,7 +406,7 @@ class TestIndexingService(TestCase):
         try:
             # Get OpenAI client from AzureClientManager
             openai_client = self.azure_client_manager.get_openai_client()
-            logger.info("Successfully obtained OpenAI client from AzureClientManager")
+            print("Successfully obtained OpenAI client from AzureClientManager")
             
             # Generate embedding using the client
             deployment_name = os.environ.get('AZURE_OPENAI_EMBEDDING_DEPLOYMENT')
@@ -395,10 +415,10 @@ class TestIndexingService(TestCase):
                 model=deployment_name
             )
             embedding = response.data[0].embedding
-            logger.info(f"Successfully generated embedding with {len(embedding)} dimensions")
+            print(f"Successfully generated embedding with {len(embedding)} dimensions")
         except Exception as e:
             # Log the error but continue with a mock embedding for testing
-            logger.warning(f"Failed to generate embedding, using mock: {str(e)}")
+            print(f"Warning: Failed to generate embedding, using mock: {str(e)}")
             # Create a mock embedding of the correct size (1536 dimensions)
             embedding = [0.1] * 1536
             
@@ -504,7 +524,7 @@ class TestIndexingService(TestCase):
                     embedding = self.indexing_service.search_service.generate_embedding(chunk_content)
                 except Exception as e:
                     # Log the error but continue with a mock embedding for testing
-                    logger.warning(f"Failed to generate embedding, using mock: {str(e)}")
+                    print(f"Warning: Failed to generate embedding, using mock: {str(e)}")
                     # Create a mock embedding of the correct size (1536 dimensions)
                     embedding = [0.1] * 1536
                 
@@ -607,7 +627,7 @@ class TestIndexingService(TestCase):
                     embedding = self.indexing_service.search_service.generate_embedding(chunk_content)
                 except Exception as e:
                     # Log the error but continue with a mock embedding for testing
-                    logger.warning(f"Failed to generate embedding for {doc_type}, using mock: {str(e)}")
+                    print(f"Warning: Failed to generate embedding for {doc_type}, using mock: {str(e)}")
                     # Create a mock embedding of the correct size (1536 dimensions)
                     embedding = [0.1] * 1536
                 

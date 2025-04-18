@@ -18,13 +18,11 @@ from konveyor.settings.settings_loader import load_settings
 load_settings()
 
 # Now import the rest
-from konveyor.services.rag.rag_service import RAGService
-from konveyor.services.rag.context_service import ContextService
-from konveyor.core.azure.storage import AzureStorageManager
-from konveyor.core.azure.clients import AzureClientManager
+from konveyor.core.rag.rag_service import RAGService
+from konveyor.core.azure_utils.clients import AzureClientManager
 from konveyor.apps.search.services.indexing_service import IndexingService
 from konveyor.apps.search.services.search_service import SearchService
-from konveyor.apps.documents.services.document_service import DocumentService
+from konveyor.apps.documents.services.document_adapter import DjangoDocumentService # Updated import
 
 @pytest.mark.integration
 class TestRAGIntegration:
@@ -44,7 +42,7 @@ class TestRAGIntegration:
         self.rag_service = RAGService(client_manager)
         self.indexing_service = IndexingService()
         self.search_service = SearchService()
-        self.document_service = DocumentService()
+        self.document_service = DjangoDocumentService() # Instantiate the adapter
         
         # Index test documents
         test_docs = {
@@ -54,13 +52,18 @@ class TestRAGIntegration:
         }
         
         # Process and index each document
+        from io import BytesIO # Import BytesIO
+
         for filename, content in test_docs.items():
-            # Store document
-            doc = await self.document_service.store_document(
-                content.encode(),
-                filename,
-                "text/markdown",
-                title=filename
+            # Create a file-like object from the content string
+            file_obj = BytesIO(content.encode('utf-8'))
+
+            # Process document using the adapter's process_document method
+            # This handles model creation and delegates parsing/storage to core service
+            doc = self.document_service.process_document(
+                file_obj=file_obj,
+                filename=filename
+                # The adapter now handles content_type detection and uses filename for title
             )
             
             # Index document for search
