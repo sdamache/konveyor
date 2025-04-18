@@ -56,6 +56,9 @@ module "bot_service" {
   location            = "global"
   sku                 = "F0"
   microsoft_app_id    = var.microsoft_app_id
+  slack_client_id     = var.slack_client_id
+  slack_client_secret = var.slack_client_secret
+  slack_signing_secret = var.slack_signing_secret
   tags                = var.tags
 }
 

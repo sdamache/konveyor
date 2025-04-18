@@ -22,7 +22,30 @@ variable "tags" {
 variable "microsoft_app_id" {
   description = "Microsoft App ID for Azure Bot Service in the test environment"
   type        = string
-  default     = "0eecb239-f1dc-4ab6-8ac7-5d60fd9102d1" # Use the same default or a test-specific one if available
+  default     = "c8218a52-681c-4df2-b558-5fa8e5067b43" # Use the same default or a test-specific one if available
+}
+
+variable "microsoft_app_password" {
+  description = "Microsoft App Password for the Azure Bot Service in the test environment"
+  type        = string
+  sensitive   = true
+}
+
+variable "slack_client_id" {
+  description = "Slack Client ID for bot channel configuration in the test environment"
+  type        = string
+}
+
+variable "slack_client_secret" {
+  description = "Slack Client Secret for bot channel configuration in the test environment"
+  type        = string
+  sensitive   = true
+}
+
+variable "slack_signing_secret" {
+  description = "Slack Signing Secret for bot channel configuration in the test environment"
+  type        = string
+  sensitive   = true
 }
 
 # Note: Other variables like openai_sku_name, openai_model_name etc. are defined
