@@ -315,3 +315,21 @@ These rules are critical for guiding the Task Manager AI in generating accurate,
     *   **Guideline:** The description should be concise and imperative (e.g., "Add feature" not "Added feature").
     *   **Guideline:** A longer body can be added for more context, separated by a blank line.
     *   **Guideline:** Task Manager AI should suggest appropriate commit message structures within task details when generating implementation tasks for the Cascade agent.
+
+*   **H. Branching Strategy & Guidelines:**
+    *   **Model:** Employ a simple **feature branching** strategy. All new work (features, fixes) corresponding to a task or sub-task should be done on a dedicated branch created from the main development branch (e.g., `main` or `develop`).
+    *   **Branch Naming Convention:** Branches should be named descriptively, incorporating the task ID and type of work.
+        *   Features: `feat/task-<id>-<short-description>` (e.g., `feat/task-4-code-understanding-parser`)
+        *   Fixes: `fix/task-<id>-<short-description>` (e.g., `fix/task-3.2-search-service-adapter`)
+        *   Chores/Refactoring: `chore/task-<id>-<short-description>` (e.g., `chore/task-1.1-sk-directory-setup`)
+        *   Replace `<id>` with the full task ID (e.g., `3.2` for sub-tasks).
+        *   `<short-description>` should be 2-5 words summarizing the task, using hyphens.
+    *   **Workflow:**
+        1.  Create a new branch from the main development line (`main`/`develop`) using the naming convention.
+        2.  Implement the task/sub-task on this branch.
+        3.  Commit changes following the Conventional Commits guidelines (Section G).
+        4.  Once the task is complete and passes required checks (linting, tests), create a Pull Request (PR) to merge the feature branch back into the main development line.
+        5.  PRs should be reviewed before merging (details of review process TBD).
+    *   **Task Manager AI & Cascade Agent Integration:**
+        *   **Instruction Embedding:** Task Manager AI **must** calculate the specific branch name based on the convention above and **embed it directly into the implementation details** of each task generated for the Cascade agent (e.g., "Implementation Notes: Start by creating branch `feat/task-4.1-code-parser-setup`..."). It should also include a reminder to use the Conventional Commit format (Section G).
+        *   **Environment Enforcement (Optional):** The `.windsurfrules` file may potentially contain rules interpreted by the Windsurf environment or Cascade agent to further validate or enforce these branching and commit conventions, complementing the embedded instructions.
