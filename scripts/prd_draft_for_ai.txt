@@ -1,0 +1,317 @@
+# Overview
+
+Konveyor is an AI-powered knowledge transfer agent designed to address the significant challenges and high costs (estimated at $30,000+ per engineer) associated with software engineer onboarding. New engineers often face scattered, outdated, or missing documentation, knowledge silos, lack of context for architectural decisions, and inconsistent support, leading to prolonged ramp-up times and reduced productivity for both new hires and their mentors (See Appendix for link to detailed onboarding issues research).
+
+Konveyor leverages an **existing foundation of document processing, search, and RAG capabilities developed with the current Konveyor project, which are outlined in 'docs/architecture.md'**. We can leverage **additional functionalities integrated within the agentic framework (Semantic Kernel) when the functionality doesn't exist in our application.** This allows Konveyor to provide contextual assistance directly within the engineer's workflow (primarily Slack). It aims to accelerate onboarding by acting as a Documentation Navigator, Code Explainer, and Knowledge Gap Analyzer.
+
+This Product Requirements Document (PRD) outlines the Minimum Viable Product (MVP) for Konveyor, specifically tailored for development using the Task Manager AI within the Windsurf environment. The detailed structure and instructions herein are intended to guide the Task Manager AI, enabling a more structured, rule-based development process, minimizing agent deviation, enforcing project standards (like file locations and naming conventions as potentially defined in `.windsurfrules`), and ultimately accelerating the creation of a robust and reliable Konveyor agent for the Cascade implementation agent.
+
+# Core Features
+
+This MVP focuses on delivering the following core capabilities, designed to directly address common software engineer onboarding pain points and provide clear, self-contained instructions for the Task Manager AI and Cascade agent:
+
+1.  **Documentation Navigator**
+    *   **What it does:** Enables new engineers to ask natural language questions about organizational documentation (e.g., project setup, architecture, processes) via the Slack bot interface.
+    *   **Why it's important:** Addresses the critical problems of scattered, outdated, missing, or hard-to-find documentation (See Appendix: Onboarding Issues PDF - Documentation Issues). Provides a single, intelligent interface for knowledge discovery.
+    *   **How it works:**
+        *   **Leverages Existing Konveyor Service:** Utilizes the existing `konveyor.apps.search.services.SearchService` for its core semantic search capabilities over indexed documents.
+        *   **Requires New Semantic Kernel Integration:** This existing service needs to be wrapped as a Semantic Kernel skill/tool function.
+        *   **Requires New Semantic Kernel Skills:** New skills/tools need to be developed within the Semantic Kernel framework for:
+            *   Query preprocessing specifically for onboarding-related questions.
+            *   Response formatting using Markdown suitable for Slack display.
+            *   Adding basic source citation to responses.
+            *   Using Semantic Kernel's memory system to maintain conversation context for follow-up questions.
+            *   (Optional: Implementing a simple caching mechanism for frequent queries).
+
+2.  **Code Understanding**
+    *   **What it does:** Allows engineers to paste code snippets into Slack and ask questions about their functionality, purpose, or relation to the broader architecture.
+    *   **Why it's important:** Tackles the challenge of navigating complex, potentially undocumented codebases and understanding the "why" behind specific implementations or design decisions (See Appendix: Onboarding Issues PDF - Codebase Understanding Issues).
+    *   **How it works:**
+        *   **Requires New Semantic Kernel Skills:** This feature requires building new Semantic Kernel skills/tools for:
+            *   Code parsing, including language detection and basic structure analysis.
+            *   Developing specialized prompt templates tailored to explain organizational code patterns and conventions.
+            *   Generating context-aware code explanations that reference architectural decisions documented elsewhere (e.g., in `docs/architecture.md`).
+            *   Formatting responses with syntax highlighting suitable for Slack.
+            *   Handling errors gracefully for malformed or unsupported code snippets.
+
+3.  **Knowledge Gap Analyzer**
+    *   **What it does:** Passively analyzes an engineer's interactions (questions asked via the bot) to identify potential gaps in their understanding of key organizational knowledge domains (e.g., specific microservices, testing procedures, deployment pipeline). It can then suggest relevant documentation or learning resources.
+    *   **Why it's important:** Addresses the lack of structured onboarding and inconsistent knowledge transfer (See Appendix: Onboarding Issues PDF - Onboarding Process Issues, Knowledge Transfer Problems). Helps personalize the onboarding experience and proactively fills knowledge gaps.
+    *   **How it works:**
+        *   **Requires New Semantic Kernel Skills:** This feature requires building new Semantic Kernel skills/tools for:
+            *   Analyzing user questions to identify the underlying knowledge areas being asked about.
+            *   Mapping these questions to a predefined organizational knowledge area taxonomy (this taxonomy needs to be created).
+            *   Maintaining a confidence score for different knowledge areas per user, updating based on interactions.
+            *   Identifying knowledge gaps (areas with low confidence scores).
+            *   Generating basic learning paths or suggesting relevant resources (e.g., specific documents, wiki pages) based on detected gaps.
+            *   Tracking learning progress (basic implementation for MVP).
+
+*(Note: The underlying Agentic Framework using Semantic Kernel enables these features by orchestrating tool use, managing memory, and integrating with Slack. Setting up this framework itself involves tasks like configuring the kernel, integrating with Azure OpenAI, and connecting to the Slack bot interface, which will be detailed in the Development Roadmap section).*
+
+# User Experience
+
+The primary user experience is designed to be seamless and integrated into the developer's existing workflow, minimizing friction and addressing common onboarding frustrations.
+
+*   **User Personas:**
+    *   **Primary:** New Software Engineers (Juniors, Mid-level, Seniors new to the organization/team) undergoing onboarding. They are typically unfamiliar with the specific codebase, architecture, internal tools, and documentation landscape. They face challenges like finding information, understanding context, and identifying what they don't know.
+    *   **Secondary (Indirect):** Mentors/Senior Engineers. While not direct users of the bot for *their* onboarding, their experience is improved by offloading repetitive Q&A to Konveyor. They also benefit from Konveyor potentially highlighting areas where documentation is lacking or unclear based on new hire questions.
+
+*   **Key User Flows (via Slack Bot):**
+    1.  **Asking Documentation Questions:**
+        *   User initiates interaction in a dedicated Slack channel or via direct message with the Konveyor bot.
+        *   User asks a natural language question (e.g., "How do I set up my local dev environment?", "Where is the documentation for the auth service?").
+        *   Konveyor (using Documentation Navigator) processes the query, searches relevant documents, and provides a formatted answer with source citations directly in Slack.
+        *   User can ask follow-up questions within the same thread, maintaining context.
+    2.  **Requesting Code Explanation:**
+        *   User pastes a code snippet into Slack (potentially within a thread or direct message).
+        *   User asks a question about the code (e.g., "What does this function do?", "Why is this pattern used here?", "Is this related to the X module?").
+        *   Konveyor (using Code Understanding) analyzes the code, generates an explanation incorporating architectural context if possible, and replies with formatted text including syntax highlighting.
+    3.  **Receiving Proactive Assistance (Knowledge Gap Analyzer):**
+        *   Based on the user's questions over time, Konveyor identifies a potential knowledge gap.
+        *   Konveyor proactively sends a message (perhaps a subtle notification or a weekly summary) suggesting relevant documentation or learning resources related to the identified gap (e.g., "I noticed you asked a few questions about our deployment process. You might find this Confluence page helpful: [link]").
+
+*   **UI/UX Considerations:**
+    *   **Interface:** Primary interaction occurs within Slack, leveraging its familiar messaging interface (threads, direct messages, potentially app home).
+    *   **Clarity & Formatting:** Responses must be clearly formatted using Markdown for readability, including code blocks with syntax highlighting for code explanations and clear citations for documentation answers.
+    *   **Responsiveness:** The bot should acknowledge requests promptly, even if fetching the full answer takes a moment (e.g., "Okay, looking that up for you...").
+    *   **Context Management:** The bot must effectively manage conversation context within Slack threads to handle follow-up questions accurately.
+    *   **Error Handling:** Gracefully handle situations where it cannot answer a question, cannot parse code, or encounters an error, potentially suggesting alternative actions (e.g., "I couldn't find specific documentation on that, but here's the general architecture overview," or "I couldn't parse that code snippet. Please ensure it's complete.").
+    *   **Discoverability:** Clear instructions on how to interact with the bot should be available (e.g., via a `/konveyor help` command).
+    *   **Feedback Mechanism:**
+        *   **Essential (MVP Task):** Implement a simple feedback mechanism on bot responses within Slack. This could involve adding reaction buttons (e.g., 👍/👎) to each answer message. User reactions should be logged alongside the question and answer for later analysis and model improvement. This provides a basic "variable reward" for the user (sometimes the answer is good, sometimes not) and gathers data with minimal user effort.
+        *   **Good to Have (Future Enhancement):** Develop a more interactive feedback loop. For instance, a 👎 reaction could trigger a follow-up question from the bot (e.g., "Sorry about that! Could you tell me what was wrong with the answer? Was it inaccurate, incomplete, or something else?"). Furthermore, provide a mechanism (e.g., a specific command like `/konveyor suggest` or an option following negative feedback) for users to explicitly suggest missing documentation topics or unrecognized code patterns. This feedback should be captured and **ideally trigger an automated workflow, such as creating a Jira ticket in a designated project (e.g., 'DOCS_IMPROVEMENT' or 'KONVEYOR_FEEDBACK') or sending a formatted message to a specific Slack channel monitored by the documentation or platform team.** This provides a clear action item based on user input, increases user "investment" with the potential "reward" of seeing the knowledge base improve, and strengthens the habit loop. This feedback could also be used for more sophisticated reinforcement learning or prompt tuning.
+
+# Technical Architecture
+
+Konveyor's architecture leverages the existing robust foundation of the Konveyor Django application and its associated Azure services, augmented by the Microsoft Semantic Kernel framework to provide agentic capabilities.
+
+*   **System Components Overview:**
+    1.  **Interface Layer:** Primarily Slack, integrated via the `konveyor.apps.bot` module using the Bot Framework SDK. Handles user interaction and message routing.
+    2.  **Agentic Layer (Semantic Kernel):** The core orchestrator for the MVP features. Manages conversation flow, selects/invokes tools (skills), interacts with memory, and integrates with Azure OpenAI. Contains newly developed skills (Code Understanding, Knowledge Gap Analysis) and wrappers for existing services.
+    3.  **Core Konveyor Services (Django Backend):** Existing application modules providing foundational capabilities:
+        *   `konveyor.apps.documents`: Document ingestion, parsing, storage (Azure Blob).
+        *   `konveyor.apps.search`: Semantic search (Azure Cognitive Search).
+        *   `konveyor.apps.rag`: Existing RAG logic and conversation management.
+        *   `konveyor.core`: Shared utilities, Azure adapters (OpenAI, Search clients), core business logic.
+    4.  **Azure Infrastructure:** Underlying cloud services managed via IaC (`Konveyor-infra`): Azure OpenAI, Cognitive Search, Blob Storage, PostgreSQL (for Django), Key Vault, App Service components (Note: Specific deployment configuration needs to be implemented).
+
+*   **Detailed Architecture Reference:** For a comprehensive breakdown of modules, specific service interactions, data flow, deployment targets, and security details, **refer explicitly to the `docs/architecture.md` document.**
+
+*   **Data Models & Storage:**
+    *   Core data models are defined within existing Django models (`konveyor/apps/*/models.py`).
+    *   Semantic Kernel requires storage for conversation history and potentially user knowledge profiles. While Azure AI Search or other Azure storage can be used initially, note that **existing code artifacts related to Azure Cosmos DB and Redis caching exist within the codebase** (e.g., in `konveyor/apps/rag/models.py`, `konveyor/core/conversation/storage.py`, `konveyor/core/azure_utils/`) and associated commented infrastructure code (`Konveyor-infra/modules/rag`). These represent potential future alternatives if cost or performance requirements dictate a change from the primary Azure AI Search approach.
+
+*   **APIs and Integrations:**
+    *   Internal APIs between Django apps (Django REST Framework).
+    *   Semantic Kernel interacts with Azure OpenAI APIs and potentially custom APIs wrapping Konveyor services.
+    *   Integration with Slack API via Bot Framework.
+    *   Integration with Azure services via Azure SDKs.
+
+*   **Infrastructure & Deployment:**
+    *   Infrastructure components are provisioned via Terraform (`Konveyor-infra`).
+    *   **Note:** The specific deployment mechanism and CI/CD pipeline for the Django application and Semantic Kernel components need to be defined and implemented as part of the development effort (See Development Roadmap).
+
+*   **Development Process Guidance:** To ensure consistency and guide the Task Manager AI and Cascade agent effectively, the development process will adhere to specific constraints and rules (e.g., regarding file placement, naming conventions, code quality). **These detailed rules and constraints for the AI agents will be outlined in the Appendix.**
+
+# Development Roadmap
+
+This roadmap outlines the scope for the Konveyor MVP, focusing on delivering the core features sequentially. The goal is to provide the Task Manager AI with clearly defined work packages. Timelines are secondary; the primary focus is detailing the scope for each phase to enable accurate task breakdown and dependency mapping.
+
+**Phase 1: Foundation & Framework Setup**
+
+*   **Goal:** Establish the core agentic framework and basic integrations.
+*   **Key Tasks (for Task Manager AI breakdown):**
+    *   Set up Semantic Kernel framework within the Konveyor project structure.
+    *   Configure Semantic Kernel integration with Azure OpenAI (using credentials from Key Vault via `konveyor.core.azure_utils`).
+    *   Implement basic Semantic Kernel memory system configuration (e.g., volatile memory for initial development, define strategy for persistent memory like Azure AI Search or alternatives).
+    *   Implement the agent orchestration layer responsible for receiving requests (initially from Slack via Bot Framework) and routing them to appropriate Semantic Kernel skills/tools.
+    *   Connect the agent orchestration layer to the existing Slack bot (`konveyor.apps.bot`) to handle incoming messages and send responses.
+    *   Implement basic error handling and logging within the agent framework.
+    *   **Infrastructure:** Define and implement the target deployment infrastructure for the Django application (e.g., Azure App Service for Docker containers) via Terraform updates in `Konveyor-infra`.
+    *   **CI/CD:** Set up initial CI pipeline (e.g., GitHub Actions) for basic linting, testing (unit tests for core components), and Docker image building for the Django app.
+
+**Phase 2: Documentation Navigator Implementation**
+
+*   **Goal:** Implement the core documentation search and retrieval feature.
+*   **Key Tasks (for Task Manager AI breakdown):**
+    *   Wrap the existing `konveyor.apps.search.services.SearchService` as a Semantic Kernel skill/tool for semantic search.
+    *   Develop a new Semantic Kernel skill/tool for query preprocessing (identifying documentation-related questions).
+    *   Develop a new Semantic Kernel skill/tool for formatting responses in Slack-compatible Markdown.
+    *   Develop a new Semantic Kernel skill/tool to add basic source document citations to responses.
+    *   Integrate Semantic Kernel's memory system to handle conversation context for follow-up questions related to documentation.
+    *   Implement basic testing for the Documentation Navigator flow.
+
+**Phase 3: Code Understanding Implementation**
+
+*   **Goal:** Implement the core code explanation feature.
+*   **Key Tasks (for Task Manager AI breakdown):**
+    *   Develop a new Semantic Kernel skill/tool for code parsing (language detection, basic structure analysis).
+    *   Develop specialized prompt templates within Semantic Kernel for explaining organizational code patterns, referencing architectural context where appropriate.
+    *   Develop a new Semantic Kernel skill/tool to generate explanations based on parsed code and prompts.
+    *   Develop a new Semantic Kernel skill/tool to format code explanations with syntax highlighting for Slack.
+    *   Implement error handling for malformed or unsupported code snippets.
+    *   Implement basic testing for the Code Understanding flow.
+
+**Phase 4: Knowledge Gap Analyzer (Basic) & Feedback**
+
+*   **Goal:** Implement the initial version of the knowledge gap analysis and the essential feedback mechanism.
+*   **Key Tasks (for Task Manager AI breakdown):**
+    *   Define and implement the initial organizational knowledge area taxonomy (e.g., store in a configuration file or simple database model).
+    *   Develop a new Semantic Kernel skill/tool to analyze user questions and map them to the knowledge taxonomy.
+    *   Develop a new Semantic Kernel skill/tool to maintain basic confidence scores per user per knowledge area (in-memory or simple persistent storage).
+    *   Develop a new Semantic Kernel skill/tool to identify gaps based on low confidence scores.
+    *   Develop a new Semantic Kernel skill/tool to suggest relevant existing documentation based on identified gaps.
+    *   Implement the essential feedback mechanism (e.g., Slack reaction buttons 👍/👎) and log feedback data.
+    *   Implement basic testing for the Knowledge Gap Analyzer and feedback logging.
+    *   **CI/CD:** Enhance CI pipeline to include integration tests for core features developed so far. Implement basic CD pipeline for deploying the application container to the configured Azure App Service environment (manual trigger initially).
+
+**Staging Checkpoints & Phase Gates (Instructions for Task Manager AI):**
+
+*   Task Manager AI must configure the workflow such that **review and validation are required at the end of each Phase** before proceeding to the next.
+*   **Phase 1 Gate:** Successful deployment of the basic framework to a dev/test environment. Basic Slack connectivity confirmed.
+*   **Phase 2 Gate:** Successful demonstration of documentation search and retrieval via Slack. Basic integration tests pass.
+*   **Phase 3 Gate:** Successful demonstration of code explanation via Slack for supported languages. Basic integration tests pass.
+*   **Phase 4 Gate:** Successful demonstration of basic gap identification and resource suggestion, plus feedback logging. Enhanced integration tests pass. Deployed MVP version ready for initial UAT.
+*   **Documentation Requirement:** Task Manager AI should ensure that tasks related to updating relevant documentation (e.g., READMEs, architecture notes if impacted) are generated alongside feature implementation tasks, particularly at phase boundaries.
+
+**Future Enhancements (Beyond MVP):**
+
+*   Advanced feedback loop (interactive prompts, suggestion routing via Jira/Slack).
+*   More sophisticated Knowledge Gap Analyzer (adaptive paths, knowledge graphs, multi-format resources).
+*   Enhanced Code Understanding (diff explanations, code summarization, additional languages).
+*   Hybrid search, document clustering, query expansion for Documentation Navigator.
+*   Advanced Semantic Kernel memory management and caching.
+*   Full CI/CD automation with automated testing gates.
+*   UI/UX improvements (React SPA, analytics dashboards).
+
+# Logical Dependency Chain
+
+This section outlines the critical dependencies and sequencing required for the MVP development. The Task Manager AI must generate tasks and enforce execution order based on these dependencies to ensure a stable and logical build process.
+
+**Core Dependencies:**
+
+1.  **Infrastructure Before Deployment:** Tasks related to defining and provisioning the necessary Azure infrastructure (via `Konveyor-infra` updates, Phase 1) **must precede** any tasks attempting to deploy application components (e.g., the Django app to Azure App Service, Phase 1 CI/CD).
+2.  **Framework Before Features:** The core Semantic Kernel framework setup, including Azure OpenAI integration and basic agent orchestration (Phase 1), **must be completed** before tasks related to implementing specific feature skills (Documentation Navigator, Code Understanding, Knowledge Gap Analyzer - Phases 2, 3, 4) can begin.
+3.  **Slack Integration Before Interaction:** The connection between the agent orchestration layer and the Slack bot (Phase 1) **must be functional** before any end-to-end user interaction flows (Phases 2, 3, 4) can be fully tested or implemented.
+
+**Feature Dependencies:**
+
+4.  **Documentation Navigator Foundation:** While features can be developed somewhat in parallel after Phase 1, the Documentation Navigator (Phase 2) provides the first user-facing value and tests the core search integration. It's recommended to prioritize its completion to establish a working end-to-end flow quickly.
+5.  **Skill Dependencies:** Within each feature phase (2, 3, 4), the tasks involving wrapping existing services (like `SearchService`) or developing core logic skills **must precede** tasks that integrate these skills into the overall agent flow or add UI/formatting layers.
+
+**Task Generation Constraints & Dependencies (Instructions for Task Manager AI):**
+
+6.  **Directory Constraints:** Task Manager AI **must** generate tasks that adhere to defined file creation boundaries and directory structures (as specified in the Appendix rules). For example, tasks modifying Terraform **must** operate within the `Konveyor-infra/` directory and its submodules/environments. Tasks creating new Semantic Kernel skills **must** place them in the designated skills directory (e.g., `konveyor/skills/`). Work on specific sub-issues (if mapped later) **must be constrained** to their designated directories.
+7.  **Documentation Linkage:** For any task involving significant code implementation or modification (especially API changes or new feature logic), Task Manager AI **must generate a dependent task** for updating relevant documentation (e.g., READMEs, `docs/architecture.md` if impacted, module-level documentation). This ensures documentation stays synchronized with the code.
+8.  **Testing Dependencies:** Feature implementation tasks **must have dependent tasks** for creating corresponding unit and integration tests. Phase completion depends on these tests passing (as defined in the Roadmap phase gates).
+9.  **CI/CD Dependencies:** Application deployment tasks (Phase 4 CD) **depend on** the successful completion and testing of the features included in that deployment, as well as the prior setup of the CI/CD infrastructure (Phase 1 CI/CD basics, Phase 4 enhancements).
+
+**Development Approach:**
+
+*   Prioritize establishing the foundational elements (Phase 1) quickly to enable parallel work on feature skills where possible.
+*   Focus on getting a minimal, visible end-to-end flow working (e.g., Slack -> Agent -> Basic Search -> Slack Response) as early as possible (target end of Phase 2).
+*   Scope tasks atomically, ensuring each task delivers a specific piece of functionality or infrastructure, respects dependencies, and can be built upon.
+
+# Risks and Mitigations
+
+This section identifies potential risks during the MVP development and outlines mitigation strategies. The Task Manager AI should be aware of these risks and incorporate mitigations into task planning where applicable.
+
+**1. Technical Risks:**
+
+*   **Risk:** Complexity in integrating Semantic Kernel with the existing Django application and Azure services. Unexpected compatibility issues or steep learning curve.
+    *   **Mitigation:** Start with simple integrations (Phase 1). Leverage existing Azure adapters in `konveyor.core`. Allocate time for research and potential refactoring if needed. Prioritize clear interfaces between Semantic Kernel skills and core Konveyor services.
+*   **Risk:** Performance bottlenecks in Semantic Kernel orchestration, Azure OpenAI calls, or Azure Cognitive Search queries, especially under load.
+    *   **Mitigation:** Implement basic caching early (as noted in Documentation Navigator). Monitor response times during testing. Optimize critical paths. Consider asynchronous processing for non-critical tasks (e.g., background knowledge gap analysis).
+*   **Risk:** Difficulty in accurately parsing diverse code snippets or handling edge cases in the Code Understanding feature.
+    *   **Mitigation:** Start with a limited set of well-defined languages/patterns for the MVP. Implement robust error handling for unparseable code. Focus prompt engineering on common organizational patterns. Log parsing failures for future improvement.
+
+**2. Process & AI Agent Risks:**
+
+*   **Risk:** Task Manager AI incorrectly interprets PRD sections, leading to inaccurate task breakdown or dependency mapping.
+    *   **Mitigation:** Structure this PRD with clear, explicit instructions and self-contained sections. Use consistent terminology. Implement review gates (human oversight) after initial task generation and at phase boundaries.
+*   **Risk:** Cascade agent deviates from generated task instructions, creating code in incorrect locations, using wrong naming conventions, or implementing logic incorrectly (Agent Deviation).
+    *   **Mitigation:**
+        *   **Strict Constraints:** Task Manager AI must generate tasks with explicit constraints (file paths, naming conventions) based on rules defined in the Appendix. **These constraints should ideally be mirrored or enforced via rules within the `.windsurfrules` file used by the Windsurf environment.**
+        *   **Component Isolation:** Generate tasks that minimize cross-component modifications. Enforce API boundaries. Task Manager AI should flag tasks requiring changes in multiple unrelated areas for review.
+        *   **Automated Validation:** Incorporate automated checks (linting, unit tests, potentially simple rule checks via `.windsurfrules`) as sub-tasks or completion criteria for Cascade agent tasks. Task Manager AI should ensure these validation tasks are generated.
+        *   **Clear Task Details:** Task Manager AI must generate tasks with highly specific implementation details and acceptance criteria.
+*   **Risk:** Generated tasks lack sufficient detail or context for the Cascade agent.
+    *   **Mitigation:** Task Manager AI should leverage detailed descriptions from this PRD. Implement a mechanism for the Cascade agent (or human reviewer) to flag tasks needing clarification or expansion *before* implementation begins.
+*   **Risk:** Dependencies between tasks are missed or incorrectly mapped by Task Manager AI, leading to build failures or incorrect execution order.
+    *   **Mitigation:** Clearly define dependencies in the Logical Dependency Chain section. Task Manager AI must strictly adhere to this. Implement automated dependency checks within the task management tooling if possible. Human review of the initial dependency graph.
+
+**3. Resource & Cost Risks:**
+
+*   **Risk:** Azure OpenAI and Cognitive Search costs exceed budget, especially during development and testing.
+    *   **Mitigation:** Implement cost optimization strategies outlined in the Accelerated PRD (tiered search, caching). Use less expensive models during initial development where feasible. Monitor Azure costs closely. Set up budget alerts in Azure.
+*   **Risk:** Development timeline underestimated due to unforeseen technical challenges or AI agent issues.
+    *   **Mitigation:** Focus scope tightly on MVP essentials. Prioritize core functionality. Use phased approach with clear gates. Build in buffer time for potential debugging of AI agent interactions.
+
+**4. Onboarding Domain Risks:**
+
+*   **Risk:** Difficulty in creating an accurate and comprehensive knowledge taxonomy for the Knowledge Gap Analyzer.
+    *   **Mitigation:** Start with a high-level taxonomy based on existing documentation structure and common onboarding topics. Refine iteratively based on user interactions and feedback. Involve subject matter experts if possible.
+*   **Risk:** Konveyor provides inaccurate or misleading information, negatively impacting the new engineer's learning process.
+    *   **Mitigation:** Implement the feedback mechanism (👍/👎) early. Log responses and feedback for analysis. Prioritize accuracy in prompt engineering and context retrieval. Clearly cite sources for documentation answers. Set user expectations that the bot is an assistant, not an infallible oracle.
+
+# Appendix
+
+This appendix contains supplementary information, including links to relevant documents and detailed guidelines specifically for the Task Manager AI and Cascade agent development workflow.
+
+**1. Supporting Documents:**
+
+*   **Detailed System Architecture:** `docs/architecture.md` (Provides comprehensive details on Konveyor modules, data flow, infrastructure, etc.)
+*   **Onboarding Challenges Research:** `docs/Major_issues_with_onboarding_software_employees.pdf` (Details the core problems Konveyor aims to solve, based on external research).
+*   **Accelerated PRD (Hackathon Context):** `docs/app_modernization/Konveyor_Accelerated_PRD_MVP_for_AI_Agents_Hackathon.md` (Provides original context and unique differentiator details, though core requirements are embedded in this main PRD).
+*   **Windsurf Rules:** `.windsurfrules` (Contains rules potentially used by the Windsurf environment to enforce some of the constraints below).
+
+**2. AI Agent Development Constraints & Guidelines:**
+
+These rules are critical for guiding the Task Manager AI in generating accurate, consistent, and manageable tasks for the Cascade agent, and for guiding the Cascade agent's implementation within the Windsurf environment. Task Manager AI **must** incorporate these constraints into task generation and dependency mapping.
+
+*   **A. File Creation Boundaries & Directory Structure:**
+    *   **Rule:** All new code related to Semantic Kernel skills (e.g., Documentation Navigator tools, Code Understanding parser, Knowledge Gap Analyzer logic) **must** be placed within a newly created top-level directory, e.g., `konveyor/skills/`, organized into subdirectories per feature (e.g., `konveyor/skills/documentation_navigator/`, `konveyor/skills/code_understanding/`).
+    *   **Rule:** Modifications or wrappers related to existing Konveyor services **must** be placed appropriately within the existing `konveyor/apps/` structure or `konveyor/core/` where applicable (e.g., a Semantic Kernel adapter for `SearchService` might reside near `konveyor/apps/search/services/`).
+    *   **Rule:** Infrastructure changes **must** be confined to the `Konveyor-infra/` directory and its subdirectories (modules, environments).
+    *   **Rule:** Unit and integration tests **must** be placed in corresponding `tests/` directories mirroring the structure of the code they test.
+    *   **Rule:** Task Manager AI **must** specify the exact target file path(s) in generated tasks involving file creation or modification.
+
+*   **B. Naming Conventions:**
+    *   **Rule:** Follow standard Python (PEP 8) and Django naming conventions for backend code (snake_case for variables, functions, modules; PascalCase for classes).
+    *   **Rule:** Semantic Kernel Skills/Plugins should follow PascalCase (e.g., `DocumentationNavigatorSkill`). Skill functions/tools exposed within a skill should follow snake_case (e.g., `format_slack_response`, `parse_python_code`).
+    *   **Rule:** New Python modules/directories should use snake_case (e.g., `konveyor/skills/knowledge_analyzer/`).
+    *   **Rule:** Configuration files should use descriptive names (e.g., `knowledge_taxonomy.yaml`).
+    *   **Rule:** Test files should be prefixed with `test_` (e.g., `test_code_parser.py`).
+    *   **Guideline:** Task/Issue titles generated by Task Manager AI should be concise yet descriptive, clearly indicating the action and component (e.g., "Create `CodeParserSkill` for Python", "Add unit tests for `format_slack_response`"). Sub-task IDs should use dot notation (e.g., `3.1`, `3.2`).
+    *   **Rule:** Task Manager AI **must** attempt to enforce these conventions when generating task details involving new code elements.
+
+*   **C. Component Templates:**
+    *   **Guideline:** When generating tasks for creating new Semantic Kernel skills, Task Manager AI should suggest a basic structure including initialization (`__init__`), necessary imports, core function definitions with type hints using `@sk_function` decorators, and basic error handling placeholders.
+    *   **Guideline:** Tasks for creating new Django models or services should reference existing patterns within the Konveyor codebase.
+
+*   **D. Code Quality Gates & Validation:**
+    *   **Rule:** Task Manager AI **must** generate sub-tasks or include explicit acceptance criteria for ensuring code quality for any significant implementation task.
+    *   **Requirement:** Linting (e.g., using flake8 or black) **must** pass for all new/modified Python code. A linting check should be a standard sub-task.
+    *   **Requirement:** Relevant unit tests **must** be written and pass for new functions/classes. Test creation should be a dependent task.
+    *   **Requirement:** Integration tests **must** be written and pass for end-to-end feature flows, especially at phase boundaries. Test creation/execution should be a dependent task gating phase completion.
+    *   **Guideline:** Consider adding static analysis checks (e.g., mypy for type checking) as part of the CI pipeline (Phase 1/4 task).
+
+*   **E. Component Isolation & API Boundaries:**
+    *   **Rule:** Task Manager AI should prioritize generating tasks that modify code within a single component or module (e.g., one Semantic Kernel skill, one Django app).
+    *   **Rule:** Tasks requiring modifications across multiple, loosely related components **must** be flagged for human review before implementation.
+    *   **Guideline:** Interactions between Semantic Kernel skills and core Django services should ideally occur through well-defined interfaces or adapters, rather than direct cross-component calls where possible.
+
+*   **F. Progressive Testing Strategy:**
+    *   **Rule:** Task Manager AI **must** sequence testing tasks logically:
+        1.  Unit tests generated alongside component implementation.
+        2.  Service-level integration tests generated after core component logic is complete.
+        3.  End-to-end integration tests (e.g., Slack -> Agent -> Response) generated and executed at phase boundaries.
+    *   **Requirement:** Test coverage requirements should be considered (though specific % targets are TBD), ensuring critical paths are tested. Task Manager AI should include "ensure adequate test coverage" in relevant task descriptions.
+
+*   **G. Commit Message Guidelines:**
+    *   **Guideline:** Commit messages should follow the Conventional Commits specification (https://www.conventionalcommits.org/).
+    *   **Format:** `<type>[optional scope]: <description>` (e.g., `feat(skills): add code parsing for python`, `fix(search): correct citation formatting`, `docs(prd): update roadmap section`, `test(rag): add integration test for context retrieval`).
+    *   **Types:** `feat`, `fix`, `build`, `chore`, `ci`, `docs`, `style`, `refactor`, `perf`, `test`.
+    *   **Guideline:** The description should be concise and imperative (e.g., "Add feature" not "Added feature").
+    *   **Guideline:** A longer body can be added for more context, separated by a blank line.
+    *   **Guideline:** Task Manager AI should suggest appropriate commit message structures within task details when generating implementation tasks for the Cascade agent.
