@@ -14,16 +14,27 @@ module "key_vault" {
 }
 
 module "openai" {
-  source              = "../../modules/openai"
-  name                = "${var.prefix}-test-openai"
-  resource_group_name = module.resource_group.name
-  location            = var.location
-  sku_name            = "S0"
-  model_name          = "gpt-4o"
-  model_version       = "2024-05-13" # Use valid YYYY-MM-DD format
-  capacity            = 1
-  tags                = var.tags
+  source                       = "../../modules/openai"
+  name                         = "${var.prefix}-test-openai"
+  resource_group_name          = module.resource_group.name
+  location                     = var.location
+  sku_name                     = "S0"
+
+  # Chat (GPT) model deployment
+  deploy_model                 = var.deploy_model
+  model_name                   = var.openai_model_name
+  model_version                = var.openai_model_version
+  capacity                     = var.openai_capacity
+
+  # Embeddings model deployment
+  deploy_embeddings            = var.deploy_embeddings
+  embeddings_model_name        = var.openai_embeddings_model_name
+  embeddings_model_version     = var.openai_embeddings_model_version
+  embeddings_capacity          = var.openai_embeddings_capacity
+
+  tags                         = var.tags
 }
+
 
 module "document_intelligence" {
   source              = "../../modules/document-intelligence"

@@ -57,7 +57,7 @@ class AzureClientManager:
     def __init__(self, config: Optional[AzureConfig] = None):
         """Initialize with optional config."""
         self.config = config or AzureConfig()
-        
+
     @azure_retry()
     def get_search_clients(self, index_name: str) -> Tuple[SearchIndexClient, SearchClient]:
         """Initialize and return Azure Cognitive Search clients.
@@ -217,39 +217,16 @@ class AzureClientManager:
             raise
             
     @azure_retry()
-    def get_secret_client(self) -> SecretClient:
-        """Initialize and return Azure Key Vault client.
-        
-        Creates a client for accessing secrets in Azure Key Vault.
-        Uses token-based authentication via DefaultAzureCredential.
-        
-        Returns:
-            SecretClient: Configured Key Vault client
-            
-        Raises:
-            ValueError: If required configuration is missing
-            Exception: If client initialization fails
-            
-        Required Environment Variables:
-            AZURE_KEY_VAULT_URL: Key Vault URL
-            
-        Note:
-            This client requires proper Azure AD authentication.
-            It will attempt to use DefaultAzureCredential for authentication.
-        """
+    def get_key_vault_client(self) -> SecretClient:
+        """Initialize and return Azure Key Vault SecretClient."""
+        vault_url = self.config.get_key_vault_url()
+        credential = self.config.get_credential()
+        if not all([vault_url, credential]):
+            raise ValueError("Missing required Key Vault configuration")
         try:
-            vault_url = self.config.get_key_vault_url()
-            credential = self.config.get_credential()
-            
-            if not all([vault_url, credential]):
-                raise ValueError("Missing required Key Vault configuration")
-                
-            client = SecretClient(vault_url=vault_url, credential=credential)
-            
-            return client
-            
+            return SecretClient(vault_url=vault_url, credential=credential)
         except Exception as e:
-            logger.error(f"Failed to initialize Key Vault client: {str(e)}")
+            logger.error(f"Failed to initialize Key Vault client: {e}")
             raise
             
     @azure_retry()

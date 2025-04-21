@@ -48,6 +48,53 @@ variable "slack_signing_secret" {
   sensitive   = true
 }
 
+variable "deploy_model" {
+  description = "Deploy model in the test environment"
+  type        = string
+  default     = "true"
+}
+
+variable "openai_model_name" {
+  description = "OpenAI model name in the test environment"
+  type        = string
+  default     = "gpt-4o"
+}
+variable "openai_model_version" {
+  description = "OpenAI model version in the test environment"
+  type        = string
+  default     = "2024-05-13"
+}
+
+variable "openai_capacity" {
+  description = "OpenAI capacity in the test environment"
+  type        = string
+  default     = "10"
+}  
+
+variable "deploy_embeddings" {
+  description = "Deploy embeddings model in the test environment"
+  type        = bool
+  default     = true
+}
+
+variable "openai_embeddings_model_name" {
+  description = "OpenAI embeddings model name in the test environment"
+  type        = string
+  default     = "text-embedding-ada-002"
+}
+
+variable "openai_embeddings_model_version" {
+  description = "OpenAI embeddings model version in the test environment"
+  type        = string
+  default     = "2"
+}
+
+variable "openai_embeddings_capacity" {
+  description = "OpenAI embeddings model capacity in the test environment"
+  type        = number
+  default     = 10
+}
+
 # Note: Other variables like openai_sku_name, openai_model_name etc. are defined
 # in the root variables.tf and their defaults will be used unless overridden here
 # or in a .tfvars file (which we are not using in the script).
