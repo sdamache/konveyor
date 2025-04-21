@@ -31,7 +31,7 @@ from konveyor.skills.setup import create_kernel
 kernel = create_kernel()
 
 # Access chat AI service
-chat = kernel.get_ai_service('chat')
+chat = kernel.get_service('chat')
 response = chat.generate('Hello Semantic Kernel')
 print(response)
 ```
