@@ -38,6 +38,7 @@ from openai import AzureOpenAI
 
 from konveyor.core.azure_utils.config import AzureConfig
 from konveyor.core.azure_utils.retry import azure_retry
+from konveyor.core.conversation.storage import AzureStorageManager
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +58,7 @@ class AzureClientManager:
     def __init__(self, config: Optional[AzureConfig] = None):
         """Initialize with optional config."""
         self.config = config or AzureConfig()
-        
+
     @azure_retry()
     def get_search_clients(self, index_name: str) -> Tuple[SearchIndexClient, SearchClient]:
         """Initialize and return Azure Cognitive Search clients.
@@ -81,10 +82,11 @@ class AzureClientManager:
             AZURE_SEARCH_ENDPOINT: Search service endpoint
             AZURE_SEARCH_API_KEY: Search service API key
         """
+        config = self.config
         try:
             # Initialize search clients
-            search_endpoint = self.config.get_endpoint("SEARCH")
-            search_key = self.config.get_key("SEARCH")
+            search_endpoint = config.get_endpoint("SEARCH")
+            search_key = config.get_key("SEARCH")
             
             if not all([search_endpoint, search_key, index_name]):
                 raise ValueError("Missing required search configuration")
@@ -130,10 +132,11 @@ class AzureClientManager:
         Optional Environment Variables:
             AZURE_OPENAI_API_VERSION: API version (default: 2024-12-01-preview)
         """
+        config = self.config
         try:
-            endpoint = self.config.get_endpoint("OPENAI")
-            api_key = self.config.get_key("OPENAI")
-            api_version = os.getenv("AZURE_OPENAI_API_VERSION", "2024-12-01-preview")
+            endpoint = config.get_endpoint("OPENAI")
+            api_key = config.get_key("OPENAI")
+            api_version = config.get_setting("AZURE_OPENAI_API_VERSION")
             
             if not all([endpoint, api_key]):
                 raise ValueError("Missing required OpenAI configuration")
@@ -168,9 +171,10 @@ class AzureClientManager:
             AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT: Document Intelligence endpoint
             AZURE_DOCUMENT_INTELLIGENCE_API_KEY: Document Intelligence API key
         """
+        config = self.config
         try:
-            endpoint = self.config.get_endpoint("DOCUMENT_INTELLIGENCE")
-            key = self.config.get_key("DOCUMENT_INTELLIGENCE")
+            endpoint = config.get_endpoint("DOCUMENT_INTELLIGENCE")
+            key = config.get_key("DOCUMENT_INTELLIGENCE")
             
             if not all([endpoint, key]):
                 raise ValueError("Missing required Document Intelligence configuration")
@@ -202,8 +206,9 @@ class AzureClientManager:
             1. AZURE_STORAGE_CONNECTION_STRING
             2. Both AZURE_STORAGE_ACCOUNT_NAME and AZURE_STORAGE_ACCOUNT_KEY
         """
+        config = self.config
         try:
-            conn_str = self.config.get_storage_connection_string()
+            conn_str = config.get_storage_connection_string()
             
             if not conn_str:
                 raise ValueError("Missing required storage configuration")
@@ -217,7 +222,7 @@ class AzureClientManager:
             raise
             
     @azure_retry()
-    def get_secret_client(self) -> SecretClient:
+    def get_key_vault_client(self) -> SecretClient:
         """Initialize and return Azure Key Vault client.
         
         Creates a client for accessing secrets in Azure Key Vault.
@@ -237,19 +242,15 @@ class AzureClientManager:
             This client requires proper Azure AD authentication.
             It will attempt to use DefaultAzureCredential for authentication.
         """
+        config = self.config
+        vault_url = config.get_key_vault_url()
+        credential = config.get_credential()
+        if not all([vault_url, credential]):
+            raise ValueError("Missing required Key Vault configuration")
         try:
-            vault_url = self.config.get_key_vault_url()
-            credential = self.config.get_credential()
-            
-            if not all([vault_url, credential]):
-                raise ValueError("Missing required Key Vault configuration")
-                
-            client = SecretClient(vault_url=vault_url, credential=credential)
-            
-            return client
-            
+            return SecretClient(vault_url=vault_url, credential=credential)
         except Exception as e:
-            logger.error(f"Failed to initialize Key Vault client: {str(e)}")
+            logger.error(f"Failed to initialize Key Vault client: {e}")
             raise
             
     @azure_retry()
@@ -269,11 +270,10 @@ class AzureClientManager:
             AZURE_COSMOS_CONNECTION_STRING: Cosmos DB connection string
             AZURE_REDIS_CONNECTION_STRING: Redis connection string
         """
+        config = self.config
         try:
-            from konveyor.core.conversation.storage import AzureStorageManager
-            
-            cosmos_conn_str = self.config.get_cosmos_connection_string()
-            redis_conn_str = self.config.get_redis_connection_string()
+            cosmos_conn_str = config.get_cosmos_connection_string()
+            redis_conn_str = config.get_redis_connection_string()
             
             if not all([cosmos_conn_str, redis_conn_str]):
                 raise ValueError("Missing required storage configuration")

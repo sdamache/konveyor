@@ -475,3 +475,14 @@ alwaysApply: true
   - Document breaking changes
 
 Follow WINDSURF_RULES for proper rule formatting and structure of windsurf rule sections.
+
+---
+TEST_WORKFLOW
+---
+description: Integration tests should not use dummy or mock tests; they must invoke real Azure service endpoints and configurations.
+globs: **/tests/**/*
+filesToApplyRule: **/tests/**/*
+alwaysApply: true
+
+- Integration tests must not use dummy or mock tests.
+- Tests must invoke real Azure and Slack endpoints using environment-driven configuration.
