@@ -98,3 +98,19 @@ variable "openai_embeddings_capacity" {
 # Note: Other variables like openai_sku_name, openai_model_name etc. are defined
 # in the root variables.tf and their defaults will be used unless overridden here
 # or in a .tfvars file (which we are not using in the script).
+variable "slack_app_token" {
+  description = "Slack App Token for bot channel configuration in the test environment"
+  type        = string
+  sensitive   = true
+}
+
+variable "slack_bot_token" {
+  description = "Slack Bot Token for bot channel configuration in the test environment"
+  type        = string
+  sensitive   = true
+}
+
+variable "slack_test_channel_id" {
+  description = "ID of the Slack channel for testing in the test environment"
+  type        = string
+}
