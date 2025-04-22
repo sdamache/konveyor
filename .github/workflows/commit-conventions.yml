@@ -1,0 +1,38 @@
+name: "Conventional Commits & PR Naming Enforcement"
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+  push:
+    branches:
+      - main
+
+jobs:
+  semantic-pull-request:
+    name: "Validate PR Title and Commit Messages"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@v5
+        with:
+          types: |
+            feat
+            fix
+            chore
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            revert
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Enforce Feature Branch Naming
+        if: startsWith(github.head_ref, 'feat/task-')
+        run: echo "Branch name follows the required pattern."
+      - name: Fail if Branch Name Does Not Match
+        if: ${{ !startsWith(github.head_ref, 'feat/task-') }}
+        run: |
+          echo "Branch name must start with 'feat/task-<id>-<desc>'"
+          exit 1

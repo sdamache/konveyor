@@ -1,20 +1,20 @@
--r python-dotenv
--r django
--r openai>=1.0.0
--r azure-identity
--r azure-ai-formrecognizer
--r azure-search-documents>=11.4.0
--r azure-storage-blob
--r pytest
--r pytest-asyncio
--r pytest-aiohttp
--r slack_sdk>=3.19.0
--r certifi
--r botbuilder-core
--r aiohttp>=3.7.4
--r botbuilder-integration-aiohttp
--r asyncio
--r cookiecutter
+python-dotenv
+django
+openai>=1.0.0
+azure-identity
+azure-ai-formrecognizer
+azure-search-documents>=11.4.0
+azure-storage-blob
+pytest
+pytest-asyncio
+pytest-aiohttp
+slack_sdk>=3.19.0
+certifi
+botbuilder-core
+aiohttp>=3.7.4
+botbuilder-integration-aiohttp
+asyncio
+cookiecutter
 # Add other specific dependencies as needed
 -r requirements/base.txt
 -r requirements/development.txt
