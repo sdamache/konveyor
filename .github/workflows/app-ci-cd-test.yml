@@ -11,6 +11,7 @@ on:
       - 'manage.py'
       - 'package.json'
       - 'package-lock.json'
+      - '.github/workflows/**'
   pull_request:
     paths:
       - 'konveyor/**'
