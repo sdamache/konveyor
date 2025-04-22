@@ -10,6 +10,12 @@ This Product Requirements Document (PRD) outlines the Minimum Viable Product (MV
 
 This MVP focuses on delivering the following core capabilities, designed to directly address common software engineer onboarding pain points and provide clear, self-contained instructions for the Task Manager AI and Cascade agent:
 
+0.  **Infrastructure & CI/CD Pipeline**
+    *  **What it does:** Provision Azure resources (App Service, Key Vault, Terraform configs) and establish a GitHub Actions CI/CD pipeline.
+    *  **Why it's critical:** Ensures automated testing and deployment guardrails; no other feature work should proceed without this in place.
+    *  **Dependencies:** None (foundation for all other tasks).
+    *  **Branching & Workflow:** Enforce feature-branch naming (e.g., `feat/task-<id>-<desc>`), PR review, and Conventional Commits.
+
 1.  **Documentation Navigator**
     *   **What it does:** Enables new engineers to ask natural language questions about organizational documentation (e.g., project setup, architecture, processes) via the Slack bot interface.
     *   **Why it's important:** Addresses the critical problems of scattered, outdated, missing, or hard-to-find documentation (See Appendix: Onboarding Issues PDF - Documentation Issues). Provides a single, intelligent interface for knowledge discovery.
@@ -117,6 +123,11 @@ Konveyor's architecture leverages the existing robust foundation of the Konveyor
 
 This roadmap outlines the scope for the Konveyor MVP, focusing on delivering the core features sequentially. The goal is to provide the Task Manager AI with clearly defined work packages. Timelines are secondary; the primary focus is detailing the scope for each phase to enable accurate task breakdown and dependency mapping.
 
+**Phase 0: Infrastructure & CI/CD Setup**
+*   **Goal:** Provision Azure resources and establish GitHub Actions CI/CD pipeline.
+*   **Dependencies:** None; must complete before Foundations (Phase 1).
+*   **Deliverables:** Terraform configs and CI workflows.
+
 **Phase 1: Foundation & Framework Setup**
 
 *   **Goal:** Establish the core agentic framework and basic integrations.
@@ -168,6 +179,7 @@ This roadmap outlines the scope for the Konveyor MVP, focusing on delivering the
 **Staging Checkpoints & Phase Gates (Instructions for Task Manager AI):**
 
 *   Task Manager AI must configure the workflow such that **review and validation are required at the end of each Phase** before proceeding to the next.
+*   **Phase 0 Gate:** Successful deployment of the basic infrastructure and CI/CD setup. Basic Azure connectivity confirmed.
 *   **Phase 1 Gate:** Successful deployment of the basic framework to a dev/test environment. Basic Slack connectivity confirmed.
 *   **Phase 2 Gate:** Successful demonstration of documentation search and retrieval via Slack. Basic integration tests pass.
 *   **Phase 3 Gate:** Successful demonstration of code explanation via Slack for supported languages. Basic integration tests pass.
@@ -190,7 +202,8 @@ This section outlines the critical dependencies and sequencing required for the 
 
 **Core Dependencies:**
 
-1.  **Infrastructure Before Deployment:** Tasks related to defining and provisioning the necessary Azure infrastructure (via `Konveyor-infra` updates, Phase 1) **must precede** any tasks attempting to deploy application components (e.g., the Django app to Azure App Service, Phase 1 CI/CD).
+0.  **Infrastructure & CI/CD Foundation:** All Azure infra provisioning and CI/CD setup must complete before any other tasks.
+1.  **Infrastructure Before Deployment:** Tasks related to defining and provisioning the necessary Azure infrastructure (via `Konveyor-infra` updates, Phase 0) **must precede** any tasks attempting to deploy application components (e.g., the Django app to Azure App Service, Phase 1 CI/CD).
 2.  **Framework Before Features:** The core Semantic Kernel framework setup, including Azure OpenAI integration and basic agent orchestration (Phase 1), **must be completed** before tasks related to implementing specific feature skills (Documentation Navigator, Code Understanding, Knowledge Gap Analyzer - Phases 2, 3, 4) can begin.
 3.  **Slack Integration Before Interaction:** The connection between the agent orchestration layer and the Slack bot (Phase 1) **must be functional** before any end-to-end user interaction flows (Phases 2, 3, 4) can be fully tested or implemented.
 
@@ -204,11 +217,11 @@ This section outlines the critical dependencies and sequencing required for the 
 6.  **Directory Constraints:** Task Manager AI **must** generate tasks that adhere to defined file creation boundaries and directory structures (as specified in the Appendix rules). For example, tasks modifying Terraform **must** operate within the `Konveyor-infra/` directory and its submodules/environments. Tasks creating new Semantic Kernel skills **must** place them in the designated skills directory (e.g., `konveyor/skills/`). Work on specific sub-issues (if mapped later) **must be constrained** to their designated directories.
 7.  **Documentation Linkage:** For any task involving significant code implementation or modification (especially API changes or new feature logic), Task Manager AI **must generate a dependent task** for updating relevant documentation (e.g., READMEs, `docs/architecture.md` if impacted, module-level documentation). This ensures documentation stays synchronized with the code.
 8.  **Testing Dependencies:** Feature implementation tasks **must have dependent tasks** for creating corresponding unit and integration tests. Phase completion depends on these tests passing (as defined in the Roadmap phase gates).
-9.  **CI/CD Dependencies:** Application deployment tasks (Phase 4 CD) **depend on** the successful completion and testing of the features included in that deployment, as well as the prior setup of the CI/CD infrastructure (Phase 1 CI/CD basics, Phase 4 enhancements).
+9.  **CI/CD Dependencies:** Application deployment tasks (Phase 4 CD) **depend on** the successful completion and testing of the features included in that deployment, as well as the prior setup of the CI/CD infrastructure (Phase 0 CI/CD basics, Phase 4 enhancements).
 
 **Development Approach:**
 
-*   Prioritize establishing the foundational elements (Phase 1) quickly to enable parallel work on feature skills where possible.
+*   Prioritize establishing the foundational elements (Phase 0) quickly to enable parallel work on feature skills where possible.
 *   Focus on getting a minimal, visible end-to-end flow working (e.g., Slack -> Agent -> Basic Search -> Slack Response) as early as possible (target end of Phase 2).
 *   Scope tasks atomically, ensuring each task delivers a specific piece of functionality or infrastructure, respects dependencies, and can be built upon.
 
