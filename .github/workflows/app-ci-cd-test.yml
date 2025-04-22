@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - feature/task-1-infra-cicd
     paths:
       - 'konveyor/**'
       - 'requirements/**'
