@@ -1,5 +1,9 @@
 name: "App CI/CD (Test Environment)"
 
+permissions:
+  id-token: write # Required for OIDC login to Azure
+  contents: read # Default required for checkout
+
 on:
   push:
     branches:
