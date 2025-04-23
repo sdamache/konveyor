@@ -11,3 +11,7 @@ aiohttp
 # Slack Integration
 slack-sdk>=3.19.5
 slack-bolt>=1.16.1
+
+# Explicitly exclude asyncio as it's part of the standard library
+# and causes syntax errors with Python 3.11
+asyncio<0
