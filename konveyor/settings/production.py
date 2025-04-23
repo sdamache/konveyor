@@ -8,8 +8,14 @@ DEBUG = False
 ALLOWED_HOSTS = [os.environ.get('WEBSITE_HOSTNAME', '*')]
 
 # Security settings for production
-# Set SECURE_SSL_REDIRECT based on environment variable to allow disabling in local testing
-SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'True').lower() == 'true'
+# Disable SSL redirect when running in Azure App Service
+# Azure App Service handles HTTPS redirects at the platform level
+if os.environ.get('WEBSITE_HOSTNAME'):  # This environment variable is set in Azure App Service
+    SECURE_SSL_REDIRECT = False
+    logger.info("Running in Azure App Service, disabling SSL redirect")
+else:
+    SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'True').lower() == 'true'
+
 SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'True').lower() == 'true'
 CSRF_COOKIE_SECURE = os.environ.get('CSRF_COOKIE_SECURE', 'True').lower() == 'true'
 SECURE_BROWSER_XSS_FILTER = True
