@@ -41,16 +41,22 @@ jobs:
         with:
           ref: ${{ github.event.inputs.ref }}
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Log in to GitHub Container Registry (GHCR)
+        uses: docker/login-action@v3
         with:
-          python-version: '3.10'
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_PAT }}
 
-      - name: Install dependencies
+      - name: Build Docker image
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements/development.txt
-          pip uninstall -y asyncio || true
+          IMAGE_TAG=${{ github.ref_name }}
+          docker build -t ghcr.io/${{ github.repository }}/konveyor-app:$IMAGE_TAG .
+
+      - name: Push Docker image to GHCR
+        run: |
+          IMAGE_TAG=${{ github.ref_name }}
+          docker push ghcr.io/${{ github.repository }}/konveyor-app:$IMAGE_TAG
 
       - name: Azure Login
         uses: azure/login@v2
@@ -59,9 +65,9 @@ jobs:
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Deploy to Azure Web App
+      - name: Deploy to Azure Web App (using GHCR image)
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           resource-group-name: ${{ env.AZURE_RESOURCE_GROUP }}
-          package: .
+          images: ghcr.io/${{ github.repository }}/konveyor:${{ github.ref_name }}
