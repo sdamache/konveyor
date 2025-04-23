@@ -80,10 +80,10 @@ module "app_service" {
 
   # Docker/GHCR configuration
   docker_registry_url      = "https://ghcr.io"
-  docker_image_name        = "ghcr.io/sdamache/konveyor" # <-- Replace with your actual GHCR path
-  docker_image_tag         = "latest" # Or use a dynamic tag if desired
-  docker_registry_username = "sdamache" # <-- Replace or use a variable/secret
-  docker_registry_password = "${var.GHCR_PAT}" # <-- Store securely, e.g., in TF_VAR or Key Vault
+  docker_image_name        = "ghcr.io/${var.github_repository}" # Use the same repository path as in GitHub Actions
+  docker_image_tag         = var.docker_image_tag # Use the tag passed from GitHub Actions or default to latest
+  docker_registry_username = var.docker_registry_username # GitHub username
+  docker_registry_password = "${var.GHCR_PAT}" # GitHub PAT
 
   app_settings = {
     DJANGO_SECRET_KEY        = "${var.DJANGO_SECRET_KEY}" # Should be stored in Key Vault and referenced securely

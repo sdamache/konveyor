@@ -16,9 +16,12 @@ resource "azurerm_linux_web_app" "this" {
   tags                = var.tags
 
   site_config {
-    always_on = false
+    always_on = true
 
     container_registry_use_managed_identity = false
+
+    health_check_path = "/healthz/"
+    health_check_eviction_time_in_min = 5
   }
 
   app_settings = merge(

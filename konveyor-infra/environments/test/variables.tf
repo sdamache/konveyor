@@ -69,7 +69,7 @@ variable "openai_capacity" {
   description = "OpenAI capacity in the test environment"
   type        = string
   default     = "10"
-}  
+}
 
 variable "deploy_embeddings" {
   description = "Deploy embeddings model in the test environment"
@@ -125,4 +125,22 @@ variable "DJANGO_SECRET_KEY" {
   description = "Django secret key for the test environment"
   type        = string
   sensitive   = true
+}
+
+variable "github_repository" {
+  description = "GitHub repository name in the format 'username/repo'"
+  type        = string
+  default     = "sdamache/konveyor"
+}
+
+variable "docker_image_tag" {
+  description = "Docker image tag to deploy"
+  type        = string
+  default     = "latest"
+}
+
+variable "docker_registry_username" {
+  description = "GitHub username for accessing the GHCR registry"
+  type        = string
+  default     = "sdamache"
 }
