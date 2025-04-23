@@ -114,3 +114,15 @@ variable "slack_test_channel_id" {
   description = "ID of the Slack channel for testing in the test environment"
   type        = string
 }
+
+variable "GHCR_PAT" {
+  description = "GitHub Personal Access Token for accessing the GHCR registry"
+  type        = string
+  sensitive   = true
+}
+
+variable "DJANGO_SECRET_KEY" {
+  description = "Django secret key for the test environment"
+  type        = string
+  sensitive   = true
+}

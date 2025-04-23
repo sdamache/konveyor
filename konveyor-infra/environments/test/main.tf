@@ -78,10 +78,16 @@ module "app_service" {
   tags                = var.tags
   app_service_plan_sku = "B1" # Use Basic tier instead of Free due to quota limits
 
-  # All Django environment variables are set in code, not via UI
+  # Docker/GHCR configuration
+  docker_registry_url      = "https://ghcr.io"
+  docker_image_name        = "ghcr.io/sdamache/konveyor" # <-- Replace with your actual GHCR path
+  docker_image_tag         = "latest" # Or use a dynamic tag if desired
+  docker_registry_username = "sdamache" # <-- Replace or use a variable/secret
+  docker_registry_password = "${var.GHCR_PAT}" # <-- Store securely, e.g., in TF_VAR or Key Vault
+
   app_settings = {
-    DJANGO_SECRET_KEY        = "REPLACE_WITH_SECRET" # Should be stored in Key Vault and referenced securely
-    DJANGO_SETTINGS_MODULE   = "konveyor.settings.development"
+    DJANGO_SECRET_KEY        = "${var.DJANGO_SECRET_KEY}" # Should be stored in Key Vault and referenced securely
+    DJANGO_SETTINGS_MODULE   = "konveyor.settings.production"
     DATABASE_URL             = "REPLACE_WITH_DB_URL" # Should be set to your Azure Database connection string
     AZURE_STORAGE_CONNECTION_STRING = module.storage.storage_connection_string
     AZURE_OPENAI_ENDPOINT    = module.openai.cognitive_account_endpoint

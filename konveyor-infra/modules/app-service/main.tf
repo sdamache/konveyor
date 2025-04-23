@@ -17,16 +17,19 @@ resource "azurerm_linux_web_app" "this" {
 
   site_config {
     always_on = false
-    # linux_fx_version is typically set automatically by Azure for Python apps
+
+    container_registry_use_managed_identity = false
   }
 
   app_settings = merge(
     {
       WEBSITES_ENABLE_APP_SERVICE_STORAGE = "false"
-      SCM_DO_BUILD_DURING_DEPLOYMENT     = "true"
-      DJANGO_SETTINGS_MODULE             = "konveyor.settings.development"
-      WEBSITE_RUN_FROM_PACKAGE           = "0"
-
+      WEBSITES_PORT                      = "8000"
+      DJANGO_SETTINGS_MODULE             = "konveyor.settings.production"
+      DOCKER_CUSTOM_IMAGE_NAME           = "${var.docker_image_name}:${var.docker_image_tag}"
+      DOCKER_REGISTRY_SERVER_URL         = var.docker_registry_url
+      DOCKER_REGISTRY_SERVER_USERNAME    = var.docker_registry_username
+      DOCKER_REGISTRY_SERVER_PASSWORD    = var.docker_registry_password
     },
     var.app_settings
   )
