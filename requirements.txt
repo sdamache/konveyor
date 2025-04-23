@@ -18,5 +18,3 @@ cookiecutter
 # Add other specific dependencies as needed
 -r requirements/base.txt
 -r requirements/development.txt
--r requirements/testing.txt
--r requirements/production.txt
