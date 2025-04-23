@@ -24,6 +24,11 @@ on:
       - 'package.json'
       - 'package-lock.json'
   workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy to"
+        type: choice
+        options: [dev, prod, feature/task-1-infra-cicd]
 
 env:
   AZURE_WEBAPP_NAME: konveyor-test-app
