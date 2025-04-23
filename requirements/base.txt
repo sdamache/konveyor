@@ -6,10 +6,10 @@ langchain>=0.1.0
 # Azure packages
 azure-identity>=1.15.0
 azure-core>=1.29.5
-azure-ai-documentintelligence>=1.0.0
-azure-ai-formrecognizer>=3.2.0
-azure-search-documents>=11.4.0
-azure-storage-blob>=12.19.0
+azure-ai-documentintelligence
+azure-ai-formrecognizer
+azure-search-documents
+azure-storage-blob
 azure-keyvault-secrets>=4.7.0
 
 # OpenAI
