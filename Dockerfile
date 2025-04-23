@@ -19,11 +19,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip install --upgrade pip
 
 # Copy only the necessary requirements files for production
-COPY requirements/base.txt requirements/production.txt requirements/constraints.txt /app/requirements/
+COPY requirements/base.txt requirements/production.txt /app/requirements/
 
 # Install Python dependencies into a wheelhouse for faster installation in the final stage
-# Use production.txt which includes base.txt, and constraints.txt to prevent problematic packages
-RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements/production.txt -c requirements/constraints.txt
+# Use production.txt which includes base.txt
+RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements/production.txt
 
 
 # Stage 2: Final - Build the final application image
