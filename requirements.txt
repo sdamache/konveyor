@@ -13,7 +13,6 @@ certifi
 botbuilder-core
 aiohttp
 botbuilder-integration-aiohttp
-asyncio
 cookiecutter
 # Add other specific dependencies as needed
 -r requirements/base.txt
