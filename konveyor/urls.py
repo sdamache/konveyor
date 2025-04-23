@@ -18,12 +18,15 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from konveyor.apps.core.views import health_check
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('konveyor.apps.core.urls')),
     path('api/', include('konveyor.apps.api.urls')),
     path('documents/', include('konveyor.apps.documents.urls')),  # Modified this line
+    # Azure App Service health check endpoint
+    path('healthz/', health_check, name='health_check_root'),
     # TODO: Add other app-specific URLs when implemented
 ]
 
@@ -31,7 +34,12 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    import debug_toolbar
-    urlpatterns += [
-        path('__debug__/', include(debug_toolbar.urls)),
-    ]
+
+    # Try to import debug_toolbar, but don't fail if it's not installed
+    try:
+        import debug_toolbar
+        urlpatterns += [
+            path('__debug__/', include(debug_toolbar.urls)),
+        ]
+    except ImportError:
+        pass
