@@ -2,19 +2,21 @@
 
 ## Current Work Focus
 
-- Completing Azure App Service deployment for the Django application to enable full Azure integration and production readiness.
-- Implementing and integrating the agent orchestration layer for routing requests to Semantic Kernel skills/tools.
-- Developing and integrating Semantic Kernel skills: Documentation Navigator, Code Understanding, and Knowledge Gap Analyzer.
-- Finalizing Slack/Bot Framework integration to enable chat-based access to the agent.
-- Enhancing CI/CD pipeline for integration testing and automated deployment.
+- Azure infrastructure provisioning (App Service, Key Vault, Cognitive Search, OpenAI, etc.) and CI/CD pipeline setup are implemented via Terraform and GitHub Actions (task-1).
+- Pending validation of Azure App Service deployment and end-to-end connectivity.
+- Next focus: complete and test agent orchestration layer, integrate Semantic Kernel skills (Documentation Navigator, Code Understanding, Knowledge Gap Analyzer), and finalize Slack/Bot Framework integration.
+- Enhance CI/CD for integration testing and automated deployment.
 - All retrieval and context for the current demo are handled via Azure Cognitive Search; Redis cache and Cosmos DB are not yet active and are planned for future cost optimization.
+- Task plan from tasks.json is the authoritative roadmap for all further development.
 
 ## Recent Changes
 
+- Infrastructure-as-Code (Terraform) modules for all required Azure resources are implemented and active.
+- GitHub Actions workflow for CI/CD (build and deploy to Azure App Service) is present and configured.
 - Core Django modules for documents, search, RAG, and utilities are in place and functional.
 - Azure Cognitive Search is integrated and operational for RAG workflows.
-- Infrastructure-as-Code (Terraform) provisions most required Azure resources, but App Service deployment is still pending.
 - Test scaffolding exists for core workflows, but end-to-end and user journey tests are not yet implemented.
+- Memory bank is now aligned with the current branch and the task-master plan.
 
 ## Next Steps
 

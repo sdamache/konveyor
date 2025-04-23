@@ -5,12 +5,13 @@
 - Core Django application modules for documents, search, RAG, and core utilities are implemented and structured.
 - Azure Cognitive Search is integrated and used for retrieval-augmented generation (RAG) in the current demo.
 - Document ingestion, chunking, embedding, and indexing workflows are functional.
-- Infrastructure-as-Code (Terraform) provisions key Azure resources: Cognitive Search, Key Vault, OpenAI, Document Intelligence, Storage, and partial Bot Service.
+- Infrastructure-as-Code (Terraform) provisions all key Azure resources: App Service, Cognitive Search, Key Vault, OpenAI, Document Intelligence, Storage, Bot Service, and RAG infrastructure.
+- GitHub Actions workflow for CI/CD (build and deploy to Azure App Service) is present and configured.
 - Unit and integration test scaffolding exists for core RAG workflows and services.
 
 ## What's Left to Build
 
-- **Azure App Service Deployment:** The Django application is not yet deployed to Azure App Service; this is critical for validating end-to-end Azure integration and production readiness.
+- **Azure App Service Deployment Validation:** The Django application must be deployed and validated on Azure App Service to confirm end-to-end Azure integration and production readiness.
 - **Bot Integration:** Slack/Bot Framework integration is incomplete; the agent is not yet accessible via chat interfaces.
 - **Agent Orchestration:** The orchestration layer for routing requests to Semantic Kernel skills/tools is not fully implemented.
 - **Semantic Kernel Skills:** Documentation Navigator, Code Understanding, and Knowledge Gap Analyzer skills are not yet complete or integrated.
@@ -22,9 +23,10 @@
 ## Current Status
 
 - The project is in an advanced development stage but is not yet end-to-end demo-ready.
+- Infrastructure provisioning and CI/CD setup are implemented and active; pending validation of Azure App Service deployment.
 - Retrieval and RAG features work using Azure AI Search, but advanced agentic features (Semantic Kernel skills, orchestration, chat integration) are still in progress.
-- Infrastructure is partially provisioned; App Service deployment is a major missing component.
 - The next steps and implementation plan are defined in detail in the tasks folder and scripts/prd_draft_for_ai.txt, which should be followed to complete the MVP.
+- The task plan from tasks.json is the authoritative roadmap for all further development.
 
 ## Known Issues
 
