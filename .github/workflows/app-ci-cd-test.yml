@@ -6,30 +6,14 @@ permissions:
 
 on:
   push:
-    branches:
-      - main
-      - feature/task-1-infra-cicd
-    paths:
-      - 'konveyor/**'
-      - 'requirements/**'
-      - 'manage.py'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/**'
-  pull_request:
-    paths:
-      - 'konveyor/**'
-      - 'requirements/**'
-      - 'manage.py'
-      - 'package.json'
-      - 'package-lock.json'
+    tags:
+      - 'v*' # Trigger on version tags like v1.0, v1.2.3
   workflow_dispatch:
     inputs:
-
-      environment:
-        description: "Environment to deploy to"
-        type: choice
-        options: [dev, prod, feature/task-1-infra-cicd]
+      ref:
+        description: 'The branch, tag or SHA to deploy (e.g., main, v1.0.0)'
+        required: true
+        type: string
 
 env:
   AZURE_WEBAPP_NAME: konveyor-test-app
@@ -45,8 +29,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repository (push/tag)
+        if: github.event_name == 'push' && github.ref_type == 'tag'
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Checkout repository (workflow_dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
