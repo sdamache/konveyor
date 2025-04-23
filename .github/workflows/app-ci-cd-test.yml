@@ -67,4 +67,4 @@ jobs:
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           resource-group-name: ${{ env.AZURE_RESOURCE_GROUP }}
-          images: ghcr.io/${{ github.repository }}/konveyor:${{ github.ref_name }}
+          images: ghcr.io/${{ github.repository }}/konveyor:$IMAGE_TAG
