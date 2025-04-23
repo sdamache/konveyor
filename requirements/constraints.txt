@@ -1,0 +1,3 @@
+# Prevent asyncio from being installed from PyPI
+# It's part of the standard library and the PyPI version causes syntax errors with Python 3.11
+asyncio==none
