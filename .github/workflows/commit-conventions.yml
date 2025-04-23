@@ -1,0 +1,22 @@
+name: "Branch Naming Enforcement"
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+  push:
+    branches:
+      - main
+
+jobs:
+  branch-naming:
+    name: "Validate Branch Naming"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce Feature Branch Naming
+        if: startsWith(github.head_ref, 'feat/task-')
+        run: echo "Branch name follows the required pattern."
+      - name: Fail if Branch Name Does Not Match
+        if: ${{ !startsWith(github.head_ref, 'feat/task-') }}
+        run: |
+          echo "Branch name must start with 'feat/task-<id>-<desc>'"
+          exit 1

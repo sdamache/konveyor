@@ -1,5 +1,5 @@
 resource "azurerm_search_service" "search" {
-  name                = var.name
+  name                = "${var.name}-${var.random_suffix}"
   resource_group_name = var.resource_group_name
   location            = var.location
   sku                 = var.sku
