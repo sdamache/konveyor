@@ -50,12 +50,12 @@ jobs:
       - name: Build Docker image
         run: |
           IMAGE_TAG=${{ github.ref_name }}
-          docker build -t ghcr.io/${{ github.repository }}/konveyor-app:$IMAGE_TAG .
+          docker build -t ghcr.io/${{ github.repository }}/konveyor:$IMAGE_TAG .
 
       - name: Push Docker image to GHCR
         run: |
           IMAGE_TAG=${{ github.ref_name }}
-          docker push ghcr.io/${{ github.repository }}/konveyor-app:$IMAGE_TAG
+          docker push ghcr.io/${{ github.repository }}/konveyor:$IMAGE_TAG
 
       - name: Azure Login
         uses: azure/login@v2.1.0
