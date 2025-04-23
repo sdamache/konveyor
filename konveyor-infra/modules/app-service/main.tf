@@ -24,6 +24,9 @@ resource "azurerm_linux_web_app" "this" {
     {
       WEBSITES_ENABLE_APP_SERVICE_STORAGE = "false"
       SCM_DO_BUILD_DURING_DEPLOYMENT     = "true"
+      DJANGO_SETTINGS_MODULE             = "konveyor.settings.development"
+      WEBSITE_RUN_FROM_PACKAGE           = "0"
+
     },
     var.app_settings
   )
