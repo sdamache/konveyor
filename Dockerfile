@@ -19,11 +19,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip install --upgrade pip
 
 # Copy only the necessary requirements files for production
-COPY requirements/base.txt requirements/production.txt /app/requirements/
+COPY requirements/base.txt requirements/production.txt requirements/constraints.txt /app/requirements/
 
 # Install Python dependencies into a wheelhouse for faster installation in the final stage
-# Use production.txt which includes base.txt
-RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements/production.txt
+# Use production.txt which includes base.txt, and constraints.txt to prevent problematic packages
+RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements/production.txt -c requirements/constraints.txt
 
 
 # Stage 2: Final - Build the final application image
@@ -69,6 +69,9 @@ USER app
 # Expose the port Gunicorn will run on (default is 8000)
 EXPOSE 8000
 
-# Run the application using Gunicorn WSGI server
-# Use environment variables for host/port if needed, default is 0.0.0.0:8000
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "konveyor.wsgi:application"]
+# Copy startup script
+COPY startup.sh /app/startup.sh
+
+# Run the application using our startup script
+# This will remove asyncio package before starting Gunicorn
+CMD ["/app/startup.sh", "gunicorn", "--bind", "0.0.0.0:8000", "konveyor.wsgi:application"]
