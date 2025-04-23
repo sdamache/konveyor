@@ -2,7 +2,7 @@ python-dotenv
 django
 openai>=1.0.0
 azure-identity
-azure-ai-formrecognizer
+azure-ai-formrecognizer==3.3.3
 azure-search-documents>=11.4.0
 azure-storage-blob
 pytest
@@ -10,7 +10,7 @@ pytest-asyncio
 pytest-aiohttp
 slack_sdk>=3.19.0
 certifi
-botbuilder-core
+botbuilder-core==4.17.1
 aiohttp>=3.7.4
 botbuilder-integration-aiohttp
 asyncio
