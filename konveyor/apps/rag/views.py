@@ -1,5 +1,19 @@
 """
 Views for the RAG Django app using Azure storage.
+
+**IMPORTANT: REDUNDANCY NOTICE**
+This RAG implementation has some overlapping functionality with the Semantic Kernel
+implementation in konveyor/skills/. Specifically:
+
+1. Conversation history management: Both this implementation (via ConversationManager)
+   and the ChatSkill handle conversation history.
+
+2. Message formatting: Both implementations have functions for formatting messages.
+
+3. Integration with Azure OpenAI: Both directly use Azure OpenAI services.
+
+Future work in Task #3 (Agent Orchestration) should consider consolidating these
+implementations or clearly defining their boundaries.
 """
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -10,29 +24,29 @@ from .models import ConversationManager, MESSAGE_TYPE_USER, MESSAGE_TYPE_ASSISTA
 
 class ConversationViewSet(viewsets.ViewSet):
     """ViewSet for managing conversations and generating responses using Azure storage."""
-    
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.client_manager = AzureClientManager()
         self.rag_service = RAGService(self.client_manager)
         self.conversation_manager = ConversationManager()
-    
+
     async def create(self, request):
         """Create a new conversation."""
         user_id = str(request.user.id) if request.user.is_authenticated else None
         conversation = await self.conversation_manager.create_conversation(user_id)
         return Response(conversation)
-    
+
     async def list(self, request):
         """List conversations for the current user."""
         # This would need to be implemented in storage.py to filter by user
         return Response([])
-    
+
     @action(detail=True, methods=['post'])
     async def ask(self, request, pk=None):
         """
         Generate a response for a user question in a conversation.
-        
+
         Request body:
         {
             "query": "user question",
@@ -47,7 +61,7 @@ class ConversationViewSet(viewsets.ViewSet):
                 {'error': 'Query is required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         try:
             # Save user message
             user_message = await self.conversation_manager.add_message(
@@ -55,14 +69,14 @@ class ConversationViewSet(viewsets.ViewSet):
                 content=query,
                 message_type=MESSAGE_TYPE_USER
             )
-            
+
             # Generate response using RAG
             response_data = await self.rag_service.generate_response(
                 query=query,
                 template_type=request.data.get('template_type', 'knowledge'),
                 max_context_chunks=request.data.get('max_context_chunks', 3)
             )
-            
+
             # Save assistant message with metadata
             assistant_message = await self.conversation_manager.add_message(
                 conversation_id=pk,
@@ -73,13 +87,13 @@ class ConversationViewSet(viewsets.ViewSet):
                     'prompt_template': response_data['prompt_template']
                 }
             )
-            
+
             return Response({
                 'response': response_data['response'],
                 'message_id': assistant_message['id'],
                 'conversation_id': pk
             })
-            
+
         except Exception as e:
             # Log error and return fallback response
             print(f"Error generating response: {e}")
@@ -90,7 +104,7 @@ class ConversationViewSet(viewsets.ViewSet):
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-    
+
     @action(detail=True, methods=['get'])
     async def history(self, request, pk=None):
         """Get conversation history."""

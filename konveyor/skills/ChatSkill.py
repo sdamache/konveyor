@@ -4,6 +4,20 @@ ChatSkill for Konveyor.
 This skill provides chat-related functionality using Azure OpenAI,
 including question answering, conversation handling, and basic utility functions.
 It combines both chat capabilities and basic demonstration functions.
+
+**IMPORTANT: REDUNDANCY NOTICE**
+This implementation has some overlapping functionality with the existing RAG implementation
+in konveyor/apps/rag/ and konveyor/core/rag/. Specifically:
+
+1. Conversation history management: Both this ChatSkill and the RAG implementation
+   (via ConversationManager) handle conversation history.
+
+2. Message formatting: Both implementations have functions for formatting messages.
+
+3. Integration with Azure OpenAI: Both directly or indirectly use Azure OpenAI services.
+
+Future work in Task #3 (Agent Orchestration) should consider consolidating these
+implementations or clearly defining their boundaries.
 """
 
 import logging
