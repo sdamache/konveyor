@@ -19,6 +19,6 @@ elif environment == 'konveyor.settings.testing':
     from .testing import *
 else:
     raise ImportError(
-        'Settings module "%s" not found. Check DJANGO_SETTINGS_MODULE environment variable.' 
+        'Settings module "%s" not found. Check DJANGO_SETTINGS_MODULE environment variable.'
         % environment
     )

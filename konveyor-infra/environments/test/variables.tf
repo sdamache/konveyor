@@ -69,7 +69,7 @@ variable "openai_capacity" {
   description = "OpenAI capacity in the test environment"
   type        = string
   default     = "10"
-}  
+}
 
 variable "deploy_embeddings" {
   description = "Deploy embeddings model in the test environment"
@@ -98,3 +98,49 @@ variable "openai_embeddings_capacity" {
 # Note: Other variables like openai_sku_name, openai_model_name etc. are defined
 # in the root variables.tf and their defaults will be used unless overridden here
 # or in a .tfvars file (which we are not using in the script).
+variable "slack_app_token" {
+  description = "Slack App Token for bot channel configuration in the test environment"
+  type        = string
+  sensitive   = true
+}
+
+variable "slack_bot_token" {
+  description = "Slack Bot Token for bot channel configuration in the test environment"
+  type        = string
+  sensitive   = true
+}
+
+variable "slack_test_channel_id" {
+  description = "ID of the Slack channel for testing in the test environment"
+  type        = string
+}
+
+variable "GHCR_PAT" {
+  description = "GitHub Personal Access Token for accessing the GHCR registry"
+  type        = string
+  sensitive   = true
+}
+
+variable "DJANGO_SECRET_KEY" {
+  description = "Django secret key for the test environment"
+  type        = string
+  sensitive   = true
+}
+
+variable "github_repository" {
+  description = "GitHub repository name in the format 'username/repo'"
+  type        = string
+  default     = "sdamache/konveyor"
+}
+
+variable "docker_image_tag" {
+  description = "Docker image tag to deploy"
+  type        = string
+  default     = "latest"
+}
+
+variable "docker_registry_username" {
+  description = "GitHub username for accessing the GHCR registry"
+  type        = string
+  default     = "sdamache"
+}

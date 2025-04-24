@@ -1,0 +1,67 @@
+name: "Infrastructure CI/CD (Test Environment)"
+
+permissions:
+  contents: read # Default required for checkout
+
+on:
+  push:
+    tags:
+      - '*infra*'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'The branch, tag or SHA to deploy (e.g., main, v1.0.0)'
+        required: true
+        type: string
+
+env:
+  TF_VERSION: '1.5.7'
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+jobs:
+  terraform:
+    name: 'Terraform Apply (Test)'
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: Konveyor-infra/environments/test
+
+    steps:
+      - name: Checkout repository (push/tag)
+        if: github.event_name == 'push' && github.ref_type == 'tag'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Checkout repository (workflow_dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+        run: terraform apply -auto-approve tfplan

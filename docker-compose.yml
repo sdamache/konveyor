@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # Development environment
+  konveyor-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - DJANGO_SETTINGS_MODULE=konveyor.settings.development
+      - PYTHONUNBUFFERED=1
+      - DEBUG=True
+    command: python manage.py runserver 0.0.0.0:8000
+
+  # Production environment with modified settings for local testing
+  konveyor-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8000"
+    environment:
+      # Use production settings (modified for local testing)
+      - DJANGO_SETTINGS_MODULE=konveyor.settings.production
+      - PYTHONUNBUFFERED=1
+      - DEBUG=False
+      - ALLOWED_HOSTS=localhost,127.0.0.1,*
+      # Disable SSL redirect and secure cookies for local testing
+      - SECURE_SSL_REDIRECT=False
+      - SESSION_COOKIE_SECURE=False
+      - CSRF_COOKIE_SECURE=False
+      # Add Azure service settings for testing
+      - AZURE_OPENAI_ENDPOINT=https://example.openai.azure.com
+      - AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=https;AccountName=example;AccountKey=example;EndpointSuffix=core.windows.net
+      - AZURE_SEARCH_ENDPOINT=https://example.search.windows.net
+    command: gunicorn --bind 0.0.0.0:8000 konveyor.wsgi:application

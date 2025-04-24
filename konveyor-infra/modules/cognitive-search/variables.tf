@@ -16,9 +16,14 @@ variable "resource_group_name" {
 }
 
 variable "sku" {
-  description = "SKU for the Azure Cognitive Search service"
+  description = "Azure Cognitive Search SKU (e.g., basic, standard, free)"
   type        = string
-  default     = "basic"
+  default     = "standard"
+}
+
+variable "random_suffix" {
+  description = "Random suffix to ensure uniqueness for the search service name"
+  type        = string
 }
 
 variable "replica_count" {
@@ -34,7 +39,7 @@ variable "partition_count" {
 }
 
 variable "tags" {
-  description = "Tags to apply to the Azure Cognitive Search service"
+  description = "A map of tags to assign to the resource"
   type        = map(string)
   default     = {
     project = "konveyor"

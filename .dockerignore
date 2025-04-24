@@ -1,0 +1,52 @@
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Python cache/artefacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Databases
+db.sqlite3
+db.sqlite3.*
+
+# Environment variables
+.env
+.env.*
+
+# Infrastructure code
+Konveyor-infra/
+
+# Node.js
+node_modules/
+npm-debug.log
+package-lock.json
+
+# Test files
+tests/
+test_analysis/
+pytest.ini
+.coverage
+htmlcov/
+
+# Memory Bank (usually not needed in runtime image)
+memory-bank/
+
+# VS Code
+.vscode/
+
+# OS generated files
+.DS_Store
+Thumbs.db
