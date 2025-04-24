@@ -2,51 +2,116 @@
 Setup for Semantic Kernel framework.
 
 Initializes the Semantic Kernel SDK and configures Azure OpenAI integration.
+This module provides the core functionality for creating and configuring
+Semantic Kernel instances that can be used throughout the Konveyor application.
 """
+
+import os
+import logging
+from typing import Optional, Dict, Any
 
 from semantic_kernel import Kernel
 from semantic_kernel.connectors.ai.open_ai.services.azure_chat_completion import AzureChatCompletion
+from semantic_kernel.connectors.ai.open_ai.services.azure_text_embedding import AzureTextEmbedding
+from semantic_kernel.memory.volatile_memory_store import VolatileMemoryStore
 from konveyor.core.azure_utils.config import AzureConfig
 from konveyor.core.azure_utils.clients import AzureClientManager
-from semantic_kernel.memory import VolatileMemoryStore
+
+logger = logging.getLogger(__name__)
 
 
-def create_kernel() -> Kernel:
+def create_kernel(use_embeddings: bool = False) -> Kernel:
     """
     Create and configure the Semantic Kernel with Azure OpenAI chat and memory services.
     All configuration and secret logic is handled via konveyor/core utilities.
+
+    Args:
+        use_embeddings: Whether to add embedding service to the kernel
+
     Returns:
         Kernel: Configured Semantic Kernel instance.
     """
     config = AzureConfig()
     config.validate_required_config('OPENAI')
 
+    # Get Azure OpenAI configuration
     endpoint = config.get_endpoint('OPENAI')
     key_or_secret_name = config.get_key('OPENAI')
+
     # Attempt to fetch API key from Key Vault; fallback to environment value if unavailable
     try:
         kv_client = AzureClientManager(config).get_key_vault_client()
         secret = kv_client.get_secret(key_or_secret_name)
         api_key = secret.value
-    except Exception:
+        logger.info("Successfully retrieved OpenAI API key from Key Vault")
+    except Exception as e:
+        logger.warning(f"Failed to retrieve key from Key Vault, using environment variable: {str(e)}")
         api_key = key_or_secret_name
-    deployment = config.get_setting('AZURE_OPENAI_CHAT_DEPLOYMENT') or 'gpt-35-turbo'
+
+    # Get deployment names and API version
+    chat_deployment = config.get_setting('AZURE_OPENAI_CHAT_DEPLOYMENT') or 'gpt-35-turbo'
+    embedding_deployment = config.get_setting('AZURE_OPENAI_EMBEDDING_DEPLOYMENT') or 'text-embedding-ada-002'
     api_version = config.get_setting('AZURE_OPENAI_API_VERSION') or '2024-12-01-preview'
 
-    # Construct AzureChatCompletion with all required arguments
-    chat_service = AzureChatCompletion(
-        endpoint=endpoint,
-        api_key=api_key,
-        deployment_name=deployment,
-        api_version=api_version,
-        service_id='chat'
-    )
-
+    # Create kernel
     kernel = Kernel()
-    kernel.add_service(chat_service)
+
+    # Add chat service
+    try:
+        chat_service = AzureChatCompletion(
+            endpoint=endpoint,
+            api_key=api_key,
+            deployment_name=chat_deployment,
+            api_version=api_version,
+            service_id='chat'
+        )
+        kernel.add_service(chat_service)
+        logger.info(f"Added Azure OpenAI chat service with deployment: {chat_deployment}")
+    except Exception as e:
+        logger.error(f"Failed to add chat service: {str(e)}")
+        raise
+
+    # Add embedding service if requested
+    if use_embeddings:
+        try:
+            embedding_service = AzureTextEmbedding(
+                endpoint=endpoint,
+                api_key=api_key,
+                deployment_name=embedding_deployment,
+                api_version=api_version,
+                service_id='embeddings'
+            )
+            kernel.add_service(embedding_service)
+            logger.info(f"Added Azure OpenAI embedding service with deployment: {embedding_deployment}")
+        except Exception as e:
+            logger.warning(f"Failed to add embedding service: {str(e)}")
 
     # Register volatile memory store
-    volatile_memory = VolatileMemoryStore()
-    volatile_memory.service_id = 'volatile'
-    kernel.add_service(volatile_memory)
+    try:
+        volatile_memory = VolatileMemoryStore()
+        volatile_memory.service_id = 'volatile'
+        kernel.add_service(volatile_memory)
+        logger.info("Added volatile memory store")
+    except Exception as e:
+        logger.warning(f"Failed to add memory store: {str(e)}")
+
     return kernel
+
+
+def get_kernel_settings() -> Dict[str, Any]:
+    """
+    Get the current Semantic Kernel settings from environment variables.
+    Useful for diagnostics and testing.
+
+    Returns:
+        Dict[str, Any]: Dictionary of kernel settings
+    """
+    config = AzureConfig()
+
+    return {
+        "endpoint": config.get_endpoint('OPENAI'),
+        "chat_deployment": config.get_setting('AZURE_OPENAI_CHAT_DEPLOYMENT') or 'gpt-35-turbo',
+        "embedding_deployment": config.get_setting('AZURE_OPENAI_EMBEDDING_DEPLOYMENT') or 'text-embedding-ada-002',
+        "api_version": config.get_setting('AZURE_OPENAI_API_VERSION') or '2024-12-01-preview',
+        "has_key_vault": bool(os.environ.get('AZURE_KEY_VAULT_NAME')),
+    }
