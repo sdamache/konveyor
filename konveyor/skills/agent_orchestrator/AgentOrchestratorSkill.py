@@ -221,42 +221,88 @@ class AgentOrchestratorSkill:
             logger.info(f"Using existing plugin for {skill_name}")
 
         # Check if the function exists
-        logger.info(f"Available functions in {skill_name}: {list(plugin.keys()) if plugin else 'None'}")
-        if function_name not in plugin:
-            logger.warning(f"Function {function_name} not found in skill {skill_name}, falling back to chat")
-            function_name = "chat"  # Default fallback
-            if function_name not in plugin:
-                error_msg = f"Neither {function_name} nor fallback 'chat' function found in skill {skill_name}"
-                logger.error(error_msg)
-                raise ValueError(error_msg)
+        try:
+            # Try to get available functions using different methods depending on the plugin type
+            if hasattr(plugin, 'keys'):
+                available_functions = list(plugin.keys())
+            elif hasattr(plugin, 'functions'):
+                available_functions = list(plugin.functions.keys())
+            elif hasattr(plugin, '__dict__'):
+                available_functions = [name for name in dir(plugin) if not name.startswith('_')]
+            else:
+                available_functions = []
+
+            logger.info(f"Available functions in {skill_name}: {available_functions}")
+
+            # Check if the function exists in the plugin
+            function_exists = function_name in available_functions
+
+            if not function_exists:
+                logger.warning(f"Function {function_name} not found in skill {skill_name}, falling back to chat")
+                function_name = "chat"  # Default fallback
+                function_exists = function_name in available_functions
+
+                if not function_exists:
+                    error_msg = f"Neither {function_name} nor fallback 'chat' function found in skill {skill_name}"
+                    logger.error(error_msg)
+                    raise ValueError(error_msg)
+        except Exception as e:
+            logger.error(f"Error checking functions in plugin: {str(e)}")
+            # Continue with the function name we have, and let the invoke handle any errors
 
         # Prepare arguments based on the function
         logger.info(f"Preparing arguments for {function_name}")
-        if function_name == "answer_question":
-            # For answer_question, pass the request as the question
-            logger.info(f"Invoking answer_question with question: {request[:50]}...")
-            result = await self.kernel.invoke(plugin[function_name], question=request)
-        elif function_name == "chat":
-            # For chat, pass the request as the message
-            logger.info(f"Invoking chat with message: {request[:50]}...")
-            result = await self.kernel.invoke(plugin[function_name], message=request)
-        elif function_name == "greet":
-            # For greet, extract the name from the request
-            # Simple extraction - could be improved with NLP
-            words = request.split()
-            name = words[-1] if len(words) > 1 else "there"
-            logger.info(f"Invoking greet with name: {name}")
-            result = await self.kernel.invoke(plugin[function_name], name=name)
-        elif function_name == "format_as_bullet_list":
-            # For format_as_bullet_list, extract the content to format
-            # Simple extraction - could be improved with NLP
-            content = request.split("format", 1)[1] if "format" in request else request
-            logger.info(f"Invoking format_as_bullet_list with text: {content[:50]}...")
-            result = await self.kernel.invoke(plugin[function_name], text=content)
-        else:
-            # For other functions, pass the request as input
-            logger.info(f"Invoking {function_name} with input: {request[:50]}...")
-            result = await self.kernel.invoke(plugin[function_name], input=request)
+        try:
+            if function_name == "answer_question":
+                # For answer_question, pass the request as the question
+                logger.info(f"Invoking answer_question with question: {request[:50]}...")
+                result = await self.kernel.invoke(function_name, plugin=skill_name, question=request)
+            elif function_name == "chat":
+                # For chat, pass the request as the message
+                logger.info(f"Invoking chat with message: {request[:50]}...")
+                result = await self.kernel.invoke(function_name, plugin=skill_name, message=request)
+            elif function_name == "greet":
+                # For greet, extract the name from the request
+                # Simple extraction - could be improved with NLP
+                words = request.split()
+                name = words[-1] if len(words) > 1 else "there"
+                logger.info(f"Invoking greet with name: {name}")
+                result = await self.kernel.invoke(function_name, plugin=skill_name, name=name)
+            elif function_name == "format_as_bullet_list":
+                # For format_as_bullet_list, extract the content to format
+                # Simple extraction - could be improved with NLP
+                content = request.split("format", 1)[1] if "format" in request else request
+                logger.info(f"Invoking format_as_bullet_list with text: {content[:50]}...")
+                result = await self.kernel.invoke(function_name, plugin=skill_name, text=content)
+            else:
+                # For other functions, pass the request as input
+                logger.info(f"Invoking {function_name} with input: {request[:50]}...")
+                result = await self.kernel.invoke(function_name, plugin=skill_name, input=request)
+        except Exception as e:
+            logger.error(f"Error invoking function {function_name} in skill {skill_name}: {str(e)}")
+            # Try a fallback approach for older versions of Semantic Kernel
+            try:
+                logger.info(f"Trying fallback approach for invoking {function_name}...")
+                if hasattr(plugin, function_name):
+                    func = getattr(plugin, function_name)
+                    if function_name == "answer_question":
+                        result = await self.kernel.invoke(func, question=request)
+                    elif function_name == "chat":
+                        result = await self.kernel.invoke(func, message=request)
+                    elif function_name == "greet":
+                        words = request.split()
+                        name = words[-1] if len(words) > 1 else "there"
+                        result = await self.kernel.invoke(func, name=name)
+                    elif function_name == "format_as_bullet_list":
+                        content = request.split("format", 1)[1] if "format" in request else request
+                        result = await self.kernel.invoke(func, text=content)
+                    else:
+                        result = await self.kernel.invoke(func, input=request)
+                else:
+                    raise ValueError(f"Function {function_name} not found in skill {skill_name}")
+            except Exception as fallback_error:
+                logger.error(f"Fallback approach also failed: {str(fallback_error)}")
+                raise
 
         logger.info(f"Result from {skill_name}.{function_name}: {result}")
         return result

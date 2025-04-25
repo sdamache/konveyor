@@ -225,8 +225,6 @@ class AzureStorageManager:
         return conversation
 
     async def add_message(self, conversation_id: str, message_type: str,
-
-    async def add_message(self, conversation_id: str, message_type: str,
                          content: str, metadata: Optional[Dict] = None) -> Dict:
         """Add a message to a conversation."""
         message = {
@@ -250,9 +248,6 @@ class AzureStorageManager:
 
 
         return message
-
-    async def get_conversation_messages(self, conversation_id: str,
-                                     limit: int = 50,
 
     async def get_conversation_messages(self, conversation_id: str,
                                      limit: int = 50,

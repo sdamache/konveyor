@@ -1,19 +1,28 @@
 """
-Integration tests for Agent Orchestration Layer.
+Mock integration tests for Agent Orchestration Layer.
 
-These tests verify the end-to-end functionality of the Agent Orchestration Layer,
+These tests verify the end-to-end functionality of the Agent Orchestration Layer using mocked dependencies,
 including integration with the Bot Framework and Semantic Kernel skills.
+
+This file uses unittest.mock to mock the Semantic Kernel, Bot Framework, and their dependencies,
+allowing tests to run without requiring real Azure OpenAI credentials or a real bot deployment.
 """
 
 import pytest
 import asyncio
+import logging
 from unittest.mock import patch, MagicMock, AsyncMock
 from botbuilder.core import TurnContext
-from botbuilder.schema import Activity, ConversationAccount, ChannelAccount
+from botbuilder.schema import Activity, ConversationAccount, ChannelAccount, ActivityTypes
 
 from konveyor.apps.bot.bot import KonveyorBot
 from konveyor.skills.agent_orchestrator import AgentOrchestratorSkill, SkillRegistry
 from konveyor.skills.ChatSkill import ChatSkill
+
+# Configure logging for tests
+logging.basicConfig(level=logging.INFO,
+                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
@@ -40,56 +49,44 @@ def mock_turn_context():
 @pytest.fixture
 def mock_kernel():
     """Mock Kernel for testing."""
-    with patch('konveyor.skills.setup.create_kernel') as mock_create_kernel:
-        kernel = MagicMock()
+    # Create a simple mock kernel
+    kernel = MagicMock()
 
-        # Mock the invoke method
-        async def mock_invoke(function, **kwargs):
-            # Return different responses based on the function name
-            if hasattr(function, 'name'):
-                if function.name == 'answer_question':
-                    return f"Answer to: {kwargs.get('question', '')}"
-                elif function.name == 'chat':
-                    return {
-                        "response": f"Chat response to: {kwargs.get('message', '')}",
-                        "history": f"User: {kwargs.get('message', '')}\nAssistant: Chat response"
-                    }
-                elif function.name == 'process_request':
-                    return {
-                        "response": f"Processed: {kwargs.get('request', '')}",
-                        "skill_name": "TestSkill",
-                        "function_name": "test_function",
-                        "success": True
-                    }
+    # Mock the invoke method
+    async def mock_invoke(function, **kwargs):
+        # Return a mock response
+        return {
+            "response": f"Mock response to: {kwargs.get('message', kwargs.get('question', 'No input'))}",
+            "history": "User: Test\nAssistant: Mock response",
+            "success": True
+        }
 
-            return "Mock response"
+    kernel.invoke = AsyncMock(side_effect=mock_invoke)
 
-        kernel.invoke = AsyncMock(side_effect=mock_invoke)
+    # Mock the add_plugin method
+    def mock_add_plugin(skill, plugin_name=None):
+        # Create a dictionary of mock functions
+        functions = {}
 
-        # Mock the add_plugin method
-        def mock_add_plugin(skill, plugin_name=None):
-            # Create a dictionary of mock functions
-            functions = {}
+        # Add mock functions for all possible methods
+        method_names = ['answer_question', 'chat', 'greet', 'format_as_bullet_list',
+                       'process_request', 'register_skill', 'get_available_skills']
 
-            # If it's a ChatSkill, add its functions
-            if isinstance(skill, ChatSkill):
-                for method_name in ['answer_question', 'chat', 'greet', 'format_as_bullet_list']:
-                    mock_function = MagicMock()
-                    mock_function.name = method_name
-                    functions[method_name] = mock_function
-            elif isinstance(skill, AgentOrchestratorSkill):
-                for method_name in ['process_request', 'register_skill', 'get_available_skills']:
-                    mock_function = MagicMock()
-                    mock_function.name = method_name
-                    functions[method_name] = mock_function
+        for method_name in method_names:
+            mock_function = MagicMock()
+            mock_function.name = method_name
+            functions[method_name] = mock_function
 
-            return functions
+        # Store in the plugins dictionary if plugin_name is provided
+        if plugin_name:
+            kernel.plugins[plugin_name] = functions
 
-        kernel.add_plugin = mock_add_plugin
-        kernel.plugins = {}
+        return functions
 
-        mock_create_kernel.return_value = kernel
-        yield kernel
+    kernel.add_plugin = mock_add_plugin
+    kernel.plugins = {}
+
+    return kernel
 
 
 @pytest.mark.asyncio

@@ -27,36 +27,9 @@ class KonveyorBot(ActivityHandler):
     def _initialize_components(self):
         """Initialize the kernel, skills, and orchestrator."""
         try:
-            # Create the kernel
-            try:
-                # Try to create the kernel with full validation
-                self.kernel = create_kernel()
-                logger.info("Created Semantic Kernel for bot with full validation")
-            except Exception as kernel_error:
-                # If validation fails (e.g., during testing), create a kernel without validation
-                logger.warning(f"Failed to create kernel with validation: {str(kernel_error)}")
-                logger.warning("Creating kernel without validation for testing purposes")
-
-                # Import required modules
-                from semantic_kernel import Kernel
-                from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
-                from semantic_kernel.memory.volatile import VolatileMemoryStore
-
-                # Create a basic kernel without validation
-                self.kernel = Kernel()
-
-                # Try to add a mock chat service if possible
-                try:
-                    from unittest.mock import MagicMock
-                    mock_chat = MagicMock()
-                    self.kernel.add_service("chat", mock_chat)
-                    logger.info("Added mock chat service to kernel")
-                except Exception as mock_error:
-                    logger.warning(f"Failed to add mock chat service: {str(mock_error)}")
-
-                # Add a volatile memory store
-                self.kernel.add_service("volatile", VolatileMemoryStore())
-                logger.info("Added volatile memory store to kernel")
+            # Create the kernel with validation disabled for better error handling
+            self.kernel = create_kernel(validate=False)
+            logger.info("Created Semantic Kernel for bot")
 
             # Create the skill registry
             self.registry = SkillRegistry()

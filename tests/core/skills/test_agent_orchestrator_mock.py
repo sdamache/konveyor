@@ -1,8 +1,11 @@
 """
-Tests for Agent Orchestrator Skill.
+Mock tests for Agent Orchestrator Skill.
 
-These tests verify the functionality of the Agent Orchestrator Skill,
+These tests verify the functionality of the Agent Orchestrator Skill using mocked dependencies,
 including request routing, skill selection, and error handling.
+
+This file uses unittest.mock to mock the Semantic Kernel and its dependencies,
+allowing tests to run without requiring real Azure OpenAI credentials.
 """
 
 import pytest

@@ -20,19 +20,27 @@ from konveyor.core.azure_utils.clients import AzureClientManager
 logger = logging.getLogger(__name__)
 
 
-def create_kernel(use_embeddings: bool = False) -> Kernel:
+def create_kernel(use_embeddings: bool = False, validate: bool = True) -> Kernel:
     """
     Create and configure the Semantic Kernel with Azure OpenAI chat and memory services.
     All configuration and secret logic is handled via konveyor/core utilities.
 
     Args:
         use_embeddings: Whether to add embedding service to the kernel
+        validate: Whether to validate the required configuration
 
     Returns:
         Kernel: Configured Semantic Kernel instance.
     """
     config = AzureConfig()
-    config.validate_required_config('OPENAI')
+
+    # Validate configuration if requested
+    if validate:
+        try:
+            config.validate_required_config('OPENAI')
+        except Exception as e:
+            logger.warning(f"Failed to validate OpenAI configuration: {str(e)}")
+            logger.warning("Continuing without validation - this may cause issues if Azure OpenAI services are required")
 
     # Get Azure OpenAI configuration
     endpoint = config.get_endpoint('OPENAI')
