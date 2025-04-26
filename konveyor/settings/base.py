@@ -10,7 +10,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-_96kwk)pw9hoq$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*', 'localhost', '127.0.0.1']
 
 # Application definition
 INSTALLED_APPS = [
@@ -20,7 +20,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+
     # Local apps - use full paths
     'konveyor.apps.core.apps.CoreConfig',
     'konveyor.apps.users.apps.UsersConfig',
@@ -162,3 +162,7 @@ AZURE_STORAGE_CONTAINER_NAME = azure_settings['AZURE_STORAGE_CONTAINER_NAME']
 
 AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT = azure_settings['AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT']
 AZURE_DOCUMENT_INTELLIGENCE_API_KEY = azure_settings['AZURE_DOCUMENT_INTELLIGENCE_API_KEY']
+
+# Slack Integration Settings
+SLACK_BOT_TOKEN = os.environ.get('SLACK_BOT_TOKEN', '')
+SLACK_SIGNING_SECRET = os.environ.get('SLACK_SIGNING_SECRET', '')
