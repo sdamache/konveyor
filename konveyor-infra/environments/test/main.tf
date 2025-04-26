@@ -59,12 +59,12 @@ module "storage" {
 }
 
 module "cognitive_search" {
+  count               = var.deploy_search_service ? 1 : 0
   source              = "../../modules/cognitive-search"
   name                = "${var.prefix}-test-search"
   resource_group_name = module.resource_group.name
   location            = var.location
   sku                 = "standard" # Set your desired SKU
-  replica_count       = 1
   partition_count     = 1
   tags                = var.tags
   random_suffix       = random_id.search_suffix.hex
@@ -85,19 +85,28 @@ module "app_service" {
   docker_registry_username = var.docker_registry_username # GitHub username
   docker_registry_password = "${var.GHCR_PAT}" # GitHub PAT
 
-  app_settings = {
-    DJANGO_SECRET_KEY        = "${var.DJANGO_SECRET_KEY}" # Should be stored in Key Vault and referenced securely
-    DJANGO_SETTINGS_MODULE   = "konveyor.settings.production"
-    DATABASE_URL             = "REPLACE_WITH_DB_URL" # Should be set to your Azure Database connection string
-    AZURE_STORAGE_CONNECTION_STRING = module.storage.storage_connection_string
-    AZURE_OPENAI_ENDPOINT    = module.openai.cognitive_account_endpoint
-    AZURE_OPENAI_KEY         = module.openai.cognitive_account_primary_key
-    AZURE_COGSEARCH_ENDPOINT = module.cognitive_search.search_service_endpoint
-    AZURE_COGSEARCH_KEY      = module.cognitive_search.search_service_primary_key
-    DOCUMENT_INTELLIGENCE_ENDPOINT = module.document_intelligence.endpoint
-    DOCUMENT_INTELLIGENCE_KEY      = module.document_intelligence.primary_key
-    # Add any other required Django or Azure settings here
-  }
+  app_settings = merge(
+    {
+      DJANGO_SECRET_KEY        = "${var.DJANGO_SECRET_KEY}" # Should be stored in Key Vault and referenced securely
+      DJANGO_SETTINGS_MODULE   = "konveyor.settings.production"
+      DATABASE_URL             = "REPLACE_WITH_DB_URL" # Should be set to your Azure Database connection string
+      AZURE_STORAGE_CONNECTION_STRING = module.storage.storage_connection_string
+      AZURE_OPENAI_ENDPOINT    = module.openai.cognitive_account_endpoint
+      AZURE_OPENAI_KEY         = module.openai.cognitive_account_primary_key
+      DOCUMENT_INTELLIGENCE_ENDPOINT = module.document_intelligence.endpoint
+      DOCUMENT_INTELLIGENCE_KEY      = module.document_intelligence.primary_key
+      # Add any other required Django or Azure settings here
+    },
+    # Conditionally add search service settings if deployed
+    var.deploy_search_service ? {
+      AZURE_COGSEARCH_ENDPOINT = module.cognitive_search.search_service_endpoint
+      AZURE_COGSEARCH_KEY      = module.cognitive_search.search_service_primary_key
+    } : {
+      # Placeholder values when search service is not deployed
+      AZURE_COGSEARCH_ENDPOINT = "disabled"
+      AZURE_COGSEARCH_KEY      = "disabled"
+    }
+  )
 }
 
 module "bot_service" {
