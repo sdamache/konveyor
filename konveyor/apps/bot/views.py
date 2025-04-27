@@ -29,6 +29,7 @@ from konveyor.core.chat import ChatSkill
 from konveyor.core.formatters.factory import FormatterFactory
 from konveyor.core.conversation.factory import ConversationManagerFactory
 from konveyor.apps.bot.services.slack_service import SlackService
+from konveyor.apps.bot.services.slack_user_profile_service import SlackUserProfileService
 from konveyor.apps.bot.slash_commands import get_command_handler
 
 # Configure logging
@@ -36,6 +37,9 @@ logger = logging.getLogger(__name__)
 
 # Initialize the Slack service
 slack_service = SlackService()
+
+# Initialize the Slack user profile service
+slack_user_profile_service = SlackUserProfileService(slack_service=slack_service)
 
 # Initialize the Agent Orchestration components
 kernel = create_kernel(validate=False)
@@ -448,6 +452,15 @@ def process_message(text: str, user_id: str, channel_id: str, thread_ts: Optiona
     logger.debug(f"Processing message from user {user_id} in channel {channel_id}{thread_info}")
     logger.debug(f"Message preview: {text_preview}")
 
+    # Get or create user profile
+    try:
+        user_profile = slack_user_profile_service.get_or_create_profile(user_id)
+        logger.debug(f"Retrieved user profile for {user_id}: {user_profile.slack_name}")
+    except Exception as e:
+        logger.error(f"Error retrieving user profile: {str(e)}")
+        logger.error(traceback.format_exc())
+        user_profile = None
+
     # Create context with user and channel information
     context = {
         "user_id": user_id,
@@ -456,6 +469,16 @@ def process_message(text: str, user_id: str, channel_id: str, thread_ts: Optiona
         "timestamp": datetime.datetime.now().isoformat(),
         "thread_ts": thread_ts
     }
+
+    # Add user profile information to context if available
+    if user_profile:
+        context["user_profile"] = {
+            "name": user_profile.slack_real_name or user_profile.slack_name,
+            "email": user_profile.slack_email,
+            "code_language_preference": user_profile.code_language_preference,
+            "response_format_preference": user_profile.get_preferred_response_format(),
+            "interaction_count": user_profile.interaction_count
+        }
 
     # Get or create a conversation for this user
     conversation_id = None

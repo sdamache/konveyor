@@ -278,8 +278,208 @@ def handle_code_command(command_text: str, user_id: str, channel_id: str, respon
         "blocks": blocks
     }
 
+# Import the SlackUserProfileService
+from konveyor.apps.bot.services.slack_user_profile_service import SlackUserProfileService
+
+# Initialize the service
+slack_user_profile_service = SlackUserProfileService()
+
+def handle_preferences_command(command_text: str, user_id: str, channel_id: str, response_url: str) -> Dict[str, Any]:
+    """
+    Handle the /preferences command for viewing and setting user preferences.
+
+    Args:
+        command_text: The text after the command
+        user_id: The Slack user ID
+        channel_id: The Slack channel ID
+        response_url: The URL to send the response to
+
+    Returns:
+        The response to send back to Slack
+    """
+    # Get the user profile
+    profile = slack_user_profile_service.get_or_create_profile(user_id)
+
+    # Parse the command text
+    parts = command_text.strip().split()
+
+    # If no arguments, show current preferences
+    if not parts or len(parts) < 2:
+        # Create blocks for the response
+        blocks = [
+            {
+                "type": "header",
+                "text": {
+                    "type": "plain_text",
+                    "text": "Your Preferences",
+                    "emoji": True
+                }
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": "Here are your current preferences:"
+                }
+            },
+            {
+                "type": "section",
+                "fields": [
+                    {
+                        "type": "mrkdwn",
+                        "text": f"*Code Language:* {profile.code_language_preference or 'Not set'}"
+                    },
+                    {
+                        "type": "mrkdwn",
+                        "text": f"*Response Format:* {profile.response_format_preference or 'concise'}"
+                    }
+                ]
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": "To set a preference, use:\n`/preferences set code_language python`\n`/preferences set response_format [concise|detailed|technical]`"
+                }
+            }
+        ]
+
+        return {
+            "response_type": "ephemeral",  # Only visible to the user who triggered it
+            "text": "Your Preferences",
+            "blocks": blocks
+        }
+
+    # Handle setting preferences
+    action = parts[0].lower()
+    if action == "set":
+        if len(parts) < 3:
+            return {
+                "response_type": "ephemeral",
+                "text": "Please specify both the preference name and value. Example: `/preferences set code_language python`"
+            }
+
+        preference_name = parts[1].lower()
+        preference_value = parts[2].lower()
+
+        # Validate preference name
+        if preference_name not in ["code_language", "response_format"]:
+            return {
+                "response_type": "ephemeral",
+                "text": f"Unknown preference: {preference_name}. Available preferences: code_language, response_format"
+            }
+
+        # Validate response_format value
+        if preference_name == "response_format" and preference_value not in ["concise", "detailed", "technical"]:
+            return {
+                "response_type": "ephemeral",
+                "text": f"Invalid value for response_format: {preference_value}. Available options: concise, detailed, technical"
+            }
+
+        # Update the preference
+        updated_profile = slack_user_profile_service.update_preference(user_id, preference_name, preference_value)
+
+        if updated_profile:
+            return {
+                "response_type": "ephemeral",
+                "text": f"Your {preference_name} preference has been set to {preference_value}."
+            }
+        else:
+            return {
+                "response_type": "ephemeral",
+                "text": "There was an error updating your preference. Please try again."
+            }
+
+    # Handle unknown action
+    return {
+        "response_type": "ephemeral",
+        "text": f"Unknown action: {action}. Available actions: set"
+    }
+
+def handle_profile_command(command_text: str, user_id: str, channel_id: str, response_url: str) -> Dict[str, Any]:
+    """
+    Handle the /profile command for viewing user profile information.
+
+    Args:
+        command_text: The text after the command
+        user_id: The Slack user ID
+        channel_id: The Slack channel ID
+        response_url: The URL to send the response to
+
+    Returns:
+        The response to send back to Slack
+    """
+    # Get the user profile
+    profile = slack_user_profile_service.get_or_create_profile(user_id)
+
+    # Create blocks for the response
+    blocks = [
+        {
+            "type": "header",
+            "text": {
+                "type": "plain_text",
+                "text": "Your Profile",
+                "emoji": True
+            }
+        },
+        {
+            "type": "section",
+            "fields": [
+                {
+                    "type": "mrkdwn",
+                    "text": f"*Name:* {profile.slack_real_name or profile.slack_name}"
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": f"*Display Name:* {profile.slack_display_name or 'Not set'}"
+                }
+            ]
+        },
+        {
+            "type": "section",
+            "fields": [
+                {
+                    "type": "mrkdwn",
+                    "text": f"*Email:* {profile.slack_email or 'Not available'}"
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": f"*Slack ID:* {profile.slack_id}"
+                }
+            ]
+        },
+        {
+            "type": "section",
+            "fields": [
+                {
+                    "type": "mrkdwn",
+                    "text": f"*Interactions:* {profile.interaction_count}"
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": f"*Last Interaction:* {profile.last_interaction.strftime('%Y-%m-%d %H:%M:%S') if profile.last_interaction else 'Never'}"
+                }
+            ]
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "To update your profile information, use `/preferences` to set your preferences."
+            }
+        }
+    ]
+
+    return {
+        "response_type": "ephemeral",  # Only visible to the user who triggered it
+        "text": "Your Profile",
+        "blocks": blocks
+    }
+
 # Register commands
 register_command("help", handle_help_command, "Show available commands")
 register_command("status", handle_status_command, "Check system status")
 register_command("info", handle_info_command, "Get information about Konveyor")
 register_command("code", handle_code_command, "Show code formatting examples")
+register_command("preferences", handle_preferences_command, "View and set your preferences")
+register_command("profile", handle_profile_command, "View your profile information")

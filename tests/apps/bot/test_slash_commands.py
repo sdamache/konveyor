@@ -7,11 +7,13 @@ import pytest
 from unittest.mock import patch, MagicMock
 from django.test import RequestFactory
 from django.http import JsonResponse
+from django.utils import timezone
 
 from konveyor.apps.bot.views import slack_slash_command
 from konveyor.apps.bot.slash_commands import (
     register_command, get_command_handler, get_all_commands,
-    handle_help_command, handle_status_command, handle_info_command, handle_code_command
+    handle_help_command, handle_status_command, handle_info_command, handle_code_command,
+    handle_preferences_command, handle_profile_command
 )
 
 
@@ -125,6 +127,86 @@ def test_code_command():
                                                "Code Block" in block["text"]["text"] or
                                                "Syntax Highlighted" in block["text"]["text"]]
     assert len(code_blocks) >= 3
+
+
+@pytest.mark.django_db
+def test_preferences_command():
+    """Test the preferences command handler."""
+    # Mock the SlackUserProfileService
+    with patch('konveyor.apps.bot.slash_commands.slack_user_profile_service') as mock_service:
+        # Create a mock profile
+        mock_profile = MagicMock()
+        mock_profile.code_language_preference = "python"
+        mock_profile.response_format_preference = "concise"
+        mock_service.get_or_create_profile.return_value = mock_profile
+
+        # Test with no arguments (show current preferences)
+        response = handle_preferences_command("", "test_user", "test_channel", "http://example.com")
+
+        # Verify the response structure
+        assert "response_type" in response
+        assert response["response_type"] == "ephemeral"
+        assert "text" in response
+        assert "blocks" in response
+
+        # Verify the blocks contain preferences
+        blocks = response["blocks"]
+        assert len(blocks) >= 3  # Header, intro, and preferences
+
+        # Verify the header
+        assert blocks[0]["type"] == "header"
+        assert "Your Preferences" in blocks[0]["text"]["text"]
+
+        # Test setting a preference
+        mock_service.update_preference.return_value = mock_profile
+        response = handle_preferences_command("set code_language javascript", "test_user", "test_channel", "http://example.com")
+
+        # Verify the response
+        assert "response_type" in response
+        assert response["response_type"] == "ephemeral"
+        assert "text" in response
+        assert "code_language" in response["text"]
+        assert "javascript" in response["text"]
+
+        # Verify the service was called correctly
+        mock_service.update_preference.assert_called_once_with("test_user", "code_language", "javascript")
+
+
+@pytest.mark.django_db
+def test_profile_command():
+    """Test the profile command handler."""
+    # Mock the SlackUserProfileService
+    with patch('konveyor.apps.bot.slash_commands.slack_user_profile_service') as mock_service:
+        # Create a mock profile
+        mock_profile = MagicMock()
+        mock_profile.slack_id = "test_user"
+        mock_profile.slack_name = "Test User"
+        mock_profile.slack_real_name = "Test Real Name"
+        mock_profile.slack_display_name = "Test Display Name"
+        mock_profile.slack_email = "test@example.com"
+        mock_profile.interaction_count = 42
+        mock_profile.last_interaction = timezone.now()
+        mock_service.get_or_create_profile.return_value = mock_profile
+
+        # Test the profile command
+        response = handle_profile_command("", "test_user", "test_channel", "http://example.com")
+
+        # Verify the response structure
+        assert "response_type" in response
+        assert response["response_type"] == "ephemeral"
+        assert "text" in response
+        assert "blocks" in response
+
+        # Verify the blocks contain profile information
+        blocks = response["blocks"]
+        assert len(blocks) >= 4  # Header and at least 3 sections
+
+        # Verify the header
+        assert blocks[0]["type"] == "header"
+        assert "Your Profile" in blocks[0]["text"]["text"]
+
+        # Verify the service was called correctly
+        mock_service.get_or_create_profile.assert_called_once_with("test_user")
 
 
 @pytest.mark.django_db
