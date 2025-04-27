@@ -23,10 +23,10 @@ Example:
     ```python
     # Get configuration
     config = AzureConfig()
-    
+
     # Get service endpoint
     search_endpoint = config.get_endpoint('SEARCH')
-    
+
     # Validate configuration
     config.validate_required_config('SEARCH')
     ```
@@ -45,20 +45,20 @@ logger = logging.getLogger(__name__)
 
 class AzureConfig:
     """Unified Azure configuration management.
-    
+
     This class implements the Singleton pattern to ensure only one configuration instance exists.
     It handles loading configuration from environment variables and provides methods to access
     service-specific configuration.
-    
+
     Required Environment Variables:
         AZURE_OPENAI_EMBEDDING_DEPLOYMENT: Deployment name for embeddings model
         AZURE_OPENAI_API_VERSION: API version for Azure OpenAI (defaults to 2024-12-01-preview)
-    
+
     The class will attempt to initialize Azure credentials in the following order:
     1. DefaultAzureCredential
     2. AzureCliCredential
     3. Key-based authentication
-    
+
     Attributes:
         credential (TokenCredential): Azure credential for authentication
         key_vault_url (str): URL for Azure Key Vault
@@ -68,15 +68,15 @@ class AzureConfig:
         storage_account_key (str): Azure Storage account key
         storage_connection_string (str): Azure Storage connection string
     """
-    
+
     _instance = None  # Singleton instance
-    
+
     def __new__(cls):
         """Ensure singleton pattern."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
-        
+
     def __init__(self):
         """Initialize configuration if not already done."""
         if not hasattr(self, 'initialized'):
@@ -85,7 +85,7 @@ class AzureConfig:
             self.cosmos_connection_string = os.environ.get('AZURE_COSMOS_CONNECTION_STRING')
             self.redis_connection_string = os.environ.get('AZURE_REDIS_CONNECTION_STRING')
             self.initialized = True
-            
+
     def _initialize_credentials(self):
         """Initialize Azure credentials."""
         try:
@@ -99,7 +99,7 @@ class AzureConfig:
                 # Final fallback to key-based auth
                 self.credential = None
                 logger.warning("Failed to initialize Azure credentials, falling back to key-based auth")
-                
+
     def _load_configuration(self):
         """Load configuration from environment."""
         # Load OpenAI configuration
@@ -107,7 +107,7 @@ class AzureConfig:
         self.openai_api_version = os.environ.get('AZURE_OPENAI_API_VERSION', '2024-12-01-preview')
         # Core configuration
         self.key_vault_url = os.getenv('AZURE_KEY_VAULT_URL')
-        
+
         # Service endpoints
         self.endpoints = {
             'SEARCH': os.getenv('AZURE_SEARCH_ENDPOINT'),
@@ -116,7 +116,7 @@ class AzureConfig:
             'STORAGE': os.getenv('AZURE_STORAGE_ACCOUNT_URL'),
             'BOT': os.getenv('AZURE_BOT_ENDPOINT')
         }
-        
+
         # Service keys
         self.keys = {
             'SEARCH': os.getenv('AZURE_SEARCH_API_KEY'),
@@ -124,37 +124,37 @@ class AzureConfig:
             'DOCUMENT_INTELLIGENCE': os.getenv('AZURE_DOCUMENT_INTELLIGENCE_API_KEY'),
             'BOT': os.getenv('MICROSOFT_APP_PASSWORD')
         }
-        
+
         # Storage specific config
         self.storage_account_name = os.getenv('AZURE_STORAGE_ACCOUNT_NAME')
         self.storage_account_key = os.getenv('AZURE_STORAGE_ACCOUNT_KEY')
         self.storage_connection_string = os.getenv('AZURE_STORAGE_CONNECTION_STRING')
-        
+
     def get_credential(self) -> Optional[TokenCredential]:
         """Get Azure credential for token-based authentication.
-        
+
         Returns:
             Optional[TokenCredential]: Azure credential if available, None if using key-based auth
         """
         return self.credential
-        
+
     def get_endpoint(self, service: str) -> Optional[str]:
         """Get endpoint URL for a specific Azure service.
-        
+
         Args:
             service (str): Service identifier (SEARCH, OPENAI, DOCUMENT_INTELLIGENCE, STORAGE)
-            
+
         Returns:
             Optional[str]: Service endpoint URL if configured, None otherwise
         """
         return self.endpoints.get(service)
-        
+
     def get_key(self, service: str) -> Optional[str]:
         """Get API key for a specific Azure service.
-        
+
         Args:
             service (str): Service identifier (SEARCH, OPENAI, DOCUMENT_INTELLIGENCE, BOT)
-            
+
         Returns:
             Optional[str]: Service API key if configured, None otherwise
         """
@@ -163,18 +163,18 @@ class AzureConfig:
     def get_setting(self, var_name: str, default: Any = None, required: bool = False) -> Any:
         """
         Retrieve an environment variable with remediation and logging.
-        
-        | Step | Action Taken | 
-        |--------------|----  | 
-        | 1. Env  | Checks os.environ | 
-        | 2. .env | Loads from .env if not found | 
-        | 3. Settings | Checks Django settings, logs which module is used | 
-        | 4. Default | Uses default if still not found | 
-        | 5. Logging | Logs source and value (hides secrets/keys) | 
+
+        | Step | Action Taken |
+        |--------------|----  |
+        | 1. Env  | Checks os.environ |
+        | 2. .env | Loads from .env if not found |
+        | 3. Settings | Checks Django settings, logs which module is used |
+        | 4. Default | Uses default if still not found |
+        | 5. Logging | Logs source and value (hides secrets/keys) |
         | 6. Required | Raises error if required and missing/empty |
 
         """
-        logger = logging.getLogger(__name__)
+        # Use class-level logger to avoid duplicate loggers
         value = os.environ.get(var_name)
         source = "environment"
 
@@ -201,8 +201,15 @@ class AzureConfig:
             value = default
             source = "default"
 
-        # Log the outcome
-        logger.info(f"Config: '{var_name}' loaded from {source} with value: {'<hidden>' if 'KEY' in var_name or 'SECRET' in var_name else value}")
+        # Log the outcome - only at DEBUG level for most settings, INFO for critical ones
+        is_sensitive = 'KEY' in var_name or 'SECRET' in var_name or 'PASSWORD' in var_name
+        display_value = '<hidden>' if is_sensitive else value
+
+        # Only log at INFO level for important settings, DEBUG for others
+        if var_name in ['AZURE_OPENAI_CHAT_DEPLOYMENT', 'AZURE_OPENAI_EMBEDDING_DEPLOYMENT', 'AZURE_OPENAI_API_VERSION']:
+            logger.debug(f"Config: '{var_name}' loaded from {source} with value: {display_value}")
+        else:
+            logger.info(f"Config: '{var_name}' loaded from {source} with value: {display_value}")
 
         # Raise if required and still missing/empty
         if required and (value is None or value == ""):
@@ -211,21 +218,21 @@ class AzureConfig:
         return value
     def get_key_vault_url(self) -> Optional[str]:
         """Get Azure Key Vault URL.
-        
+
         Returns:
             Optional[str]: Key Vault URL if configured, None otherwise
-            
+
         Environment Variables:
             AZURE_KEY_VAULT_URL: Key Vault URL
         """
         return self.key_vault_url
-        
+
     def get_storage_connection_string(self) -> Optional[str]:
         """Get Azure Storage connection string.
-        
+
         This method will first check for a complete connection string in environment variables.
         If not found, it will attempt to build one using the account name and key.
-        
+
         Returns:
             Optional[str]: Storage connection string if available configuration exists,
             None otherwise
@@ -237,7 +244,7 @@ class AzureConfig:
         """
         if self.storage_connection_string:
             return self.storage_connection_string
-            
+
         # Build connection string if we have account name and key
         if self.storage_account_name and self.storage_account_key:
             return (
@@ -246,41 +253,41 @@ class AzureConfig:
                 f"AccountKey={self.storage_account_key};"
                 "EndpointSuffix=core.windows.net"
             )
-            
+
         return None
-        
+
     def get_cosmos_connection_string(self) -> Optional[str]:
         """Get Azure Cosmos DB connection string.
-        
+
         Returns:
             Optional[str]: Cosmos DB connection string if configured, None otherwise
-            
+
         Environment Variables:
             AZURE_COSMOS_CONNECTION_STRING: Cosmos DB connection string
         """
         return self.cosmos_connection_string
-        
+
     def get_redis_connection_string(self) -> Optional[str]:
         """Get Redis connection string.
-        
+
         Returns:
             Optional[str]: Redis connection string if configured, None otherwise
-            
+
         Environment Variables:
             AZURE_REDIS_CONNECTION_STRING: Redis connection string
         """
         return self.redis_connection_string
-        
+
     def validate_required_config(self, service: str) -> None:
         """Validate that all required configuration exists for a service.
-        
+
         Args:
-            service (str): Service identifier to validate (SEARCH, OPENAI, 
+            service (str): Service identifier to validate (SEARCH, OPENAI,
                           DOCUMENT_INTELLIGENCE, STORAGE)
-                          
+
         Raises:
             ImproperlyConfigured: If any required configuration is missing
-            
+
         Required Configuration by Service:
             SEARCH: AZURE_SEARCH_ENDPOINT, AZURE_SEARCH_API_KEY
             OPENAI: AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_KEY
@@ -297,7 +304,7 @@ class AzureConfig:
             if not all([self.get_endpoint('OPENAI'), self.get_key('OPENAI')]):
                 raise ImproperlyConfigured("Missing required Azure OpenAI configuration")
         elif service == 'DOCUMENT_INTELLIGENCE':
-            if not all([self.get_endpoint('DOCUMENT_INTELLIGENCE'), 
+            if not all([self.get_endpoint('DOCUMENT_INTELLIGENCE'),
                        self.get_key('DOCUMENT_INTELLIGENCE')]):
                 raise ImproperlyConfigured("Missing required Azure Document Intelligence configuration")
         elif service == 'STORAGE':
