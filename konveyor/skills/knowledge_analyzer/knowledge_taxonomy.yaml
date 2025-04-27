@@ -1,0 +1,139 @@
+# Knowledge Taxonomy for Konveyor
+# This file defines the organizational knowledge domains relevant for onboarding
+
+version: "1.0"
+last_updated: "2024-06-01"
+
+# Top-level knowledge domains
+domains:
+  - id: "architecture"
+    name: "System Architecture"
+    description: "Overall system design, components, and interactions"
+    subcategories:
+      - id: "arch_overview"
+        name: "Architectural Overview"
+        description: "High-level system architecture and design principles"
+        keywords: ["system design", "architecture", "components", "microservices"]
+      - id: "data_flow"
+        name: "Data Flow"
+        description: "How data moves through the system"
+        keywords: ["data flow", "pipeline", "ETL", "data processing"]
+      - id: "integration_points"
+        name: "Integration Points"
+        description: "External systems and APIs that integrate with our platform"
+        keywords: ["API", "integration", "external systems", "interfaces"]
+
+  - id: "development"
+    name: "Development Practices"
+    description: "Coding standards, practices, and workflows"
+    subcategories:
+      - id: "code_standards"
+        name: "Coding Standards"
+        description: "Coding conventions and best practices"
+        keywords: ["coding standards", "style guide", "conventions", "best practices"]
+      - id: "git_workflow"
+        name: "Git Workflow"
+        description: "Branch strategy, commit conventions, and PR process"
+        keywords: ["git", "github", "branching", "pull requests", "commits"]
+      - id: "testing"
+        name: "Testing Practices"
+        description: "Unit, integration, and end-to-end testing approaches"
+        keywords: ["testing", "unit tests", "integration tests", "test coverage"]
+
+  - id: "deployment"
+    name: "Deployment & Operations"
+    description: "CI/CD, infrastructure, and operational procedures"
+    subcategories:
+      - id: "ci_cd"
+        name: "CI/CD Pipeline"
+        description: "Continuous integration and deployment processes"
+        keywords: ["CI/CD", "pipeline", "github actions", "automation"]
+      - id: "infrastructure"
+        name: "Infrastructure"
+        description: "Cloud resources, infrastructure as code, and environment setup"
+        keywords: ["azure", "terraform", "infrastructure", "cloud", "IaC"]
+      - id: "monitoring"
+        name: "Monitoring & Observability"
+        description: "Logging, monitoring, and alerting systems"
+        keywords: ["monitoring", "logging", "alerts", "observability", "application insights"]
+
+  - id: "domain_knowledge"
+    name: "Domain Knowledge"
+    description: "Business domain concepts and terminology"
+    subcategories:
+      - id: "onboarding"
+        name: "Onboarding Process"
+        description: "Understanding of the onboarding process and its challenges"
+        keywords: ["onboarding", "knowledge transfer", "new hire", "training"]
+      - id: "knowledge_management"
+        name: "Knowledge Management"
+        description: "Principles and practices of knowledge management"
+        keywords: ["knowledge management", "documentation", "knowledge base", "wiki"]
+
+  - id: "technologies"
+    name: "Core Technologies"
+    description: "Key technologies and frameworks used in the system"
+    subcategories:
+      - id: "python_django"
+        name: "Python & Django"
+        description: "Python programming and Django web framework"
+        keywords: ["python", "django", "django rest framework", "async"]
+      - id: "azure_services"
+        name: "Azure Services"
+        description: "Azure cloud services used in the application"
+        keywords: ["azure", "app service", "key vault", "cognitive search", "openai"]
+      - id: "semantic_kernel"
+        name: "Semantic Kernel"
+        description: "Semantic Kernel framework for AI orchestration"
+        keywords: ["semantic kernel", "AI", "LLM", "skills", "plugins"]
+      - id: "rag"
+        name: "Retrieval Augmented Generation"
+        description: "RAG architecture and implementation"
+        keywords: ["RAG", "retrieval", "vector search", "embeddings", "context"]
+
+# Relationships between domains
+relationships:
+  - from: "architecture"
+    to: "technologies"
+    type: "implements"
+    description: "System architecture is implemented using core technologies"
+  
+  - from: "development"
+    to: "deployment"
+    type: "enables"
+    description: "Development practices enable smooth deployment and operations"
+  
+  - from: "domain_knowledge"
+    to: "architecture"
+    type: "informs"
+    description: "Domain knowledge informs architectural decisions"
+
+# Learning paths for different roles
+learning_paths:
+  - role: "new_developer"
+    name: "New Developer Onboarding"
+    description: "Essential knowledge for new developers joining the team"
+    domains:
+      - id: "development"
+        priority: "high"
+      - id: "architecture"
+        priority: "high"
+      - id: "technologies"
+        priority: "medium"
+      - id: "domain_knowledge"
+        priority: "medium"
+      - id: "deployment"
+        priority: "low"
+  
+  - role: "devops_engineer"
+    name: "DevOps Engineer Onboarding"
+    description: "Essential knowledge for DevOps engineers joining the team"
+    domains:
+      - id: "deployment"
+        priority: "high"
+      - id: "infrastructure"
+        priority: "high"
+      - id: "architecture"
+        priority: "medium"
+      - id: "development"
+        priority: "low"
