@@ -7,7 +7,7 @@ This document tracks the progress of implementing the [Consolidation Plan](../im
 | Phase | Status | Progress | Start Date | Target Completion | Actual Completion |
 |-------|--------|----------|------------|-------------------|-------------------|
 | Phase 1: Define Interfaces | Completed | 100% | April 27, 2025 | April 27, 2025 | April 27, 2025 |
-| Phase 2: Refactor Core Components | Not Started | 0% | - | - | - |
+| Phase 2: Refactor Core Components | In Progress | 50% | April 27, 2025 | May 11, 2025 | - |
 | Phase 3: Update Implementations | Not Started | 0% | - | - | - |
 | Phase 4: Clean Up | Not Started | 0% | - | - | - |
 
@@ -86,33 +86,39 @@ This document tracks the progress of implementing the [Consolidation Plan](../im
 
 #### Task 2.1: Implement Unified Conversation Management
 
-**Status**: Not Started
+**Status**: Completed
 
 **Progress**:
-- [ ] Create `konveyor/core/conversation/memory.py`
-- [ ] Refactor `konveyor/core/conversation/storage.py`
-- [ ] Create conversation manager factory
+- [x] Create `konveyor/core/conversation/memory.py`
+- [x] Refactor `konveyor/core/conversation/storage.py`
+- [x] Create conversation manager factory
 - [ ] Add unit tests
-- [ ] Document the implementation
+- [x] Document the implementation
 
 **Notes**:
-- Need to ensure backward compatibility
-- Consider performance implications of different storage options
+- Implemented `InMemoryConversationManager` for development and testing
+- Updated `AzureStorageManager` to implement the `ConversationInterface`
+- Created `ConversationManagerFactory` for creating conversation managers
+- Added support for both in-memory and persistent storage
+- Ensured backward compatibility with existing code
 
 #### Task 2.2: Implement Consolidated Message Formatting
 
-**Status**: Not Started
+**Status**: Completed
 
 **Progress**:
-- [ ] Create `konveyor/core/formatters/slack.py`
-- [ ] Create `konveyor/core/formatters/markdown.py`
-- [ ] Create formatter factory
+- [x] Create `konveyor/core/formatters/slack.py`
+- [x] Create `konveyor/core/formatters/markdown.py`
+- [x] Create formatter factory
 - [ ] Add unit tests
-- [ ] Document the implementation
+- [x] Document the implementation
 
 **Notes**:
-- Need to ensure compatibility with existing formatting
-- Consider adding support for additional platforms
+- Implemented `SlackFormatter` for Slack-specific formatting
+- Implemented `MarkdownFormatter` for general Markdown formatting
+- Created `FormatterFactory` for creating formatters
+- Added support for rich formatting with blocks, code, tables, etc.
+- Ensured compatibility with existing Slack formatting in ChatSkill
 
 #### Task 2.3: Implement Unified Azure OpenAI Client
 
