@@ -23,6 +23,12 @@ Based on our review of the current Slack integration implementation, here are th
 - ✅ Add a slash command handler to views.py
 - ✅ Implement registration and verification for slash commands
 - ✅ Create a command registry for different slash command functionalities
+- ✅ Implement `/help` command to show available commands
+- ✅ Implement `/status` command to check system status
+- ✅ Implement `/info` command to get information about Konveyor
+- ✅ Implement `/code` command to show code formatting examples
+- ✅ Implement `/profile` command to view user profile information
+- ✅ Implement `/preferences` command to view and set user preferences
 
 ## 5. User Profile Integration ✅
 - ✅ Retrieve and use user profile information for personalized responses
