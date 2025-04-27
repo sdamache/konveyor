@@ -30,8 +30,8 @@ if project_root not in sys.path:
 # Set Django settings module
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'konveyor.settings.development')
 
-from konveyor.skills.setup import create_kernel, get_kernel_settings
-from konveyor.skills.ChatSkill import ChatSkill
+from konveyor.core.kernel import create_kernel, get_kernel_settings
+from konveyor.core.chat import ChatSkill
 
 
 async def run_chat_example() -> Dict[str, Any]:

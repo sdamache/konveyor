@@ -19,9 +19,9 @@ import os
 from dotenv import load_dotenv
 
 from semantic_kernel import Kernel
-from konveyor.skills.setup import create_kernel
-from konveyor.skills.agent_orchestrator import AgentOrchestratorSkill, SkillRegistry
-from konveyor.skills.ChatSkill import ChatSkill
+from konveyor.core.kernel import create_kernel
+from konveyor.core.agent import AgentOrchestratorSkill, SkillRegistry
+from konveyor.core.chat import ChatSkill
 
 # Configure logging for tests
 logging.basicConfig(level=logging.INFO,

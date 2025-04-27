@@ -12,8 +12,8 @@ from unittest.mock import patch, MagicMock
 
 from semantic_kernel import Kernel
 from semantic_kernel.functions import KernelFunction
-from konveyor.skills.setup import create_kernel, get_kernel_settings
-from konveyor.skills.ChatSkill import ChatSkill
+from konveyor.core.kernel import create_kernel, get_kernel_settings
+from konveyor.core.chat import ChatSkill
 
 
 # Check if we're in a CI environment or if Azure credentials are available
@@ -24,7 +24,7 @@ HAS_AZURE_CREDENTIALS = bool(os.environ.get('AZURE_OPENAI_ENDPOINT'))
 @pytest.fixture
 def mock_kernel():
     """Mock Kernel for testing when real credentials aren't available."""
-    with patch('konveyor.skills.setup.Kernel') as mock_kernel_class:
+    with patch('konveyor.core.kernel.factory.Kernel') as mock_kernel_class:
         kernel_instance = MagicMock()
 
         # Mock the run_function method
@@ -206,7 +206,7 @@ def test_chat_skill_format_as_bullet_list(real_or_mock_kernel):
 @pytest.fixture
 def mock_azure_client_manager():
     """Mock AzureClientManager for testing."""
-    with patch('konveyor.skills.setup.AzureClientManager') as mock_manager:
+    with patch('konveyor.core.kernel.factory.AzureClientManager') as mock_manager:
         manager_instance = MagicMock()
         kv_client = MagicMock()
         secret = MagicMock()
@@ -220,7 +220,7 @@ def mock_azure_client_manager():
 @pytest.fixture
 def mock_azure_chat_completion():
     """Mock AzureChatCompletion for testing."""
-    with patch('konveyor.skills.setup.AzureChatCompletion') as mock_chat:
+    with patch('konveyor.core.kernel.factory.AzureChatCompletion') as mock_chat:
         chat_instance = MagicMock()
         mock_chat.return_value = chat_instance
         yield mock_chat
@@ -229,7 +229,7 @@ def mock_azure_chat_completion():
 @pytest.fixture
 def mock_volatile_memory_store():
     """Mock VolatileMemoryStore for testing."""
-    with patch('konveyor.skills.setup.VolatileMemoryStore') as mock_store:
+    with patch('konveyor.core.kernel.factory.VolatileMemoryStore') as mock_store:
         store_instance = MagicMock()
         mock_store.return_value = store_instance
         yield mock_store, store_instance

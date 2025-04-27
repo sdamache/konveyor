@@ -24,7 +24,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'konveyor.settings.development')
 django.setup()
 
 from konveyor.apps.bot.services.slack_service import SlackService
-from konveyor.skills.ChatSkill import ChatSkill
+from konveyor.core.chat import ChatSkill
 
 def test_slack_service():
     """Test the Slack service by sending a test message."""

@@ -25,9 +25,9 @@ from botbuilder.core import TurnContext
 from botbuilder.schema import Activity, ConversationAccount, ChannelAccount, ActivityTypes
 
 from konveyor.apps.bot.bot import KonveyorBot
-from konveyor.skills.agent_orchestrator import AgentOrchestratorSkill, SkillRegistry
-from konveyor.skills.ChatSkill import ChatSkill
-from konveyor.skills.setup import create_kernel
+from konveyor.core.agent import AgentOrchestratorSkill, SkillRegistry
+from konveyor.core.chat import ChatSkill
+from konveyor.core.kernel import create_kernel
 
 # Configure logging for tests
 logging.basicConfig(level=logging.INFO,
