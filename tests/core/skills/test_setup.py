@@ -1,7 +1,7 @@
 import os
 import pytest
 from semantic_kernel import Kernel
-from konveyor.skills.setup import create_kernel
+from konveyor.core.kernel import create_kernel
 import traceback
 from konveyor.core.azure_utils.config import AzureConfig
 

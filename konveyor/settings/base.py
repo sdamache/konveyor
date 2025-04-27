@@ -10,7 +10,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-_96kwk)pw9hoq$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*', 'localhost', '127.0.0.1']
 
 # Application definition
 INSTALLED_APPS = [
@@ -20,7 +20,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+
     # Local apps - use full paths
     'konveyor.apps.core.apps.CoreConfig',
     'konveyor.apps.users.apps.UsersConfig',
@@ -117,16 +117,48 @@ LOGGING = {
             'format': '{levelname} {asctime} {module} {message}',
             'style': '{',
         },
+        'structured': {
+            'format': '{levelname} {asctime} {name} {module} {message}',
+            'style': '{',
+        },
     },
     'handlers': {
         'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
+            'formatter': 'structured',
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'konveyor.log'),
+            'formatter': 'structured',
+        },
+    },
+    'loggers': {
+        'konveyor.core.slack': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'konveyor.apps.bot': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'konveyor.core.agent': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'konveyor.core.chat': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
         },
     },
     'root': {
-        'handlers': ['console'],
+        'handlers': ['console', 'file'],
         'level': 'INFO',
     },
 }
@@ -162,3 +194,7 @@ AZURE_STORAGE_CONTAINER_NAME = azure_settings['AZURE_STORAGE_CONTAINER_NAME']
 
 AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT = azure_settings['AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT']
 AZURE_DOCUMENT_INTELLIGENCE_API_KEY = azure_settings['AZURE_DOCUMENT_INTELLIGENCE_API_KEY']
+
+# Slack Integration Settings
+SLACK_BOT_TOKEN = os.environ.get('SLACK_BOT_TOKEN', '')
+SLACK_SIGNING_SECRET = os.environ.get('SLACK_SIGNING_SECRET', '')

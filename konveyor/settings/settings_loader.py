@@ -11,7 +11,7 @@ def load_settings():
     env_path = Path(__file__).resolve().parent.parent.parent / '.env'
     if env_path.exists():
         load_dotenv(env_path)
-    
+
     # Then load Azure-specific settings
     azure_settings = {
         'AZURE_OPENAI_ENDPOINT': os.environ.get('AZURE_OPENAI_ENDPOINT'),
@@ -28,11 +28,14 @@ def load_settings():
             'AccountEndpoint=https://konveyor-cosmos-test.mongo.cosmos.azure.com:10255/;AccountKey=your_key_here'),
         'AZURE_REDIS_CONNECTION_STRING': os.environ.get('AZURE_REDIS_CONNECTION_STRING',
             'redis://localhost:6379/0'),
+        # Slack Integration Settings
+        'SLACK_BOT_TOKEN': os.environ.get('SLACK_BOT_TOKEN', ''),
+        'SLACK_SIGNING_SECRET': os.environ.get('SLACK_SIGNING_SECRET', ''),
     }
-    
+
     # Update environment variables if they're not set
     for key, value in azure_settings.items():
         if value is not None:
             os.environ[key] = value
-    
+
     return azure_settings

@@ -144,3 +144,9 @@ variable "docker_registry_username" {
   type        = string
   default     = "sdamache"
 }
+
+variable "deploy_search_service" {
+  description = "Whether to deploy the Azure Cognitive Search service (can be expensive)"
+  type        = bool
+  default     = false
+}
