@@ -3,9 +3,6 @@ Views for the bot app.
 
 This module contains views for handling Slack webhook events and other bot-related
 HTTP endpoints.
-
-This updated version uses the new core components for conversation management,
-message formatting, and response generation.
 """
 
 import json
@@ -26,9 +23,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 from konveyor.core.kernel import create_kernel
 from konveyor.core.agent import AgentOrchestratorSkill, SkillRegistry
 from konveyor.core.chat import ChatSkill
-from konveyor.core.formatters.factory import FormatterFactory
-from konveyor.core.conversation.factory import ConversationManagerFactory
-from konveyor.apps.bot.services.slack_service import SlackService
+from .services.slack_service import SlackService
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -47,30 +42,6 @@ chat_skill = ChatSkill(kernel=kernel)
 orchestrator.register_skill(chat_skill, "ChatSkill",
                           "Handles general chat interactions and questions",
                           ["chat", "question", "answer", "help"])
-
-# Initialize the formatter
-slack_formatter = FormatterFactory.get_formatter("slack")
-
-# Initialize the conversation manager
-conversation_manager = None
-
-async def init_conversation_manager():
-    """Initialize the conversation manager."""
-    global conversation_manager
-    try:
-        conversation_manager = await ConversationManagerFactory.create_manager("memory")
-        logger.info("Initialized conversation manager")
-    except Exception as e:
-        logger.error(f"Failed to initialize conversation manager: {str(e)}")
-        logger.error(traceback.format_exc())
-
-# Initialize the conversation manager
-import asyncio
-try:
-    asyncio.run(init_conversation_manager())
-except Exception as e:
-    logger.error(f"Failed to initialize conversation manager: {str(e)}")
-    logger.error(traceback.format_exc())
 
 @csrf_exempt
 def root_handler(request):
@@ -246,24 +217,18 @@ def slack_webhook(request):
                 # Get the response text
                 response_text = result.get('response', 'Sorry, I could not process your request.')
                 skill_name = result.get('skill_name', '')
-                conversation_id = result.get('conversation_id', '')
 
-                # Format the response with blocks
+                # Format the response with blocks if it's from ChatSkill
                 blocks = None
-                try:
-                    if slack_formatter:
-                        logger.debug("Formatting response with Slack formatter")
-                        formatted_response = slack_formatter.format_message(response_text, include_blocks=True)
-                        response_text = formatted_response.get('text', response_text)
-                        blocks = formatted_response.get('blocks')
-                    elif skill_name == 'ChatSkill':
+                if skill_name == 'ChatSkill':
+                    try:
                         logger.debug("Formatting response with ChatSkill")
                         formatted_response = chat_skill.format_for_slack(response_text)
                         response_text = formatted_response.get('text', response_text)
                         blocks = formatted_response.get('blocks')
-                except Exception as e:
-                    logger.error(f"Error formatting response with blocks: {str(e)}")
-                    logger.error(traceback.format_exc())
+                    except Exception as e:
+                        logger.error(f"Error formatting response with blocks: {str(e)}")
+                        logger.error(traceback.format_exc())
 
                 # Send the response based on channel type
                 try:
@@ -285,21 +250,10 @@ def slack_webhook(request):
 
                 # Send error message
                 error_message = f"Sorry, I encountered an error: {str(e)}"
-                
-                # Format error message with blocks
-                error_blocks = None
-                try:
-                    if slack_formatter:
-                        formatted_error = slack_formatter.format_error(error_message)
-                        error_message = formatted_error.get('text', error_message)
-                        error_blocks = formatted_error.get('blocks')
-                    else:
-                        error_blocks = [
-                            {"type": "header", "text": {"type": "plain_text", "text": "Error"}},
-                            {"type": "section", "text": {"type": "mrkdwn", "text": error_message}}
-                        ]
-                except Exception as format_error:
-                    logger.error(f"Error formatting error message: {str(format_error)}")
+                error_blocks = [
+                    {"type": "header", "text": {"type": "plain_text", "text": "Error"}},
+                    {"type": "section", "text": {"type": "mrkdwn", "text": error_message}}
+                ]
 
                 try:
                     if channel_type == 'im':
@@ -335,33 +289,6 @@ def process_message(text: str, user_id: str, channel_id: str) -> Dict[str, Any]:
         "timestamp": datetime.datetime.now().isoformat()
     }
 
-    # Get or create a conversation for this user
-    conversation_id = None
-    if conversation_manager:
-        try:
-            # Use asyncio to run the async method in a synchronous context
-            import asyncio
-            
-            async def get_or_create_conversation():
-                # Try to find an existing conversation for this user
-                user_conversations = await conversation_manager.get_user_conversations(user_id, limit=1)
-                if user_conversations:
-                    return user_conversations[0]["id"]
-                else:
-                    # Create a new conversation
-                    conversation = await conversation_manager.create_conversation(user_id)
-                    return conversation["id"]
-            
-            # Run the async function
-            conversation_id = asyncio.run(get_or_create_conversation())
-            logger.debug(f"Using conversation ID: {conversation_id}")
-            
-            # Add the conversation ID to the context
-            context["conversation_id"] = conversation_id
-        except Exception as e:
-            logger.error(f"Error getting or creating conversation: {str(e)}")
-            logger.error(traceback.format_exc())
-
     # Process the request through the orchestrator
     try:
         logger.info(f"Sending request to orchestrator for user {user_id}")
@@ -377,10 +304,6 @@ def process_message(text: str, user_id: str, channel_id: str) -> Dict[str, Any]:
             logger.info(f"Request processed successfully by {skill_name}.{function_name}")
         else:
             logger.warning(f"Request processing completed with success=False by {skill_name}.{function_name}")
-
-        # Add the conversation ID to the result
-        if conversation_id:
-            result["conversation_id"] = conversation_id
 
         return result
     except Exception as e:
@@ -406,6 +329,5 @@ def process_message(text: str, user_id: str, channel_id: str) -> Dict[str, Any]:
             "response": user_message,
             "error": error_message,
             "error_type": error_type,
-            "success": False,
-            "conversation_id": conversation_id
+            "success": False
         }

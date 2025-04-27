@@ -4,9 +4,6 @@ ChatSkill for Konveyor.
 This skill provides chat-related functionality using Azure OpenAI,
 including question answering, conversation handling, and basic utility functions.
 It combines both chat capabilities and basic demonstration functions.
-
-This updated version uses the new core components for conversation management,
-message formatting, and response generation.
 """
 
 import logging
@@ -14,10 +11,8 @@ import traceback
 from typing import List, Dict, Any, Optional
 from semantic_kernel.functions import kernel_function
 from semantic_kernel import Kernel
-
-from konveyor.core.conversation.factory import ConversationManagerFactory
-from konveyor.core.formatters.factory import FormatterFactory
-from konveyor.core.generation.factory import ResponseGeneratorFactory
+from semantic_kernel.connectors.ai.open_ai.services.azure_chat_completion import AzureChatCompletion
+from semantic_kernel.connectors.ai.chat_completion_client_base import ChatCompletionClientBase
 from konveyor.core.kernel import create_kernel
 
 logger = logging.getLogger(__name__)
@@ -31,9 +26,6 @@ class ChatSkill:
     conversation context, and basic utility functions. It's designed to be
     used with Slack or other chat interfaces and includes demonstration
     functions that show how Semantic Kernel skills work.
-    
-    This updated version uses the new core components for conversation management,
-    message formatting, and response generation.
     """
 
     def __init__(self, kernel: Optional[Kernel] = None):
@@ -44,19 +36,7 @@ class ChatSkill:
             kernel: Optional Semantic Kernel instance. If not provided, one will be created.
         """
         self.kernel = kernel if kernel is not None else self._create_kernel()
-        
-        # Initialize the conversation manager
-        self.conversation_manager = None
-        self._init_conversation_manager()
-        
-        # Initialize the formatter
-        self.formatter = FormatterFactory.get_formatter("slack")
-        
-        # Initialize the response generator
-        self.response_generator = None
-        self._init_response_generator()
-        
-        logger.info("ChatSkill initialized with new core components")
+        logger.info("ChatSkill initialized with kernel")
 
     def _create_kernel(self) -> Kernel:
         """
@@ -75,28 +55,6 @@ class ChatSkill:
             logger.error(traceback.format_exc())
             # Return a minimal kernel without services as a fallback
             return Kernel()
-    
-    async def _init_conversation_manager(self):
-        """Initialize the conversation manager."""
-        try:
-            self.conversation_manager = await ConversationManagerFactory.create_manager("memory")
-            logger.info("Initialized conversation manager")
-        except Exception as e:
-            logger.error(f"Failed to initialize conversation manager: {str(e)}")
-            logger.error(traceback.format_exc())
-    
-    def _init_response_generator(self):
-        """Initialize the response generator."""
-        try:
-            # Configure the response generator with the conversation manager
-            config = {
-                "conversation_service": self.conversation_manager
-            }
-            self.response_generator = ResponseGeneratorFactory.get_generator("chat", config)
-            logger.info("Initialized response generator")
-        except Exception as e:
-            logger.error(f"Failed to initialize response generator: {str(e)}")
-            logger.error(traceback.format_exc())
 
     @kernel_function(
         description="Answer a question using Azure OpenAI",
@@ -124,26 +82,6 @@ class ChatSkill:
             logger.info(f"Context provided with length: {len(context)}")
 
         try:
-            # Use the response generator to generate a response
-            if self.response_generator:
-                # Prepare additional options
-                options = {}
-                if system_message:
-                    options["system_message"] = system_message
-                
-                # Generate the response
-                response_data = await self.response_generator.generate_response(
-                    query=question,
-                    context=context,
-                    use_rag=False,
-                    **options
-                )
-                
-                return response_data.get("response", "I'm sorry, I couldn't generate a response.")
-            
-            # Fall back to the kernel if the response generator is not available
-            logger.warning("Response generator not available, falling back to kernel")
-            
             # Get the chat service from the kernel
             chat_service = self.kernel.get_service("chat")
 
@@ -223,77 +161,33 @@ class ChatSkill:
         description="Process a message in the context of a conversation",
         name="chat"
     )
-    async def chat(self, message: str, conversation_id: Optional[str] = None) -> Dict[str, Any]:
+    async def chat(self, message: str, history: str = "") -> Dict[str, Any]:
         """
         Process a message in the context of a conversation.
 
         Args:
             message: The user's message
-            conversation_id: Optional conversation identifier
+            history: The conversation history
 
         Returns:
-            Dict containing the response and updated conversation details
+            Dict containing the response and updated history
         """
         logger.info(f"Processing chat message: {message[:50]}...")
 
         try:
-            # Create a new conversation if needed
-            if not conversation_id and self.conversation_manager:
-                conversation = await self.conversation_manager.create_conversation()
-                conversation_id = conversation["id"]
-                logger.debug(f"Created new conversation: {conversation_id}")
-            
-            # Get conversation context if available
-            context = None
-            if conversation_id and self.conversation_manager:
-                try:
-                    context = await self.conversation_manager.get_conversation_context(
-                        conversation_id=conversation_id,
-                        format="string"
-                    )
-                    logger.debug(f"Retrieved conversation context with length: {len(context) if context else 0}")
-                except Exception as e:
-                    logger.error(f"Error retrieving conversation context: {str(e)}")
-            
-            # Use the response generator to generate a response
-            if self.response_generator:
-                # Generate the response
-                response_data = await self.response_generator.generate_response(
-                    query=message,
-                    context=context,
-                    conversation_id=conversation_id,
-                    use_rag=False,
-                    template_type="chat"
-                )
-                
-                response = response_data.get("response", "I'm sorry, I couldn't generate a response.")
+            # Use the answer_question method to generate a response
+            # In a real implementation, this would pass the history to provide context
+            response = await self.answer_question(message, context=history)
+
+            # Update history
+            if history:
+                updated_history = f"{history}\nUser: {message}\nAssistant: {response}"
             else:
-                # Fall back to the answer_question method
-                logger.warning("Response generator not available, falling back to answer_question")
-                response = await self.answer_question(message, context=context)
-                
-                # Store in conversation history if available
-                if conversation_id and self.conversation_manager:
-                    try:
-                        # Add user message
-                        await self.conversation_manager.add_message(
-                            conversation_id=conversation_id,
-                            content=message,
-                            message_type="user"
-                        )
-                        
-                        # Add assistant message
-                        await self.conversation_manager.add_message(
-                            conversation_id=conversation_id,
-                            content=response,
-                            message_type="assistant"
-                        )
-                    except Exception as e:
-                        logger.error(f"Error updating conversation history: {str(e)}")
+                updated_history = f"User: {message}\nAssistant: {response}"
 
             return {
                 "response": response,
-                "conversation_id": conversation_id,
+                "history": updated_history,
                 "skill_name": "ChatSkill",
                 "function_name": "chat",
                 "success": True
@@ -302,9 +196,15 @@ class ChatSkill:
             logger.error(f"Error in chat function: {str(e)}")
             error_response = "I encountered an error while processing your message. Please try again later."
 
+            # Update history even in case of error
+            if history:
+                updated_history = f"{history}\nUser: {message}\nAssistant: {error_response}"
+            else:
+                updated_history = f"User: {message}\nAssistant: {error_response}"
+
             return {
                 "response": error_response,
-                "conversation_id": conversation_id,
+                "history": updated_history,
                 "skill_name": "ChatSkill",
                 "function_name": "chat",
                 "success": False,
@@ -322,20 +222,6 @@ class ChatSkill:
         Returns:
             Dictionary with text and blocks for Slack
         """
-        # Use the Slack formatter
-        if self.formatter:
-            try:
-                return self.formatter.format_message(
-                    text=text,
-                    include_blocks=include_blocks
-                )
-            except Exception as e:
-                logger.error(f"Error using formatter: {str(e)}")
-                logger.error(traceback.format_exc())
-        
-        # Fall back to the original implementation if formatter is not available
-        logger.warning("Formatter not available, falling back to original implementation")
-        
         # Basic text formatting
         formatted_text = text
 
