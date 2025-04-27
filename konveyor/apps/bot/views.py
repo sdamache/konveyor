@@ -29,6 +29,7 @@ from konveyor.core.chat import ChatSkill
 from konveyor.core.formatters.factory import FormatterFactory
 from konveyor.core.conversation.factory import ConversationManagerFactory
 from konveyor.apps.bot.services.slack_service import SlackService
+from konveyor.apps.bot.slash_commands import get_command_handler
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -361,6 +362,73 @@ def slack_webhook(request):
                         logger.error("Failed to send simple error message as fallback")
 
     return HttpResponse(status=200)
+
+@csrf_exempt
+@require_POST
+def slack_slash_command(request):
+    """
+    Handle Slack slash commands.
+
+    This view receives slash commands from Slack, verifies them, and processes
+    them using the appropriate command handler.
+
+    Args:
+        request: The HTTP request
+
+    Returns:
+        HTTP response
+    """
+    logger.debug(f"Received Slack slash command request to {request.path}")
+
+    # Verify the request is from Slack
+    slack_signature = request.headers.get('X-Slack-Signature', '')
+    slack_timestamp = request.headers.get('X-Slack-Request-Timestamp', '')
+
+    # Skip verification if headers are missing (for testing purposes)
+    if not slack_signature or not slack_timestamp:
+        logger.warning("Missing Slack verification headers, skipping verification")
+    elif not slack_service.verify_request(request.body, slack_signature, slack_timestamp):
+        logger.warning("Failed to verify Slack slash command request")
+        return HttpResponse(status=403)
+
+    # Parse the request
+    try:
+        # Slack sends slash commands as form data
+        command = request.POST.get('command', '').strip('/')
+        text = request.POST.get('text', '')
+        user_id = request.POST.get('user_id', '')
+        channel_id = request.POST.get('channel_id', '')
+        response_url = request.POST.get('response_url', '')
+
+        logger.info(f"Received slash command: /{command} {text} from user {user_id} in channel {channel_id}")
+
+        # Get the command handler
+        command_info = get_command_handler(command)
+        if not command_info:
+            logger.warning(f"Unknown slash command: /{command}")
+            return JsonResponse({
+                "response_type": "ephemeral",
+                "text": f"Sorry, I don't know the command `/{command}`. Try `/help` to see available commands."
+            })
+
+        # Execute the command handler
+        handler = command_info['handler']
+        response = handler(text, user_id, channel_id, response_url)
+
+        logger.info(f"Slash command /{command} processed successfully")
+        return JsonResponse(response)
+
+    except Exception as e:
+        error_type = type(e).__name__
+        error_message = str(e)
+        logger.error(f"Error processing slash command: {error_type}: {error_message}")
+        logger.error(traceback.format_exc())
+
+        # Return an error message
+        return JsonResponse({
+            "response_type": "ephemeral",
+            "text": f"Sorry, I encountered an error processing your command: {error_message}"
+        })
 
 def process_message(text: str, user_id: str, channel_id: str, thread_ts: Optional[str] = None) -> Dict[str, Any]:
     """
