@@ -22,9 +22,9 @@ from konveyor.apps.core.views import health_check
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/bot/', include('konveyor.apps.bot.urls')),  # Slack bot integration - must be before api/ to avoid conflicts
     path('api/', include('konveyor.apps.api.urls')),
     path('documents/', include('konveyor.apps.documents.urls')),
-    path('api/bot/', include('konveyor.apps.bot.urls')),  # Slack bot integration
     # Azure App Service health check endpoint
     path('healthz/', health_check, name='health_check_root'),
     # Core URLs should be last
