@@ -16,8 +16,8 @@ if NGROK_URL:
         ALLOWED_HOSTS.append(ngrok_domain)
         print(f"Added ngrok domain to ALLOWED_HOSTS: {ngrok_domain}")
 
-# For convenience during development, also allow all *.ngrok-free.app domains
-ALLOWED_HOSTS.append('*.ngrok-free.app')
+# For convenience during development, also allow all ngrok-free.app domains
+ALLOWED_HOSTS.extend(['6762-2601-195-c902-7c10-5db7-9304-5464-d604.ngrok-free.app', 'ngrok-free.app', '*.ngrok-free.app'])
 
 # Use SQLite for development for simplicity
 DATABASES = {
