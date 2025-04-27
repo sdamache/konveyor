@@ -31,7 +31,7 @@ class ChatSkill:
     conversation context, and basic utility functions. It's designed to be
     used with Slack or other chat interfaces and includes demonstration
     functions that show how Semantic Kernel skills work.
-    
+
     This updated version uses the new core components for conversation management,
     message formatting, and response generation.
     """
@@ -44,18 +44,19 @@ class ChatSkill:
             kernel: Optional Semantic Kernel instance. If not provided, one will be created.
         """
         self.kernel = kernel if kernel is not None else self._create_kernel()
-        
+
         # Initialize the conversation manager
         self.conversation_manager = None
-        self._init_conversation_manager()
-        
+        # Use a synchronous initialization for the conversation manager
+        self._init_conversation_manager_sync()
+
         # Initialize the formatter
         self.formatter = FormatterFactory.get_formatter("slack")
-        
+
         # Initialize the response generator
         self.response_generator = None
         self._init_response_generator()
-        
+
         logger.info("ChatSkill initialized with new core components")
 
     def _create_kernel(self) -> Kernel:
@@ -75,23 +76,36 @@ class ChatSkill:
             logger.error(traceback.format_exc())
             # Return a minimal kernel without services as a fallback
             return Kernel()
-    
+
+    def _init_conversation_manager_sync(self):
+        """Initialize the conversation manager synchronously."""
+        try:
+            # Use a simple in-memory conversation manager for synchronous initialization
+            from konveyor.core.conversation.memory import InMemoryConversationManager
+            self.conversation_manager = InMemoryConversationManager()
+            logger.info("Initialized in-memory conversation manager synchronously")
+        except Exception as e:
+            logger.error(f"Failed to initialize conversation manager synchronously: {str(e)}")
+            logger.error(traceback.format_exc())
+
     async def _init_conversation_manager(self):
-        """Initialize the conversation manager."""
+        """Initialize the conversation manager asynchronously."""
         try:
             self.conversation_manager = await ConversationManagerFactory.create_manager("memory")
-            logger.info("Initialized conversation manager")
+            logger.info("Initialized conversation manager asynchronously")
         except Exception as e:
-            logger.error(f"Failed to initialize conversation manager: {str(e)}")
+            logger.error(f"Failed to initialize conversation manager asynchronously: {str(e)}")
             logger.error(traceback.format_exc())
-    
+
     def _init_response_generator(self):
         """Initialize the response generator."""
         try:
             # Configure the response generator with the conversation manager
-            config = {
-                "conversation_service": self.conversation_manager
-            }
+            # Only pass the conversation manager if it's initialized
+            config = {}
+            if self.conversation_manager:
+                config["conversation_service"] = self.conversation_manager
+
             self.response_generator = ResponseGeneratorFactory.get_generator("chat", config)
             logger.info("Initialized response generator")
         except Exception as e:
@@ -130,7 +144,7 @@ class ChatSkill:
                 options = {}
                 if system_message:
                     options["system_message"] = system_message
-                
+
                 # Generate the response
                 response_data = await self.response_generator.generate_response(
                     query=question,
@@ -138,12 +152,12 @@ class ChatSkill:
                     use_rag=False,
                     **options
                 )
-                
+
                 return response_data.get("response", "I'm sorry, I couldn't generate a response.")
-            
+
             # Fall back to the kernel if the response generator is not available
             logger.warning("Response generator not available, falling back to kernel")
-            
+
             # Get the chat service from the kernel
             chat_service = self.kernel.get_service("chat")
 
@@ -242,7 +256,7 @@ class ChatSkill:
                 conversation = await self.conversation_manager.create_conversation()
                 conversation_id = conversation["id"]
                 logger.debug(f"Created new conversation: {conversation_id}")
-            
+
             # Get conversation context if available
             context = None
             if conversation_id and self.conversation_manager:
@@ -254,7 +268,7 @@ class ChatSkill:
                     logger.debug(f"Retrieved conversation context with length: {len(context) if context else 0}")
                 except Exception as e:
                     logger.error(f"Error retrieving conversation context: {str(e)}")
-            
+
             # Use the response generator to generate a response
             if self.response_generator:
                 # Generate the response
@@ -265,13 +279,13 @@ class ChatSkill:
                     use_rag=False,
                     template_type="chat"
                 )
-                
+
                 response = response_data.get("response", "I'm sorry, I couldn't generate a response.")
             else:
                 # Fall back to the answer_question method
                 logger.warning("Response generator not available, falling back to answer_question")
                 response = await self.answer_question(message, context=context)
-                
+
                 # Store in conversation history if available
                 if conversation_id and self.conversation_manager:
                     try:
@@ -281,7 +295,7 @@ class ChatSkill:
                             content=message,
                             message_type="user"
                         )
-                        
+
                         # Add assistant message
                         await self.conversation_manager.add_message(
                             conversation_id=conversation_id,
@@ -332,10 +346,10 @@ class ChatSkill:
             except Exception as e:
                 logger.error(f"Error using formatter: {str(e)}")
                 logger.error(traceback.format_exc())
-        
+
         # Fall back to the original implementation if formatter is not available
         logger.warning("Formatter not available, falling back to original implementation")
-        
+
         # Basic text formatting
         formatted_text = text
 
