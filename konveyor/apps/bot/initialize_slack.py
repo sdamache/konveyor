@@ -1,16 +1,6 @@
-from services.slack_channel_service import SlackChannelService
-# Removed os and dotenv imports, and check_env_file function
+"""
+Proxy import for backward compatibility.
+This module has been moved to konveyor.core.botframework.scripts.setup_slack
+"""
 
-def main():
-    print("Starting Slack channel configuration...")
-    # Removed call to check_env_file()
-    try:
-        service = SlackChannelService()
-        service.configure_channel()
-    except ValueError as e:
-        print(f"Configuration failed: {str(e)}")
-    except Exception as e:
-        print(f"Unexpected error: {str(e)}")
-
-if __name__ == "__main__":
-    main()
+from konveyor.core.botframework.scripts.setup_slack import *
