@@ -232,16 +232,18 @@ def slack_webhook(request):
             channel = event.get('channel', '')
             user = event.get('user', '')
             channel_type = event.get('channel_type', '')
+            thread_ts = event.get('thread_ts', None)  # Extract thread_ts for threaded messages
 
             # Log message details at appropriate levels
-            logger.info(f"Processing message from user {user} in {channel_type} {channel}")
+            thread_info = f" in thread {thread_ts}" if thread_ts else ""
+            logger.info(f"Processing message from user {user} in {channel_type} {channel}{thread_info}")
             text_preview = text[:50] + ('...' if len(text) > 50 else '')
             logger.debug(f"Message text preview: {text_preview}")
 
             try:
                 # Process the message through the orchestrator
-                logger.debug(f"Calling process_message with user: {user}, channel: {channel}")
-                result = process_message(text, user, channel)
+                logger.debug(f"Calling process_message with user: {user}, channel: {channel}, thread_ts: {thread_ts}")
+                result = process_message(text, user, channel, thread_ts)
 
                 # Get the response text
                 response_text = result.get('response', 'Sorry, I could not process your request.')
@@ -267,14 +269,18 @@ def slack_webhook(request):
 
                 # Send the response based on channel type
                 try:
-                    if channel_type == 'im':
-                        logger.info(f"Sending direct message response to user {user}")
-                        response = slack_service.send_direct_message(user, response_text, blocks)
-                    else:
-                        logger.info(f"Sending response to channel {channel}")
-                        response = slack_service.send_message(channel, response_text, blocks)
+                    # Get thread_ts from the result or use the original thread_ts
+                    result_thread_ts = result.get('thread_ts', thread_ts)
+                    thread_info = f" in thread {result_thread_ts}" if result_thread_ts else ""
 
-                    logger.debug(f"Message sent successfully to {channel_type} {channel}")
+                    if channel_type == 'im':
+                        logger.info(f"Sending direct message response to user {user}{thread_info}")
+                        response = slack_service.send_direct_message(user, response_text, blocks, thread_ts=result_thread_ts)
+                    else:
+                        logger.info(f"Sending response to channel {channel}{thread_info}")
+                        response = slack_service.send_message(channel, response_text, blocks, thread_ts=result_thread_ts)
+
+                    logger.debug(f"Message sent successfully to {channel_type} {channel}{thread_info}")
                 except Exception as e:
                     logger.error(f"Error sending message: {str(e)}")
                     logger.error(traceback.format_exc())
@@ -285,7 +291,7 @@ def slack_webhook(request):
 
                 # Send error message
                 error_message = f"Sorry, I encountered an error: {str(e)}"
-                
+
                 # Format error message with blocks
                 error_blocks = None
                 try:
@@ -302,16 +308,19 @@ def slack_webhook(request):
                     logger.error(f"Error formatting error message: {str(format_error)}")
 
                 try:
+                    thread_info = f" in thread {thread_ts}" if thread_ts else ""
                     if channel_type == 'im':
-                        slack_service.send_direct_message(user, error_message, error_blocks)
+                        logger.info(f"Sending error message to user {user}{thread_info}")
+                        slack_service.send_direct_message(user, error_message, error_blocks, thread_ts=thread_ts)
                     else:
-                        slack_service.send_message(channel, error_message, error_blocks)
+                        logger.info(f"Sending error message to channel {channel}{thread_info}")
+                        slack_service.send_message(channel, error_message, error_blocks, thread_ts=thread_ts)
                 except Exception as send_error:
                     logger.error(f"Error sending error message: {str(send_error)}")
 
     return HttpResponse(status=200)
 
-def process_message(text: str, user_id: str, channel_id: str) -> Dict[str, Any]:
+def process_message(text: str, user_id: str, channel_id: str, thread_ts: Optional[str] = None) -> Dict[str, Any]:
     """
     Process a message using the Agent Orchestration Layer.
 
@@ -319,12 +328,14 @@ def process_message(text: str, user_id: str, channel_id: str) -> Dict[str, Any]:
         text: The message text
         user_id: The Slack user ID
         channel_id: The Slack channel ID
+        thread_ts: Optional thread timestamp for threaded messages
 
     Returns:
         The processed result
     """
     text_preview = text[:50] + ("..." if len(text) > 50 else "")
-    logger.debug(f"Processing message from user {user_id} in channel {channel_id}")
+    thread_info = f" in thread {thread_ts}" if thread_ts else ""
+    logger.debug(f"Processing message from user {user_id} in channel {channel_id}{thread_info}")
     logger.debug(f"Message preview: {text_preview}")
 
     # Create context with user and channel information
@@ -332,7 +343,8 @@ def process_message(text: str, user_id: str, channel_id: str) -> Dict[str, Any]:
         "user_id": user_id,
         "channel_id": channel_id,
         "platform": "slack",
-        "timestamp": datetime.datetime.now().isoformat()
+        "timestamp": datetime.datetime.now().isoformat(),
+        "thread_ts": thread_ts
     }
 
     # Get or create a conversation for this user
@@ -341,7 +353,7 @@ def process_message(text: str, user_id: str, channel_id: str) -> Dict[str, Any]:
         try:
             # Use asyncio to run the async method in a synchronous context
             import asyncio
-            
+
             async def get_or_create_conversation():
                 # Try to find an existing conversation for this user
                 user_conversations = await conversation_manager.get_user_conversations(user_id, limit=1)
@@ -351,11 +363,11 @@ def process_message(text: str, user_id: str, channel_id: str) -> Dict[str, Any]:
                     # Create a new conversation
                     conversation = await conversation_manager.create_conversation(user_id)
                     return conversation["id"]
-            
+
             # Run the async function
             conversation_id = asyncio.run(get_or_create_conversation())
             logger.debug(f"Using conversation ID: {conversation_id}")
-            
+
             # Add the conversation ID to the context
             context["conversation_id"] = conversation_id
         except Exception as e:
@@ -378,9 +390,13 @@ def process_message(text: str, user_id: str, channel_id: str) -> Dict[str, Any]:
         else:
             logger.warning(f"Request processing completed with success=False by {skill_name}.{function_name}")
 
-        # Add the conversation ID to the result
+        # Add the conversation ID and thread_ts to the result
         if conversation_id:
             result["conversation_id"] = conversation_id
+
+        # Add thread_ts to the result if available
+        if thread_ts:
+            result["thread_ts"] = thread_ts
 
         return result
     except Exception as e:
@@ -402,10 +418,16 @@ def process_message(text: str, user_id: str, channel_id: str) -> Dict[str, Any]:
         else:
             user_message += " Please try again or contact support if the issue persists."
 
-        return {
+        result = {
             "response": user_message,
             "error": error_message,
             "error_type": error_type,
             "success": False,
             "conversation_id": conversation_id
         }
+
+        # Add thread_ts to the result if available
+        if thread_ts:
+            result["thread_ts"] = thread_ts
+
+        return result
