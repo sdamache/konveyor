@@ -260,14 +260,53 @@ def handle_code_command(command_text: str, user_id: str, channel_id: str, respon
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": "*Code Block:*\n```\nfunction example() {\n  return 'Hello, world!';\n}\n```"
+                "text": "*Basic Code Block:*\n```\nfunction example() {\n  return 'Hello, world!';\n}\n```"
             }
         },
         {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": "*Syntax Highlighted Code:*\n```python\ndef example():\n    return \"Hello, world!\"\n```"
+                "text": "*Python Syntax Highlighting:*\n```python\ndef example():\n    return \"Hello, world!\"\n```"
+            }
+        },
+        {
+            "type": "context",
+            "elements": [
+                {
+                    "type": "mrkdwn",
+                    "text": "*Language:* Python"
+                }
+            ]
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "*JavaScript Syntax Highlighting:*\n```javascript\nconst getData = async () => {\n  try {\n    const response = await fetch('/api/data');\n    return await response.json();\n  } catch (error) {\n    console.error('Error fetching data:', error);\n  }\n};\n```"
+            }
+        },
+        {
+            "type": "context",
+            "elements": [
+                {
+                    "type": "mrkdwn",
+                    "text": "*Language:* JavaScript"
+                }
+            ]
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "*Supported Languages:*\nPython, JavaScript, TypeScript, Java, C#, C++, Go, Ruby, Rust, PHP, HTML, CSS, SQL, Shell/Bash, JSON, XML, YAML, and more."
+            }
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "*How to Use:*\nWrap your code in triple backticks and specify the language:\n\\```python\nyour code here\n\\```"
             }
         }
     ]

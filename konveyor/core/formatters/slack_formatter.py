@@ -106,7 +106,7 @@ class SlackFormatter(FormatterInterface):
 
     def format_code_block(self, code: str, language: Optional[str] = None) -> Dict[str, Any]:
         """
-        Format a code block for Slack.
+        Format a code block for Slack with syntax highlighting.
 
         Args:
             code: The code to format
@@ -115,8 +115,50 @@ class SlackFormatter(FormatterInterface):
         Returns:
             A dictionary with the formatted code block
         """
-        # Format the code with triple backticks and optional language
-        lang_tag = language if language else ""
+        # Clean up the code (remove extra whitespace at beginning/end)
+        code = code.strip()
+
+        # Format the code with triple backticks and language for syntax highlighting
+        # Make sure language is lowercase for better compatibility with Slack's syntax highlighting
+        lang_tag = language.lower() if language else ""
+
+        # Ensure we're using the correct language identifier for Slack
+        # Map common language names to their Slack syntax highlighting equivalents
+        lang_map = {
+            "python": "python",
+            "py": "python",
+            "javascript": "javascript",
+            "js": "javascript",
+            "typescript": "typescript",
+            "ts": "typescript",
+            "java": "java",
+            "csharp": "csharp",
+            "cs": "csharp",
+            "c#": "csharp",
+            "cpp": "cpp",
+            "c++": "cpp",
+            "go": "go",
+            "ruby": "ruby",
+            "rust": "rust",
+            "php": "php",
+            "html": "html",
+            "css": "css",
+            "sql": "sql",
+            "shell": "shell",
+            "bash": "bash",
+            "sh": "bash",
+            "json": "json",
+            "xml": "xml",
+            "yaml": "yaml",
+            "yml": "yaml",
+            "markdown": "markdown",
+            "md": "markdown"
+        }
+
+        # Use the mapped language if available
+        if lang_tag and lang_tag in lang_map:
+            lang_tag = lang_map[lang_tag]
+
         formatted_code = f"```{lang_tag}\n{code}\n```"
 
         # Create blocks for rich display
@@ -132,12 +174,32 @@ class SlackFormatter(FormatterInterface):
 
         # If a language is specified, add a context block with the language
         if language:
+            # Use a more readable language name for display
+            display_lang = language.lower()
+            # Map short language codes to full names for display
+            display_lang_map = {
+                "py": "python",
+                "js": "javascript",
+                "ts": "typescript",
+                "cs": "csharp",
+                "c#": "C#",
+                "cpp": "C++",
+                "sh": "shell",
+                "md": "markdown",
+                "yml": "yaml"
+            }
+            if display_lang in display_lang_map:
+                display_lang = display_lang_map[display_lang]
+
+            # Capitalize the first letter for better presentation
+            display_lang = display_lang[0].upper() + display_lang[1:]
+
             blocks.append({
                 "type": "context",
                 "elements": [
                     {
                         "type": "mrkdwn",
-                        "text": f"*Language:* {language}"
+                        "text": f"*Language:* {display_lang}"
                     }
                 ]
             })
@@ -325,7 +387,7 @@ class SlackFormatter(FormatterInterface):
 
     def format_code(self, code: str, language: Optional[str] = None, **kwargs) -> Dict[str, Any]:
         """
-        Format code for Slack.
+        Format code for Slack with syntax highlighting.
 
         Args:
             code: The code to format
@@ -340,9 +402,51 @@ class SlackFormatter(FormatterInterface):
         title = kwargs.get("title", "")
         include_blocks = kwargs.get("include_blocks", True)
 
-        # Format as text
-        lang_spec = f"{language}" if language else ""
-        text = f"{title}\n```{lang_spec}\n{code}\n```"
+        # Clean up the code (remove extra whitespace at beginning/end)
+        code = code.strip()
+
+        # Format the code with triple backticks and language for syntax highlighting
+        # Make sure language is lowercase for better compatibility with Slack's syntax highlighting
+        lang_tag = language.lower() if language else ""
+
+        # Ensure we're using the correct language identifier for Slack
+        # Map common language names to their Slack syntax highlighting equivalents
+        lang_map = {
+            "python": "python",
+            "py": "python",
+            "javascript": "javascript",
+            "js": "javascript",
+            "typescript": "typescript",
+            "ts": "typescript",
+            "java": "java",
+            "csharp": "csharp",
+            "cs": "csharp",
+            "c#": "csharp",
+            "cpp": "cpp",
+            "c++": "cpp",
+            "go": "go",
+            "ruby": "ruby",
+            "rust": "rust",
+            "php": "php",
+            "html": "html",
+            "css": "css",
+            "sql": "sql",
+            "shell": "shell",
+            "bash": "bash",
+            "sh": "bash",
+            "json": "json",
+            "xml": "xml",
+            "yaml": "yaml",
+            "yml": "yaml",
+            "markdown": "markdown",
+            "md": "markdown"
+        }
+
+        # Use the mapped language if available
+        if lang_tag and lang_tag in lang_map:
+            lang_tag = lang_map[lang_tag]
+
+        text = f"{title}\n```{lang_tag}\n{code}\n```" if title else f"```{lang_tag}\n{code}\n```"
 
         # Create response dictionary
         response = {
@@ -368,18 +472,38 @@ class SlackFormatter(FormatterInterface):
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"```{lang_spec}\n{code}\n```"
+                    "text": f"```{lang_tag}\n{code}\n```"
                 }
             })
 
             # If a language is specified, add a context block with the language
             if language:
+                # Use a more readable language name for display
+                display_lang = language.lower()
+                # Map short language codes to full names for display
+                display_lang_map = {
+                    "py": "python",
+                    "js": "javascript",
+                    "ts": "typescript",
+                    "cs": "csharp",
+                    "c#": "C#",
+                    "cpp": "C++",
+                    "sh": "shell",
+                    "md": "markdown",
+                    "yml": "yaml"
+                }
+                if display_lang in display_lang_map:
+                    display_lang = display_lang_map[display_lang]
+
+                # Capitalize the first letter for better presentation
+                display_lang = display_lang[0].upper() + display_lang[1:]
+
                 blocks.append({
                     "type": "context",
                     "elements": [
                         {
                             "type": "mrkdwn",
-                            "text": f"*Language:* {language}"
+                            "text": f"*Language:* {display_lang}"
                         }
                     ]
                 })
@@ -509,22 +633,85 @@ class SlackFormatter(FormatterInterface):
             lang = match.group('lang')
             code = match.group('code')
 
+            # Clean up the code (remove extra whitespace at beginning/end)
+            code = code.strip()
+
+            # Make sure language is lowercase for better compatibility with Slack's syntax highlighting
+            lang_tag = lang.lower() if lang else ""
+
+            # Ensure we're using the correct language identifier for Slack
+            # Map common language names to their Slack syntax highlighting equivalents
+            lang_map = {
+                "python": "python",
+                "py": "python",
+                "javascript": "javascript",
+                "js": "javascript",
+                "typescript": "typescript",
+                "ts": "typescript",
+                "java": "java",
+                "csharp": "csharp",
+                "cs": "csharp",
+                "c#": "csharp",
+                "cpp": "cpp",
+                "c++": "cpp",
+                "go": "go",
+                "ruby": "ruby",
+                "rust": "rust",
+                "php": "php",
+                "html": "html",
+                "css": "css",
+                "sql": "sql",
+                "shell": "shell",
+                "bash": "bash",
+                "sh": "bash",
+                "json": "json",
+                "xml": "xml",
+                "yaml": "yaml",
+                "yml": "yaml",
+                "markdown": "markdown",
+                "md": "markdown"
+            }
+
+            # Use the mapped language if available
+            if lang_tag and lang_tag in lang_map:
+                lang_tag = lang_map[lang_tag]
+
             blocks.append({
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"```{lang}\n{code}\n```"
+                    "text": f"```{lang_tag}\n{code}\n```"
                 }
             })
 
             # If a language is specified, add a context block with the language
             if lang:
+                # Use a more readable language name for display
+                display_lang = lang.lower()
+                # Map short language codes to full names for display
+                display_lang_map = {
+                    "py": "python",
+                    "js": "javascript",
+                    "ts": "typescript",
+                    "cs": "csharp",
+                    "c#": "C#",
+                    "cpp": "C++",
+                    "sh": "shell",
+                    "md": "markdown",
+                    "yml": "yaml"
+                }
+                if display_lang in display_lang_map:
+                    display_lang = display_lang_map[display_lang]
+
+                # Capitalize the first letter for better presentation
+                display_lang = display_lang[0].upper() + display_lang[1:]
+
                 blocks.append({
                     "type": "context",
                     "elements": [
                         {
                             "type": "mrkdwn",
-                            "text": f"*Language:* {lang}"
+                            "text": f"*Language:* {display_lang}"
                         }
                     ]
                 })

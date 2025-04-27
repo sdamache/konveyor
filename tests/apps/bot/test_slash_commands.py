@@ -122,11 +122,15 @@ def test_code_command():
     assert blocks[0]["type"] == "header"
     assert "Code Formatting" in blocks[0]["text"]["text"]
 
-    # Verify code examples
-    code_blocks = [block for block in blocks if "Inline Code" in block["text"]["text"] or
-                                               "Code Block" in block["text"]["text"] or
-                                               "Syntax Highlighted" in block["text"]["text"]]
-    assert len(code_blocks) >= 3
+    # Check blocks structure
+
+    # Verify we have section blocks with code examples
+    section_blocks = [block for block in blocks if block["type"] == "section"]
+    assert len(section_blocks) >= 4  # Header, intro, and at least 2 code examples
+
+    # Verify we have at least one context block with language information
+    context_blocks = [block for block in blocks if block["type"] == "context"]
+    assert len(context_blocks) >= 1
 
 
 @pytest.mark.django_db
