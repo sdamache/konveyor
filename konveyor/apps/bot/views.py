@@ -280,9 +280,30 @@ def slack_webhook(request):
                         logger.info(f"Sending response to channel {channel}{thread_info}")
                         response = slack_service.send_message(channel, response_text, blocks, thread_ts=result_thread_ts)
 
-                    logger.debug(f"Message sent successfully to {channel_type} {channel}{thread_info}")
+                    # Check if the Slack API response indicates an error
+                    if not response.get('ok', False):
+                        error_code = response.get('error', 'unknown_error')
+                        logger.error(f"Slack API error: {error_code} when sending message to {channel_type} {channel}{thread_info}")
+
+                        # Handle specific Slack API errors
+                        if error_code == 'channel_not_found':
+                            logger.error(f"Channel {channel} not found")
+                        elif error_code == 'not_in_channel':
+                            logger.error(f"Bot is not in channel {channel}")
+                        elif error_code == 'invalid_auth':
+                            logger.error("Invalid authentication token")
+                        elif error_code == 'rate_limited':
+                            retry_after = response.get('retry_after', 60)
+                            logger.error(f"Rate limited by Slack API. Retry after {retry_after} seconds")
+
+                        # Don't raise an exception here, just log the error
+                    else:
+                        logger.debug(f"Message sent successfully to {channel_type} {channel}{thread_info}")
                 except Exception as e:
-                    logger.error(f"Error sending message: {str(e)}")
+                    error_type = type(e).__name__
+                    error_message = str(e)
+                    logger.error(f"Error sending message: {error_type}: {error_message}")
+                    logger.error(f"Error details - Type: {error_type}, Message: {error_message}, User: {user}, Channel: {channel}")
                     logger.error(traceback.format_exc())
 
             except Exception as e:
@@ -311,12 +332,33 @@ def slack_webhook(request):
                     thread_info = f" in thread {thread_ts}" if thread_ts else ""
                     if channel_type == 'im':
                         logger.info(f"Sending error message to user {user}{thread_info}")
-                        slack_service.send_direct_message(user, error_message, error_blocks, thread_ts=thread_ts)
+                        response = slack_service.send_direct_message(user, error_message, error_blocks, thread_ts=thread_ts)
                     else:
                         logger.info(f"Sending error message to channel {channel}{thread_info}")
-                        slack_service.send_message(channel, error_message, error_blocks, thread_ts=thread_ts)
+                        response = slack_service.send_message(channel, error_message, error_blocks, thread_ts=thread_ts)
+
+                    # Check if the Slack API response indicates an error
+                    if not response.get('ok', False):
+                        error_code = response.get('error', 'unknown_error')
+                        logger.error(f"Slack API error when sending error message: {error_code}")
+                    else:
+                        logger.debug(f"Error message sent successfully to {channel_type} {channel}{thread_info}")
                 except Exception as send_error:
-                    logger.error(f"Error sending error message: {str(send_error)}")
+                    error_type = type(send_error).__name__
+                    error_message = str(send_error)
+                    logger.error(f"Error sending error message: {error_type}: {error_message}")
+                    logger.error(f"Error details - Type: {error_type}, Message: {error_message}, User: {user}, Channel: {channel}")
+
+                    # As a last resort, try to send a very simple message without blocks
+                    try:
+                        simple_message = "I encountered an error and couldn't process your request. Please try again later."
+                        if channel_type == 'im':
+                            slack_service.send_direct_message(user, simple_message, None, thread_ts=thread_ts)
+                        else:
+                            slack_service.send_message(channel, simple_message, None, thread_ts=thread_ts)
+                    except Exception:
+                        # If even this fails, just log it and give up
+                        logger.error("Failed to send simple error message as fallback")
 
     return HttpResponse(status=200)
 
@@ -370,6 +412,36 @@ def process_message(text: str, user_id: str, channel_id: str, thread_ts: Optiona
 
             # Add the conversation ID to the context
             context["conversation_id"] = conversation_id
+
+            # Add the user's message to the conversation history
+            async def add_user_message():
+                await conversation_manager.add_message(
+                    conversation_id=conversation_id,
+                    content=text,
+                    message_type="user",
+                    metadata={
+                        "channel_id": channel_id,
+                        "thread_ts": thread_ts,
+                        "platform": "slack"
+                    }
+                )
+                logger.debug(f"Added user message to conversation {conversation_id}")
+
+                # Retrieve conversation context
+                conversation_context = await conversation_manager.get_conversation_context(
+                    conversation_id=conversation_id,
+                    format="openai",
+                    max_messages=10  # Limit to last 10 messages for context
+                )
+                logger.debug(f"Retrieved conversation context with {len(conversation_context)} messages")
+
+                return conversation_context
+
+            # Run the async function
+            conversation_context = asyncio.run(add_user_message())
+
+            # Add conversation context to the context
+            context["conversation_history"] = conversation_context
         except Exception as e:
             logger.error(f"Error getting or creating conversation: {str(e)}")
             logger.error(traceback.format_exc())
@@ -394,6 +466,31 @@ def process_message(text: str, user_id: str, channel_id: str, thread_ts: Optiona
         if conversation_id:
             result["conversation_id"] = conversation_id
 
+            # Store the assistant's response in the conversation history
+            response_text = result.get("response", "")
+            if response_text and conversation_manager:
+                try:
+                    # Use asyncio to run the async method in a synchronous context
+                    async def add_assistant_message():
+                        await conversation_manager.add_message(
+                            conversation_id=conversation_id,
+                            content=response_text,
+                            message_type="assistant",
+                            metadata={
+                                "skill_name": result.get("skill_name", "unknown"),
+                                "function_name": result.get("function_name", "unknown"),
+                                "thread_ts": thread_ts,
+                                "platform": "slack"
+                            }
+                        )
+                        logger.debug(f"Added assistant response to conversation {conversation_id}")
+
+                    # Run the async function
+                    asyncio.run(add_assistant_message())
+                except Exception as e:
+                    logger.error(f"Error adding assistant message to conversation: {str(e)}")
+                    logger.error(traceback.format_exc())
+
         # Add thread_ts to the result if available
         if thread_ts:
             result["thread_ts"] = thread_ts
@@ -409,14 +506,29 @@ def process_message(text: str, user_id: str, channel_id: str, thread_ts: Optiona
 
         # Create a user-friendly error message
         user_message = "I encountered an error while processing your request."
-        if error_type == "ValueError":
-            user_message += f" {error_message}"
-        elif error_type == "KeyError":
-            user_message += " I couldn't find some required information."
-        elif error_type == "TimeoutError":
-            user_message += " The operation timed out. Please try again later."
-        else:
-            user_message += " Please try again or contact support if the issue persists."
+
+        # Map common error types to user-friendly messages
+        error_messages = {
+            "ValueError": f" {error_message}",
+            "KeyError": " I couldn't find some required information.",
+            "TimeoutError": " The operation timed out. Please try again later.",
+            "ConnectionError": " I'm having trouble connecting to a required service. Please try again later.",
+            "AuthenticationError": " There was an authentication issue. Please contact support.",
+            "PermissionError": " I don't have permission to access the requested resource.",
+            "ResourceNotFoundError": " The requested resource could not be found.",
+            "RateLimitError": " We've hit a rate limit. Please try again in a few minutes.",
+            "InvalidRequestError": " The request was invalid. Please check your input and try again.",
+            "ServiceUnavailableError": " A required service is currently unavailable. Please try again later."
+        }
+
+        # Add the specific error message if available, otherwise use a generic message
+        user_message += error_messages.get(
+            error_type,
+            " Please try again or contact support if the issue persists."
+        )
+
+        # Log the error with additional context
+        logger.error(f"Error details - Type: {error_type}, Message: {error_message}, User: {user_id}, Channel: {channel_id}")
 
         result = {
             "response": user_message,
@@ -429,5 +541,30 @@ def process_message(text: str, user_id: str, channel_id: str, thread_ts: Optiona
         # Add thread_ts to the result if available
         if thread_ts:
             result["thread_ts"] = thread_ts
+
+        # Store the error message in the conversation history
+        if conversation_id and conversation_manager:
+            try:
+                # Use asyncio to run the async method in a synchronous context
+                async def add_error_message():
+                    await conversation_manager.add_message(
+                        conversation_id=conversation_id,
+                        content=user_message,
+                        message_type="assistant",
+                        metadata={
+                            "error": True,
+                            "error_type": error_type,
+                            "error_message": error_message,
+                            "thread_ts": thread_ts,
+                            "platform": "slack"
+                        }
+                    )
+                    logger.debug(f"Added error message to conversation {conversation_id}")
+
+                # Run the async function
+                asyncio.run(add_error_message())
+            except Exception as e:
+                logger.error(f"Error adding error message to conversation: {str(e)}")
+                logger.error(traceback.format_exc())
 
         return result
