@@ -24,6 +24,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'konveyor.settings.development')
 django.setup()
 
 from konveyor.apps.bot.services.slack_service import SlackService
+from konveyor.skills.ChatSkill import ChatSkill
 
 def test_slack_service():
     """Test the Slack service by sending a test message."""
@@ -112,6 +113,37 @@ def test_slack_service():
             channel=channel_id,
             text="Hello from Konveyor! This is a test message from the Slack integration."
         )
+
+        # Test rich message formatting
+        print("Testing rich message formatting...")
+        chat_skill = ChatSkill()
+        markdown_text = """
+# Rich Message Test
+
+This is a test of the rich message formatting with blocks.
+
+## Features
+
+- Headers
+- Sections
+- Dividers
+- Lists
+
+## Conclusion
+
+If you see this message with proper formatting, the test was successful!
+"""
+        formatted = chat_skill.format_for_slack(markdown_text)
+        rich_response = slack.send_message(
+            channel=channel_id,
+            text=formatted['text'],
+            blocks=formatted['blocks']
+        )
+
+        if rich_response:
+            print("Rich message sent successfully!")
+        else:
+            print("Failed to send rich message.")
     except Exception as e:
         print(f"Error sending direct message: {str(e)}")
         return False
