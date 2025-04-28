@@ -1,6 +1,6 @@
-# Knowledge Taxonomy for Konveyor
+# Knowledge Analyzer for Konveyor
 
-This module provides a knowledge taxonomy for the Konveyor project, defining organizational knowledge domains relevant for onboarding new team members.
+This module provides a knowledge taxonomy and gap analysis system for the Konveyor project, helping identify and address knowledge gaps during the onboarding of new team members.
 
 ## Overview
 
@@ -35,9 +35,28 @@ The `taxonomy.py` module provides the `KnowledgeTaxonomyLoader` class, which:
 - Maps user queries to relevant knowledge domains
 - Retrieves learning paths for different roles
 
+### 3. User Knowledge Store
+
+The `user_knowledge.py` module provides the `UserKnowledgeStore` class, which:
+
+- Stores and retrieves user knowledge confidence scores
+- Tracks confidence levels for each user in different knowledge domains
+- Provides methods to update confidence scores based on interactions
+- Supports resetting user knowledge and calculating domain averages
+
+### 4. Knowledge Gap Analyzer Skill
+
+The `knowledge_gap_analyzer.py` module provides the `KnowledgeGapAnalyzerSkill` class, which:
+
+- Analyzes user questions and maps them to knowledge domains
+- Tracks user confidence in different knowledge areas
+- Identifies knowledge gaps based on low confidence scores
+- Suggests relevant documentation for addressing knowledge gaps
+- Provides personalized learning paths based on role and knowledge gaps
+
 ## Usage
 
-### Basic Usage
+### Using the Taxonomy Loader
 
 ```python
 from konveyor.skills.knowledge_analyzer.taxonomy import KnowledgeTaxonomyLoader
@@ -59,14 +78,46 @@ relevant_domains = loader.map_query_to_domains(query)
 path = loader.get_learning_path_by_role('new_developer')
 ```
 
-### Example Script
+### Using the Knowledge Gap Analyzer
 
-An example script is provided in `examples/taxonomy_example.py` that demonstrates the usage of the `KnowledgeTaxonomyLoader` class.
+```python
+from semantic_kernel import Kernel
+from konveyor.skills.knowledge_analyzer import KnowledgeGapAnalyzerSkill
 
-To run the example:
+# Create the analyzer (optionally with a Semantic Kernel instance)
+kernel = Kernel()  # In a real implementation, configure with Azure OpenAI
+analyzer = KnowledgeGapAnalyzerSkill(kernel)
+
+# Analyze a question
+user_id = "user123"
+question = "How do I set up the CI/CD pipeline?"
+analysis_json = analyzer.analyze_question(question, user_id)
+
+# Get a user's knowledge profile
+profile_json = analyzer.get_knowledge_profile(user_id)
+
+# Identify knowledge gaps
+gaps_json = analyzer.identify_gaps(user_id)
+
+# Get a personalized learning path
+path_json = analyzer.get_learning_path("new_developer", user_id)
+```
+
+### Example Scripts
+
+Example scripts are provided in the `examples/` directory:
+
+- `taxonomy_example.py`: Demonstrates the usage of the `KnowledgeTaxonomyLoader` class
+- `gap_analyzer_example.py`: Demonstrates the usage of the `KnowledgeGapAnalyzerSkill` class
+
+To run the examples:
 
 ```bash
+# Run the taxonomy example
 python -m konveyor.skills.knowledge_analyzer.examples.taxonomy_example
+
+# Run the gap analyzer example
+python -m konveyor.skills.knowledge_analyzer.examples.gap_analyzer_example
 ```
 
 ## Extending the Taxonomy
@@ -87,8 +138,35 @@ This taxonomy will be used by the Knowledge Gap Analyzer (Task 7) to:
 
 ## Testing
 
-Unit tests for the taxonomy loader are provided in `tests/test_knowledge_taxonomy.py`. To run the tests:
+Unit tests for the taxonomy loader and knowledge gap analyzer are provided in the `tests/` directory. To run the tests:
 
 ```bash
 python -m pytest tests/test_knowledge_taxonomy.py -v
+python -m pytest tests/test_knowledge_gap_analyzer.py -v
 ```
+
+## Future Improvements
+
+Several enhancements have been identified for future implementation. These are documented with TODO comments in the code and in the `docs/future_improvements.md` file. Key areas for improvement include:
+
+### 1. Semantic Mapping Enhancements
+- Replace keyword-based mapping with semantic understanding using LLMs
+- Integrate with Semantic Kernel's LLM capabilities
+- Use embeddings to calculate semantic similarity between questions and knowledge domains
+
+### 2. Dynamic Resource Suggestions
+- Replace hardcoded resource suggestions with dynamic, AI-powered recommendations
+- Connect to actual documentation repository
+- Use semantic search to find relevant documentation
+
+### 3. Persistent Knowledge Storage
+- Replace in-memory user knowledge store with persistent storage
+- Implement database backend (PostgreSQL or Azure Cosmos DB)
+- Add user authentication integration
+
+### 4. Advanced Confidence Scoring
+- Implement more sophisticated confidence scoring algorithms
+- Analyze question intent (confusion vs. confirmation)
+- Track answer quality and user feedback
+
+For a complete list of planned improvements, see `docs/future_improvements.md`.
