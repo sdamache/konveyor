@@ -99,8 +99,8 @@ module "app_service" {
     },
     # Conditionally add search service settings if deployed
     var.deploy_search_service ? {
-      AZURE_COGSEARCH_ENDPOINT = module.cognitive_search.search_service_endpoint
-      AZURE_COGSEARCH_KEY      = module.cognitive_search.search_service_primary_key
+      AZURE_COGSEARCH_ENDPOINT = module.cognitive_search[0].search_service_endpoint
+      AZURE_COGSEARCH_KEY      = module.cognitive_search[0].search_service_primary_key
     } : {
       # Placeholder values when search service is not deployed
       AZURE_COGSEARCH_ENDPOINT = "disabled"
