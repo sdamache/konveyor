@@ -347,28 +347,37 @@ class DjangoFeedbackRepository(FeedbackStorageProvider):
                 asyncio.set_event_loop(loop)
 
                 async def get_conversation_feedback():
-                    # Get recent conversations
-                    conversations = await self.conversation_manager.get_all_conversations(limit=100)
+                    # Check if the conversation manager has the required method
+                    if not hasattr(self.conversation_manager, 'get_all_conversations'):
+                        logger.warning("Conversation manager does not support get_all_conversations method")
+                        return []
 
-                    # Extract feedback from conversation metadata
-                    conversation_feedback = []
-                    for conversation in conversations:
-                        metadata = conversation.get('metadata', {})
-                        # Look for feedback entries in metadata
-                        for key, value in metadata.items():
-                            if key.startswith('feedback_'):
-                                # Check if the feedback is within the time range
-                                timestamp = value.get('timestamp')
-                                if timestamp:
-                                    try:
-                                        feedback_date = datetime.fromisoformat(timestamp)
-                                        if feedback_date >= start_date:
-                                            conversation_feedback.append(value)
-                                    except (ValueError, TypeError):
-                                        # Skip entries with invalid timestamps
-                                        pass
+                    try:
+                        # Get recent conversations
+                        conversations = await self.conversation_manager.get_all_conversations(limit=100)
 
-                    return conversation_feedback
+                        # Extract feedback from conversation metadata
+                        conversation_feedback = []
+                        for conversation in conversations:
+                            metadata = conversation.get('metadata', {})
+                            # Look for feedback entries in metadata
+                            for key, value in metadata.items():
+                                if key.startswith('feedback_'):
+                                    # Check if the feedback is within the time range
+                                    timestamp = value.get('timestamp')
+                                    if timestamp:
+                                        try:
+                                            feedback_date = datetime.fromisoformat(timestamp)
+                                            if feedback_date >= start_date:
+                                                conversation_feedback.append(value)
+                                        except (ValueError, TypeError):
+                                            # Skip entries with invalid timestamps
+                                            pass
+
+                        return conversation_feedback
+                    except Exception as e:
+                        logger.error(f"Error retrieving conversations: {str(e)}")
+                        return []
 
                 # Get feedback from conversations
                 conversation_feedback = loop.run_until_complete(get_conversation_feedback())
@@ -465,44 +474,53 @@ class DjangoFeedbackRepository(FeedbackStorageProvider):
                 asyncio.set_event_loop(loop)
 
                 async def get_conversation_feedback_by_skill():
-                    # Get recent conversations
-                    conversations = await self.conversation_manager.get_all_conversations(limit=100)
+                    # Check if the conversation manager has the required method
+                    if not hasattr(self.conversation_manager, 'get_all_conversations'):
+                        logger.warning("Conversation manager does not support get_all_conversations method")
+                        return {}
 
-                    # Extract feedback from conversation metadata
-                    skill_feedback = {}
-                    for conversation in conversations:
-                        metadata = conversation.get('metadata', {})
-                        # Look for feedback entries in metadata
-                        for key, value in metadata.items():
-                            if key.startswith('feedback_'):
-                                # Check if the feedback is within the time range
-                                timestamp = value.get('timestamp')
-                                skill_used = value.get('skill_used')
-                                feedback_type = value.get('type')
+                    try:
+                        # Get recent conversations
+                        conversations = await self.conversation_manager.get_all_conversations(limit=100)
 
-                                if timestamp and skill_used and feedback_type:
-                                    try:
-                                        feedback_date = datetime.fromisoformat(timestamp)
-                                        if feedback_date >= start_date:
-                                            # Initialize skill stats if needed
-                                            if skill_used not in skill_feedback:
-                                                skill_feedback[skill_used] = {
-                                                    'total': 0,
-                                                    'positive': 0,
-                                                    'negative': 0
-                                                }
+                        # Extract feedback from conversation metadata
+                        skill_feedback = {}
+                        for conversation in conversations:
+                            metadata = conversation.get('metadata', {})
+                            # Look for feedback entries in metadata
+                            for key, value in metadata.items():
+                                if key.startswith('feedback_'):
+                                    # Check if the feedback is within the time range
+                                    timestamp = value.get('timestamp')
+                                    skill_used = value.get('skill_used')
+                                    feedback_type = value.get('type')
 
-                                            # Update stats
-                                            skill_feedback[skill_used]['total'] += 1
-                                            if feedback_type == FeedbackType.POSITIVE:
-                                                skill_feedback[skill_used]['positive'] += 1
-                                            elif feedback_type == FeedbackType.NEGATIVE:
-                                                skill_feedback[skill_used]['negative'] += 1
-                                    except (ValueError, TypeError):
-                                        # Skip entries with invalid timestamps
-                                        pass
+                                    if timestamp and skill_used and feedback_type:
+                                        try:
+                                            feedback_date = datetime.fromisoformat(timestamp)
+                                            if feedback_date >= start_date:
+                                                # Initialize skill stats if needed
+                                                if skill_used not in skill_feedback:
+                                                    skill_feedback[skill_used] = {
+                                                        'total': 0,
+                                                        'positive': 0,
+                                                        'negative': 0
+                                                    }
 
-                    return skill_feedback
+                                                # Update stats
+                                                skill_feedback[skill_used]['total'] += 1
+                                                if feedback_type == FeedbackType.POSITIVE:
+                                                    skill_feedback[skill_used]['positive'] += 1
+                                                elif feedback_type == FeedbackType.NEGATIVE:
+                                                    skill_feedback[skill_used]['negative'] += 1
+                                        except (ValueError, TypeError):
+                                            # Skip entries with invalid timestamps
+                                            pass
+
+                        return skill_feedback
+                    except Exception as e:
+                        logger.error(f"Error retrieving conversations: {str(e)}")
+                        return {}
 
                 # Get feedback from conversations
                 conversation_skill_feedback = loop.run_until_complete(get_conversation_feedback_by_skill())
@@ -604,46 +622,55 @@ class DjangoFeedbackRepository(FeedbackStorageProvider):
                 asyncio.set_event_loop(loop)
 
                 async def get_conversation_feedback_data():
-                    # Get recent conversations
-                    conversations = await self.conversation_manager.get_all_conversations(limit=100)
+                    # Check if the conversation manager has the required method
+                    if not hasattr(self.conversation_manager, 'get_all_conversations'):
+                        logger.warning("Conversation manager does not support get_all_conversations method")
+                        return []
 
-                    # Extract feedback from conversation metadata
-                    conversation_feedback = []
-                    for conversation in conversations:
-                        conversation_id = conversation.get('id')
-                        metadata = conversation.get('metadata', {})
+                    try:
+                        # Get recent conversations
+                        conversations = await self.conversation_manager.get_all_conversations(limit=100)
 
-                        # Look for feedback entries in metadata
-                        for key, value in metadata.items():
-                            if key.startswith('feedback_'):
-                                # Extract message_id from the key (format: feedback_<message_id>)
-                                message_id = key.replace('feedback_', '')
+                        # Extract feedback from conversation metadata
+                        conversation_feedback = []
+                        for conversation in conversations:
+                            conversation_id = conversation.get('id')
+                            metadata = conversation.get('metadata', {})
 
-                                # Check if the feedback is within the time range
-                                timestamp = value.get('timestamp')
-                                if timestamp:
-                                    try:
-                                        feedback_date = datetime.fromisoformat(timestamp)
-                                        if feedback_date >= start_date:
-                                            # Create a feedback entry
-                                            feedback_entry = {
-                                                'message_id': message_id,
-                                                'conversation_id': conversation_id,
-                                                'timestamp': timestamp,
-                                                'source': 'conversation_storage'
-                                            }
+                            # Look for feedback entries in metadata
+                            for key, value in metadata.items():
+                                if key.startswith('feedback_'):
+                                    # Extract message_id from the key (format: feedback_<message_id>)
+                                    message_id = key.replace('feedback_', '')
 
-                                            # Add all available fields from the metadata
-                                            for field, field_value in value.items():
-                                                if field != 'timestamp':  # Already added
-                                                    feedback_entry[field] = field_value
+                                    # Check if the feedback is within the time range
+                                    timestamp = value.get('timestamp')
+                                    if timestamp:
+                                        try:
+                                            feedback_date = datetime.fromisoformat(timestamp)
+                                            if feedback_date >= start_date:
+                                                # Create a feedback entry
+                                                feedback_entry = {
+                                                    'message_id': message_id,
+                                                    'conversation_id': conversation_id,
+                                                    'timestamp': timestamp,
+                                                    'source': 'conversation_storage'
+                                                }
 
-                                            conversation_feedback.append(feedback_entry)
-                                    except (ValueError, TypeError):
-                                        # Skip entries with invalid timestamps
-                                        pass
+                                                # Add all available fields from the metadata
+                                                for field, field_value in value.items():
+                                                    if field != 'timestamp':  # Already added
+                                                        feedback_entry[field] = field_value
 
-                    return conversation_feedback
+                                                conversation_feedback.append(feedback_entry)
+                                        except (ValueError, TypeError):
+                                            # Skip entries with invalid timestamps
+                                            pass
+
+                        return conversation_feedback
+                    except Exception as e:
+                        logger.error(f"Error retrieving conversations: {str(e)}")
+                        return []
 
                 # Get feedback from conversations
                 conversation_feedback = loop.run_until_complete(get_conversation_feedback_data())
