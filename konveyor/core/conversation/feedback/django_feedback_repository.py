@@ -11,6 +11,21 @@ making the code more maintainable and testable.
 This implementation leverages the existing conversation storage mechanisms in
 konveyor/core/conversation/storage.py and memory.py for metadata storage,
 while using Django models for the primary feedback data.
+
+TODO: Repository Enhancements
+- Create AzureFeedbackRepository implementation (Task 8.1)
+  - Implement Azure AI Search indexing for feedback content
+  - Add fallback mechanism for when Azure is unavailable
+  - Create migration tools for existing feedback data
+
+- Optimize database queries for better performance (Technical Debt)
+  - Add caching for frequently accessed feedback data
+  - Implement batch processing for high-volume feedback
+
+- Enhance error handling and logging (Short-Term)
+  - Improve error recovery mechanisms
+  - Add more detailed logging for debugging
+  - Implement retry logic for transient failures
 """
 
 import logging
@@ -85,6 +100,30 @@ class DjangoFeedbackRepository(FeedbackStorageProvider):
         conversation_id = feedback_data.get('conversation_id')
         timestamp = feedback_data.get('timestamp')
 
+        # First, check for pending feedback entries for this message
+        try:
+            pending_entries = BotFeedback.objects.filter(
+                slack_message_ts=message_id,
+                slack_user_id="pending",
+                reaction="pending"
+            )
+
+            # If pending entries exist, get their content
+            if pending_entries.exists():
+                pending_entry = pending_entries.first()
+                # Get content from pending entry if not provided
+                question = question or pending_entry.question
+                answer = answer or pending_entry.answer
+                skill_used = skill_used or pending_entry.skill_used
+                function_used = function_used or pending_entry.function_used
+                conversation_id = conversation_id or pending_entry.conversation_id
+
+                # Delete the pending entry
+                pending_entry.delete()
+                logger.info(f"Used content from pending feedback entry for message {message_id}")
+        except Exception as e:
+            logger.error(f"Error checking for pending feedback entries: {str(e)}")
+
         # Try to find an existing feedback entry
         try:
             feedback = BotFeedback.objects.get(
@@ -95,7 +134,20 @@ class DjangoFeedbackRepository(FeedbackStorageProvider):
             # Update the existing feedback
             feedback.feedback_type = feedback_type
             feedback.feedback_timestamp = timezone.now()
-            feedback.save(update_fields=['feedback_type', 'feedback_timestamp'])
+
+            # Update content if available
+            if question is not None:
+                feedback.question = question
+            if answer is not None:
+                feedback.answer = answer
+            if skill_used is not None:
+                feedback.skill_used = skill_used
+            if function_used is not None:
+                feedback.function_used = function_used
+            if conversation_id is not None:
+                feedback.conversation_id = conversation_id
+
+            feedback.save()
             logger.info(f"Updated existing feedback: {feedback}")
         except BotFeedback.DoesNotExist:
             # Create a new feedback entry
@@ -160,6 +212,9 @@ class DjangoFeedbackRepository(FeedbackStorageProvider):
         """
         Update the content of feedback entries in both Django and conversation storage.
 
+        If no feedback entries exist yet, this method will store the content in a
+        temporary "pending feedback" entry that can be used when feedback is received later.
+
         Args:
             update_data: The data to update
 
@@ -185,22 +240,45 @@ class DjangoFeedbackRepository(FeedbackStorageProvider):
                 slack_channel_id=channel_id
             )
 
-            if not feedback_entries.exists():
-                logger.debug(f"No feedback entries found for message {message_id}")
-            else:
-                # Update all entries
-                update_fields = {}
-                if 'question' in update_data:
-                    update_fields['question'] = update_data['question']
-                if 'answer' in update_data:
-                    update_fields['answer'] = update_data['answer']
-                if 'skill_used' in update_data:
-                    update_fields['skill_used'] = update_data['skill_used']
-                if 'function_used' in update_data:
-                    update_fields['function_used'] = update_data['function_used']
-                if 'conversation_id' in update_data:
-                    update_fields['conversation_id'] = update_data['conversation_id']
+            # Prepare update fields
+            update_fields = {}
+            if 'question' in update_data:
+                update_fields['question'] = update_data['question']
+            if 'answer' in update_data:
+                update_fields['answer'] = update_data['answer']
+            if 'skill_used' in update_data:
+                update_fields['skill_used'] = update_data['skill_used']
+            if 'function_used' in update_data:
+                update_fields['function_used'] = update_data['function_used']
+            if 'conversation_id' in update_data:
+                update_fields['conversation_id'] = update_data['conversation_id']
 
+            if not feedback_entries.exists():
+                logger.debug(f"No feedback entries found for message {message_id}, creating pending entry")
+
+                # Create a "pending feedback" entry with neutral type
+                # This will be updated when actual feedback is received
+                try:
+                    pending_feedback = BotFeedback(
+                        slack_message_ts=message_id,
+                        slack_channel_id=channel_id,
+                        slack_user_id="pending",  # Placeholder user ID
+                        feedback_type="neutral",  # Neutral type for pending entries
+                        reaction="pending"        # Placeholder reaction
+                    )
+
+                    # Add the content fields
+                    for field, value in update_fields.items():
+                        setattr(pending_feedback, field, value)
+
+                    # Save the pending entry
+                    pending_feedback.save()
+                    logger.info(f"Created pending feedback entry for message {message_id}")
+                    success = True
+                except Exception as e:
+                    logger.error(f"Error creating pending feedback entry: {str(e)}")
+            else:
+                # Update existing entries
                 if update_fields:
                     feedback_entries.update(**update_fields)
                     logger.info(f"Updated {feedback_entries.count()} feedback entries for message {message_id}")

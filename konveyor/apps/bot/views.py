@@ -344,7 +344,7 @@ def slack_webhook(request):
                             if message_ts:
                                 # Update the feedback service with message content
                                 feedback_service.update_message_content(
-                                    message_ts=message_ts,
+                                    message_id=message_ts,  # Changed from message_ts to message_id
                                     channel_id=channel,
                                     question=text,
                                     answer=response_text,
