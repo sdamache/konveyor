@@ -17,6 +17,7 @@ class KnowledgeTaxonomyLoader:
     """
     Loads and provides access to the knowledge taxonomy.
 
+
     This class is responsible for loading the knowledge taxonomy from the YAML file
     and providing methods to access and query the taxonomy.
     """
@@ -24,7 +25,6 @@ class KnowledgeTaxonomyLoader:
     def __init__(self, taxonomy_file: Optional[str] = None):
         """
         Initialize the KnowledgeTaxonomyLoader.
-
         Args:
             taxonomy_file: Optional path to the taxonomy YAML file. If not provided,
                            the default file in the same directory will be used.
@@ -44,7 +44,7 @@ class KnowledgeTaxonomyLoader:
 
         Returns:
             Dict[str, Any]: The loaded taxonomy as a dictionary.
-
+            
         Raises:
             FileNotFoundError: If the taxonomy file does not exist.
             yaml.YAMLError: If the YAML file is invalid.
@@ -61,6 +61,7 @@ class KnowledgeTaxonomyLoader:
             logger.error(f"Error parsing taxonomy YAML: {e}")
             raise
 
+
     def get_all_domains(self) -> List[Dict[str, Any]]:
         """
         Get all knowledge domains.
@@ -69,6 +70,7 @@ class KnowledgeTaxonomyLoader:
             List[Dict[str, Any]]: List of all knowledge domains.
         """
         return self.taxonomy.get('domains', [])
+
 
     def get_domain_by_id(self, domain_id: str) -> Optional[Dict[str, Any]]:
         """
@@ -109,13 +111,13 @@ class KnowledgeTaxonomyLoader:
         """
         return self.taxonomy.get('learning_paths', [])
 
+
     def get_learning_path_by_role(self, role: str) -> Optional[Dict[str, Any]]:
         """
         Get a learning path by role.
 
         Args:
             role: The role to retrieve the learning path for.
-
         Returns:
             Optional[Dict[str, Any]]: The learning path if found, None otherwise.
         """
@@ -123,6 +125,7 @@ class KnowledgeTaxonomyLoader:
             if path.get('role') == role:
                 return path
         return None
+
 
     def get_relationships(self) -> List[Dict[str, Any]]:
         """
@@ -163,7 +166,7 @@ class KnowledgeTaxonomyLoader:
         """
         matching_domains = []
         keyword = keyword.lower()
-
+        
         for domain in self.get_all_domains():
             for subcategory in domain.get('subcategories', []):
                 if any(keyword in kw.lower() for kw in subcategory.get('keywords', [])):
@@ -183,6 +186,7 @@ class KnowledgeTaxonomyLoader:
             'version': self.taxonomy.get('version', 'unknown'),
             'last_updated': self.taxonomy.get('last_updated', 'unknown')
         }
+
 
     def map_query_to_domains(self, query: str) -> List[Dict[str, Any]]:
         """

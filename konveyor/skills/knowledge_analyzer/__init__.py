@@ -10,3 +10,4 @@ from konveyor.skills.knowledge_analyzer.user_knowledge import UserKnowledgeStore
 from konveyor.skills.knowledge_analyzer.knowledge_gap_analyzer import KnowledgeGapAnalyzerSkill
 
 __all__ = ["KnowledgeTaxonomyLoader", "UserKnowledgeStore", "KnowledgeGapAnalyzerSkill"]
+

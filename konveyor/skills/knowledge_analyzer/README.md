@@ -35,6 +35,7 @@ The `taxonomy.py` module provides the `KnowledgeTaxonomyLoader` class, which:
 - Maps user queries to relevant knowledge domains
 - Retrieves learning paths for different roles
 
+
 ### 3. User Knowledge Store
 
 The `user_knowledge.py` module provides the `UserKnowledgeStore` class, which:
@@ -57,7 +58,6 @@ The `knowledge_gap_analyzer.py` module provides the `KnowledgeGapAnalyzerSkill` 
 ## Usage
 
 ### Using the Taxonomy Loader
-
 ```python
 from konveyor.skills.knowledge_analyzer.taxonomy import KnowledgeTaxonomyLoader
 
@@ -77,6 +77,7 @@ relevant_domains = loader.map_query_to_domains(query)
 # Get a learning path for a role
 path = loader.get_learning_path_by_role('new_developer')
 ```
+
 
 ### Using the Knowledge Gap Analyzer
 
