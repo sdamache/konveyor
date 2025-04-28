@@ -12,6 +12,9 @@ Semantic Kernel is a lightweight SDK that integrates Large Language Models (LLMs
 - `setup.py` - Core setup for Semantic Kernel
 - `BasicSkill.py` - A simple demonstration skill
 - `ChatSkill.py` - A skill for chat interactions
+- `documentation_navigator/` - Documentation search and retrieval skill
+  - `DocumentationNavigatorSkill.py` - Main implementation
+  - `README.md` - Documentation and usage examples
 - `examples/` - Example scripts showing how to use the skills
 
 ## Skills
@@ -31,6 +34,22 @@ A more advanced skill for chat interactions. It provides functions for:
 - Maintaining conversation context
 - Formatting responses for Slack
 
+### DocumentationNavigatorSkill
+
+A skill for documentation search and retrieval that wraps the existing SearchService. It provides functions for:
+
+- Searching documentation using natural language queries
+- Preprocessing queries for better search results
+- Answering questions using documentation
+- Maintaining conversation context across interactions
+- Handling follow-up questions with contextual awareness
+- Formatting responses with citations
+- Formatting results for Slack
+
+The skill integrates with the conversation memory system to maintain context across interactions, allowing for more natural, contextual conversations about documentation.
+
+For more details, see the [DocumentationNavigatorSkill README](documentation_navigator/README.md).
+
 ## Usage
 
 ### Creating a Kernel
@@ -46,6 +65,8 @@ kernel_with_embeddings = create_kernel(use_embeddings=True)
 ```
 
 ### Using a Skill
+
+#### ChatSkill Example
 
 ```python
 from konveyor.skills.setup import create_kernel
@@ -67,6 +88,74 @@ answer = kernel.run_function(
 print(answer)
 ```
 
+#### DocumentationNavigatorSkill Example
+
+```python
+import asyncio
+from konveyor.skills.setup import create_kernel
+from konveyor.skills.documentation_navigator import DocumentationNavigatorSkill
+
+async def search_docs():
+    # Create a kernel
+    kernel = create_kernel()
+
+    # Import the DocumentationNavigatorSkill
+    doc_skill = DocumentationNavigatorSkill(kernel)
+    functions = kernel.add_plugin(doc_skill, plugin_name="documentation")
+
+    # Search for documentation
+    query = "How do I set up my development environment?"
+    result = await functions["search_documentation"].invoke(query=query)
+    print(f"Found {result['result_count']} results")
+
+    # Answer a question
+    answer = await functions["answer_question"].invoke(question=query)
+    print(f"Answer: {answer[:100]}...")
+
+# Run the example
+asyncio.run(search_docs())
+```
+
+#### Contextual Conversation Example
+
+```python
+import asyncio
+from konveyor.skills.setup import create_kernel
+from konveyor.skills.documentation_navigator import DocumentationNavigatorSkill
+
+async def contextual_conversation():
+    # Create a kernel
+    kernel = create_kernel()
+
+    # Create the DocumentationNavigatorSkill
+    doc_skill = DocumentationNavigatorSkill(kernel)
+    functions = kernel.add_plugin(doc_skill, plugin_name="documentation")
+
+    # Create a new conversation
+    conversation = await functions["create_conversation"].invoke()
+    conversation_id = conversation["id"]
+    print(f"Created conversation: {conversation_id}")
+
+    # Ask an initial question
+    initial_question = "What is the onboarding process?"
+    answer1 = await functions["answer_question"].invoke(
+        question=initial_question,
+        conversation_id=conversation_id
+    )
+    print(f"Initial answer: {answer1[:100]}...")
+
+    # Ask a follow-up question
+    follow_up = "What should I do on my first day?"
+    answer2 = await functions["continue_conversation"].invoke(
+        follow_up_question=follow_up,
+        conversation_id=conversation_id
+    )
+    print(f"Follow-up answer: {answer2[:100]}...")
+
+# Run the example
+asyncio.run(contextual_conversation())
+```
+
 ### Running Examples
 
 ```bash
@@ -80,6 +169,48 @@ export AZURE_OPENAI_CHAT_DEPLOYMENT="gpt-35-turbo"
 
 # Run the chat example
 python -m konveyor.skills.examples.chat_example
+
+# For DocumentationNavigatorSkill, you can create a script using the example above
+# and run it directly
+```
+
+### Registering with Agent Orchestrator
+
+To register the DocumentationNavigatorSkill with the agent orchestrator:
+
+```python
+import asyncio
+from konveyor.skills.setup import create_kernel
+from konveyor.skills.documentation_navigator import DocumentationNavigatorSkill
+from konveyor.skills.agent_orchestrator.AgentOrchestratorSkill import AgentOrchestratorSkill
+from konveyor.skills.agent_orchestrator.registry import SkillRegistry
+
+async def register_skill():
+    # Create kernel and registry
+    kernel = create_kernel()
+    registry = SkillRegistry()
+
+    # Create skills
+    doc_skill = DocumentationNavigatorSkill(kernel)
+    orchestrator = AgentOrchestratorSkill(kernel, registry)
+
+    # Register the DocumentationNavigatorSkill
+    skill_name = orchestrator.register_skill(
+        doc_skill,
+        description="A skill for searching and navigating documentation",
+        keywords=["documentation", "search", "help", "guide", "onboarding"]
+    )
+
+    print(f"Registered skill as: {skill_name}")
+
+    # Test with a query
+    response = await orchestrator.process_request(
+        "Where can I find documentation about onboarding?"
+    )
+    print(f"Response: {response}")
+
+# Run the registration
+asyncio.run(register_skill())
 ```
 
 ## Creating New Skills
