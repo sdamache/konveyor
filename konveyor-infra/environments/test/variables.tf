@@ -148,5 +148,5 @@ variable "docker_registry_username" {
 variable "deploy_search_service" {
   description = "Whether to deploy the Azure Cognitive Search service (can be expensive)"
   type        = bool
-  default     = true
+  default     = false
 }
