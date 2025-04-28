@@ -13,6 +13,27 @@ The service is designed to work with the existing conversation storage
 mechanisms in konveyor/core/conversation/storage.py and memory.py, but
 uses a dedicated storage provider for feedback data to maintain separation
 of concerns.
+
+TODO: Feedback System Enhancements
+- Implement Azure AI Search integration for feedback storage (Task 8.1)
+  - Index all feedback content in Azure AI Search
+  - Enable semantic search across feedback content
+  - Implement advanced analytics on feedback patterns
+
+- Enhance feedback correlation and analysis (Task 8.2)
+  - Link feedback with user profiles and conversation history
+  - Track feedback patterns by user or conversation type
+  - Provide personalized improvements based on individual feedback
+
+- Implement feedback lifecycle management (Task 8.3)
+  - Add archiving/summarization of older feedback
+  - Implement categorization/tagging for better organization
+  - Create feedback review workflows for team analysis
+
+- Add real-time feedback analytics (Task 8.4)
+  - Create real-time dashboards for monitoring trends
+  - Implement alerts for negative feedback patterns
+  - Provide immediate insights to improve bot responses
 """
 
 import logging

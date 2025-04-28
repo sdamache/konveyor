@@ -6,6 +6,22 @@ are separate from the main bot views to maintain a clear separation of concerns.
 
 The feedback API allows external systems (like Azure dashboards) to access
 feedback data for analysis and visualization.
+
+TODO: Feedback API Enhancements
+- Implement real-time feedback analytics (Task 8.4)
+  - Add WebSocket endpoints for real-time updates
+  - Create API endpoints for dashboard data
+  - Implement feedback trend analysis endpoints
+
+- Improve feedback export functionality (Medium-Term)
+  - Add more export formats (CSV, Excel)
+  - Create scheduled export functionality
+  - Implement feedback report generation
+
+- Add admin interface for feedback management (Short-Term)
+  - Create views for reviewing and categorizing feedback
+  - Implement feedback search and filtering
+  - Add user-specific feedback views
 """
 
 import logging
