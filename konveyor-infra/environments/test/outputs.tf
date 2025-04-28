@@ -2,12 +2,12 @@
 
 output "cognitive_search_endpoint" {
   description = "Test Azure Cognitive Search Service endpoint"
-  value       = var.deploy_search_service ? module.cognitive_search.search_service_endpoint : "Search service not deployed"
+  value       = var.deploy_search_service ? module.cognitive_search[0].search_service_endpoint : "Search service not deployed"
 }
 
 output "cognitive_search_primary_key" {
   description = "Test Azure Cognitive Search Service primary key"
-  value       = var.deploy_search_service ? module.cognitive_search.search_service_primary_key : "Search service not deployed"
+  value       = var.deploy_search_service ? module.cognitive_search[0].search_service_primary_key : "Search service not deployed"
   sensitive   = true
 }
 
