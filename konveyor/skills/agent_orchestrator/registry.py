@@ -11,6 +11,16 @@ from typing import Dict, Any, List, Optional, Type, Set
 import inspect
 from semantic_kernel.functions import KernelFunction
 
+# Default keywords for built-in skills
+DEFAULT_SKILL_KEYWORDS = {
+    "DocumentationNavigatorSkill": [
+        "documentation", "docs", "search", "find", "information", "help",
+        "guide", "manual", "reference", "lookup", "document", "article",
+        "tutorial", "how-to", "faq", "question", "answer", "onboarding",
+        "getting started", "learn", "knowledge", "info"
+    ]
+}
+
 # Configure logging
 logging.basicConfig(level=logging.INFO,
                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -124,19 +134,24 @@ class SkillRegistry:
             self.keywords[skill_name] = set(keywords)
             logger.info(f"Using provided keywords: {keywords}")
         else:
-            # Extract keywords from skill name and description
-            self.keywords[skill_name] = set()
-            logger.info("Extracting keywords from skill name and description")
+            # Check for default keywords first
+            if skill.__class__.__name__ in DEFAULT_SKILL_KEYWORDS:
+                self.keywords[skill_name] = set(DEFAULT_SKILL_KEYWORDS[skill.__class__.__name__])
+                logger.info(f"Using default keywords for {skill.__class__.__name__}: {self.keywords[skill_name]}")
+            else:
+                # Extract keywords from skill name and description
+                self.keywords[skill_name] = set()
+                logger.info("Extracting keywords from skill name and description")
 
-            if skill_name:
-                name_keywords = skill_name.lower().split('_')
-                self.keywords[skill_name].update(name_keywords)
-                logger.info(f"Added keywords from skill name: {name_keywords}")
+                if skill_name:
+                    name_keywords = skill_name.lower().split('_')
+                    self.keywords[skill_name].update(name_keywords)
+                    logger.info(f"Added keywords from skill name: {name_keywords}")
 
-            if skill_name in self.skill_descriptions:
-                desc_keywords = self.skill_descriptions[skill_name].lower().split()
-                self.keywords[skill_name].update(desc_keywords)
-                logger.info(f"Added keywords from description: {desc_keywords}")
+                if skill_name in self.skill_descriptions:
+                    desc_keywords = self.skill_descriptions[skill_name].lower().split()
+                    self.keywords[skill_name].update(desc_keywords)
+                    logger.info(f"Added keywords from description: {desc_keywords}")
 
         logger.info(f"Final keywords for {skill_name}: {self.keywords[skill_name]}")
         logger.info(f"Registered skill: {skill_name} with {len(self.function_descriptions[skill_name])} functions")
