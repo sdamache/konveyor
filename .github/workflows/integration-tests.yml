@@ -1,0 +1,214 @@
+name: "Integration Tests"
+
+on:
+  pull_request:
+    branches: [ main, dev ]
+  push:
+    branches: [ main, dev ]
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of tests to run'
+        required: true
+        default: 'mock'
+        type: choice
+        options:
+          - mock
+          - real
+          - both
+      environment:
+        description: 'Environment to run tests in'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - test
+          - prod
+      test_category:
+        description: 'Category of tests to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - unit
+          - integration
+          - real
+          - search
+          - document
+          - slack
+      fast_track:
+        description: 'Run only critical tests for quick deployment'
+        required: false
+        default: false
+        type: boolean
+  workflow_call:
+    inputs:
+      test_type:
+        description: 'Type of tests to run'
+        required: false
+        default: 'mock'
+        type: string
+      environment:
+        description: 'Environment to run tests in'
+        required: false
+        default: 'dev'
+        type: string
+      test_category:
+        description: 'Category of tests to run'
+        required: false
+        default: 'all'
+        type: string
+      fast_track:
+        description: 'Run only critical tests for quick deployment'
+        required: false
+        default: false
+        type: boolean
+    outputs:
+      success:
+        description: 'Whether all tests passed'
+        value: ${{ jobs.integration-tests.outputs.tests_passed }}
+
+jobs:
+  integration-tests:
+    name: Run Integration Tests
+    runs-on: ubuntu-latest
+    outputs:
+      tests_passed: ${{ steps.test-result.outputs.passed }}
+
+    env:
+      # Django settings
+      DJANGO_SETTINGS_MODULE: konveyor.settings.${{ inputs.environment || github.event.inputs.environment || 'testing' }}
+      DJANGO_ENVIRONMENT: ${{ inputs.environment || github.event.inputs.environment || 'testing' }}
+      DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+      PYTHONPATH: ${{ github.workspace }}
+
+      # Azure credentials
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # Azure Key Vault
+      AZURE_KEY_VAULT_URL: ${{ secrets.AZURE_KEY_VAULT_URL }}
+
+      # Azure Cognitive Search
+      AZURE_COGNITIVE_SEARCH_ENDPOINT: ${{ secrets.AZURE_COGNITIVE_SEARCH_ENDPOINT }}
+      AZURE_SEARCH_ENDPOINT: ${{ secrets.AZURE_SEARCH_ENDPOINT }}
+      AZURE_SEARCH_API_KEY: ${{ secrets.AZURE_SEARCH_API_KEY }}
+      AZURE_SEARCH_INDEX_NAME: ${{ secrets.AZURE_SEARCH_INDEX_NAME || 'konveyor-documents' }}
+
+      # Azure Document Intelligence
+      AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT: ${{ secrets.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT }}
+      AZURE_DOCUMENT_INTELLIGENCE_API_KEY: ${{ secrets.AZURE_DOCUMENT_INTELLIGENCE_API_KEY }}
+
+      # Azure OpenAI
+      AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+      AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+      AZURE_OPENAI_CHAT_DEPLOYMENT: ${{ secrets.AZURE_OPENAI_CHAT_DEPLOYMENT }}
+      AZURE_OPENAI_EMBEDDING_DEPLOYMENT: ${{ secrets.AZURE_OPENAI_EMBEDDING_DEPLOYMENT }}
+      AZURE_OPENAI_API_VERSION: ${{ secrets.AZURE_OPENAI_API_VERSION }}
+
+      # Database settings (for non-SQLite tests)
+      DB_NAME: ${{ secrets.DB_NAME || 'konveyor' }}
+      DB_USER: ${{ secrets.DB_USER || 'postgres' }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD || 'postgres' }}
+      DB_HOST: ${{ secrets.DB_HOST || 'localhost' }}
+      DB_PORT: ${{ secrets.DB_PORT || '5432' }}
+
+      # Bot Framework / Slack
+      MICROSOFT_APP_ID: ${{ secrets.MICROSOFT_APP_ID }}
+      MICROSOFT_APP_PASSWORD: ${{ secrets.MICROSOFT_APP_PASSWORD }}
+      SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+      SLACK_APP_TOKEN: ${{ secrets.SLACK_APP_TOKEN }}
+      SLACK_SIGNING_SECRET: ${{ secrets.SLACK_SIGNING_SECRET }}
+      SLACK_CLIENT_ID: ${{ secrets.SLACK_CLIENT_ID }}
+      SLACK_CLIENT_SECRET: ${{ secrets.SLACK_CLIENT_SECRET }}
+      SLACK_TEST_USER_EMAIL: ${{ secrets.SLACK_TEST_USER_EMAIL }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/testing.txt
+          pip install pytest pytest-django pytest-asyncio
+
+      # Determine test parameters based on workflow_dispatch inputs or defaults
+      - name: Set test parameters
+        id: test-params
+        run: |
+          # Set test type (mock, real, or both)
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" || "${{ github.event_name }}" == "workflow_call" ]]; then
+            TEST_TYPE="${{ inputs.test_type || github.event.inputs.test_type || 'mock' }}"
+            ENVIRONMENT="${{ inputs.environment || github.event.inputs.environment || 'dev' }}"
+            TEST_CATEGORY="${{ inputs.test_category || github.event.inputs.test_category || 'all' }}"
+            FAST_TRACK="${{ inputs.fast_track || github.event.inputs.fast_track || 'false' }}"
+          else
+            # Default for push/PR events
+            TEST_TYPE="mock"
+            ENVIRONMENT="dev"
+            TEST_CATEGORY="all"
+            FAST_TRACK="false"
+          fi
+
+          # Set command-line arguments for the test runner
+          ARGS="--category ${TEST_CATEGORY} --env ${ENVIRONMENT}"
+
+          if [[ "${TEST_TYPE}" == "mock" ]]; then
+            ARGS="${ARGS} --mock"
+          elif [[ "${TEST_TYPE}" == "real" ]]; then
+            ARGS="${ARGS} --real"
+          else
+            # Both mock and real
+            ARGS="${ARGS} --mock --real"
+          fi
+
+          if [[ "${FAST_TRACK}" == "true" ]]; then
+            # For fast track, only run critical tests
+            if [[ "${TEST_CATEGORY}" == "all" ]]; then
+              # Override category to unit for fast track
+              ARGS="--category unit --env ${ENVIRONMENT} --mock"
+            fi
+          fi
+
+          echo "args=${ARGS}" >> $GITHUB_OUTPUT
+          echo "Test parameters: ${ARGS}"
+
+      # Run the tests with the determined parameters
+      - name: Run tests
+        id: run-tests
+        run: |
+          mkdir -p tests/results
+          python tests/run_all_tests.py ${{ steps.test-params.outputs.args }} -v
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+
+      # Set test result output
+      - name: Set test result
+        id: test-result
+        run: |
+          if [[ "${{ steps.run-tests.outputs.exit_code }}" == "0" ]]; then
+            echo "passed=true" >> $GITHUB_OUTPUT
+          else
+            echo "passed=false" >> $GITHUB_OUTPUT
+          fi
+
+      # Upload test results as artifacts
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: |
+            tests/results/
+            **/test-*.xml
+          retention-days: 5
