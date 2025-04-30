@@ -22,7 +22,12 @@ import os
 from dotenv import load_dotenv
 from unittest.mock import patch, MagicMock, AsyncMock
 from botbuilder.core import TurnContext
-from botbuilder.schema import Activity, ConversationAccount, ChannelAccount, ActivityTypes
+from botbuilder.schema import (
+    Activity,
+    ConversationAccount,
+    ChannelAccount,
+    ActivityTypes,
+)
 
 from konveyor.apps.bot.bot import KonveyorBot
 from konveyor.core.agent import AgentOrchestratorSkill, SkillRegistry
@@ -30,8 +35,9 @@ from konveyor.core.chat import ChatSkill
 from konveyor.core.kernel import create_kernel
 
 # Configure logging for tests
-logging.basicConfig(level=logging.INFO,
-                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 # Load environment variables
@@ -39,11 +45,13 @@ load_dotenv()
 
 # Skip all tests if required environment variables are not set
 pytestmark = pytest.mark.skipif(
-    not all([
-        os.environ.get('AZURE_OPENAI_ENDPOINT'),
-        os.environ.get('AZURE_OPENAI_API_KEY')
-    ]),
-    reason="Azure OpenAI credentials not found in environment variables"
+    not all(
+        [
+            os.environ.get("AZURE_OPENAI_ENDPOINT"),
+            os.environ.get("AZURE_OPENAI_API_KEY"),
+        ]
+    ),
+    reason="Azure OpenAI credentials not found in environment variables",
 )
 
 
@@ -61,7 +69,7 @@ def mock_turn_context():
         text="Hello, bot!",
         type="message",
         conversation=ConversationAccount(id="test-conversation"),
-        from_property=ChannelAccount(id="test-user")
+        from_property=ChannelAccount(id="test-user"),
     )
     context.activity = activity
 
@@ -76,10 +84,10 @@ async def test_bot_initialization():
         bot = KonveyorBot()
 
         # Check that the components were initialized
-        assert hasattr(bot, 'kernel')
-        assert hasattr(bot, 'registry')
-        assert hasattr(bot, 'orchestrator')
-        assert hasattr(bot, 'conversations')
+        assert hasattr(bot, "kernel")
+        assert hasattr(bot, "registry")
+        assert hasattr(bot, "orchestrator")
+        assert hasattr(bot, "conversations")
     except Exception as e:
         logger.error(f"Error initializing bot: {str(e)}")
         pytest.fail(f"Bot initialization failed: {str(e)}")
@@ -125,15 +133,12 @@ async def test_bot_members_added():
         activity = Activity(
             type="conversationUpdate",
             recipient=ChannelAccount(id="bot-id"),
-            conversation=ConversationAccount(id="test-conversation")
+            conversation=ConversationAccount(id="test-conversation"),
         )
         context.activity = activity
 
         # Create a list of members added
-        members_added = [
-            ChannelAccount(id="user-id"),
-            ChannelAccount(id="bot-id")
-        ]
+        members_added = [ChannelAccount(id="user-id"), ChannelAccount(id="bot-id")]
 
         # Process the members added event
         await bot.on_members_added_activity(members_added, context)

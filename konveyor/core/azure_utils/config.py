@@ -43,6 +43,7 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
+
 class AzureConfig:
     """Unified Azure configuration management.
 
@@ -79,11 +80,15 @@ class AzureConfig:
 
     def __init__(self):
         """Initialize configuration if not already done."""
-        if not hasattr(self, 'initialized'):
+        if not hasattr(self, "initialized"):
             self._initialize_credentials()
             self._load_configuration()
-            self.cosmos_connection_string = os.environ.get('AZURE_COSMOS_CONNECTION_STRING')
-            self.redis_connection_string = os.environ.get('AZURE_REDIS_CONNECTION_STRING')
+            self.cosmos_connection_string = os.environ.get(
+                "AZURE_COSMOS_CONNECTION_STRING"
+            )
+            self.redis_connection_string = os.environ.get(
+                "AZURE_REDIS_CONNECTION_STRING"
+            )
             self.initialized = True
 
     def _initialize_credentials(self):
@@ -98,37 +103,43 @@ class AzureConfig:
             except Exception:
                 # Final fallback to key-based auth
                 self.credential = None
-                logger.warning("Failed to initialize Azure credentials, falling back to key-based auth")
+                logger.warning(
+                    "Failed to initialize Azure credentials, falling back to key-based auth"
+                )
 
     def _load_configuration(self):
         """Load configuration from environment."""
         # Load OpenAI configuration
-        self.openai_embedding_deployment = os.environ.get('AZURE_OPENAI_EMBEDDING_DEPLOYMENT', 'embeddings')
-        self.openai_api_version = os.environ.get('AZURE_OPENAI_API_VERSION', '2024-12-01-preview')
+        self.openai_embedding_deployment = os.environ.get(
+            "AZURE_OPENAI_EMBEDDING_DEPLOYMENT", "embeddings"
+        )
+        self.openai_api_version = os.environ.get(
+            "AZURE_OPENAI_API_VERSION", "2024-12-01-preview"
+        )
         # Core configuration
-        self.key_vault_url = os.getenv('AZURE_KEY_VAULT_URL')
+        self.key_vault_url = os.getenv("AZURE_KEY_VAULT_URL")
 
         # Service endpoints
         self.endpoints = {
-            'SEARCH': os.getenv('AZURE_SEARCH_ENDPOINT'),
-            'OPENAI': os.getenv('AZURE_OPENAI_ENDPOINT'),
-            'DOCUMENT_INTELLIGENCE': os.getenv('AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT'),
-            'STORAGE': os.getenv('AZURE_STORAGE_ACCOUNT_URL'),
-            'BOT': os.getenv('AZURE_BOT_ENDPOINT')
+            "SEARCH": os.getenv("AZURE_SEARCH_ENDPOINT"),
+            "OPENAI": os.getenv("AZURE_OPENAI_ENDPOINT"),
+            "DOCUMENT_INTELLIGENCE": os.getenv("AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT"),
+            "STORAGE": os.getenv("AZURE_STORAGE_ACCOUNT_URL"),
+            "BOT": os.getenv("AZURE_BOT_ENDPOINT"),
         }
 
         # Service keys
         self.keys = {
-            'SEARCH': os.getenv('AZURE_SEARCH_API_KEY'),
-            'OPENAI': os.getenv('AZURE_OPENAI_API_KEY'),
-            'DOCUMENT_INTELLIGENCE': os.getenv('AZURE_DOCUMENT_INTELLIGENCE_API_KEY'),
-            'BOT': os.getenv('MICROSOFT_APP_PASSWORD')
+            "SEARCH": os.getenv("AZURE_SEARCH_API_KEY"),
+            "OPENAI": os.getenv("AZURE_OPENAI_API_KEY"),
+            "DOCUMENT_INTELLIGENCE": os.getenv("AZURE_DOCUMENT_INTELLIGENCE_API_KEY"),
+            "BOT": os.getenv("MICROSOFT_APP_PASSWORD"),
         }
 
         # Storage specific config
-        self.storage_account_name = os.getenv('AZURE_STORAGE_ACCOUNT_NAME')
-        self.storage_account_key = os.getenv('AZURE_STORAGE_ACCOUNT_KEY')
-        self.storage_connection_string = os.getenv('AZURE_STORAGE_CONNECTION_STRING')
+        self.storage_account_name = os.getenv("AZURE_STORAGE_ACCOUNT_NAME")
+        self.storage_account_key = os.getenv("AZURE_STORAGE_ACCOUNT_KEY")
+        self.storage_connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 
     def get_credential(self) -> Optional[TokenCredential]:
         """Get Azure credential for token-based authentication.
@@ -160,7 +171,9 @@ class AzureConfig:
         """
         return self.keys.get(service)
 
-    def get_setting(self, var_name: str, default: Any = None, required: bool = False) -> Any:
+    def get_setting(
+        self, var_name: str, default: Any = None, required: bool = False
+    ) -> Any:
         """
         Retrieve an environment variable with remediation and logging.
 
@@ -189,7 +202,9 @@ class AzureConfig:
                         source = f".env ({dotenv_path})"
             # Try Django settings if available
             try:
-                settings_module = getattr(settings, 'SETTINGS_MODULE', None) or os.environ.get('DJANGO_SETTINGS_MODULE')
+                settings_module = getattr(
+                    settings, "SETTINGS_MODULE", None
+                ) or os.environ.get("DJANGO_SETTINGS_MODULE")
                 if hasattr(settings, var_name):
                     value = getattr(settings, var_name)
                     source = f"Django settings ({settings_module})"
@@ -202,20 +217,33 @@ class AzureConfig:
             source = "default"
 
         # Log the outcome - only at DEBUG level for most settings, INFO for critical ones
-        is_sensitive = 'KEY' in var_name or 'SECRET' in var_name or 'PASSWORD' in var_name
-        display_value = '<hidden>' if is_sensitive else value
+        is_sensitive = (
+            "KEY" in var_name or "SECRET" in var_name or "PASSWORD" in var_name
+        )
+        display_value = "<hidden>" if is_sensitive else value
 
         # Only log at INFO level for important settings, DEBUG for others
-        if var_name in ['AZURE_OPENAI_CHAT_DEPLOYMENT', 'AZURE_OPENAI_EMBEDDING_DEPLOYMENT', 'AZURE_OPENAI_API_VERSION']:
-            logger.debug(f"Config: '{var_name}' loaded from {source} with value: {display_value}")
+        if var_name in [
+            "AZURE_OPENAI_CHAT_DEPLOYMENT",
+            "AZURE_OPENAI_EMBEDDING_DEPLOYMENT",
+            "AZURE_OPENAI_API_VERSION",
+        ]:
+            logger.debug(
+                f"Config: '{var_name}' loaded from {source} with value: {display_value}"
+            )
         else:
-            logger.info(f"Config: '{var_name}' loaded from {source} with value: {display_value}")
+            logger.info(
+                f"Config: '{var_name}' loaded from {source} with value: {display_value}"
+            )
 
         # Raise if required and still missing/empty
         if required and (value is None or value == ""):
-            raise ImproperlyConfigured(f"Required environment variable '{var_name}' is missing or empty (checked {source}).")
+            raise ImproperlyConfigured(
+                f"Required environment variable '{var_name}' is missing or empty (checked {source})."
+            )
 
         return value
+
     def get_key_vault_url(self) -> Optional[str]:
         """Get Azure Key Vault URL.
 
@@ -297,24 +325,45 @@ class AzureConfig:
                      both AZURE_STORAGE_ACCOUNT_NAME and AZURE_STORAGE_ACCOUNT_KEY
             BOT: MICROSOFT_APP_ID, MICROSOFT_APP_PASSWORD
         """
-        if service == 'SEARCH':
-            if not all([self.get_endpoint('SEARCH'), self.get_key('SEARCH')]):
-                raise ImproperlyConfigured("Missing required Azure Search configuration")
-        elif service == 'OPENAI':
-            if not all([self.get_endpoint('OPENAI'), self.get_key('OPENAI')]):
-                raise ImproperlyConfigured("Missing required Azure OpenAI configuration")
-        elif service == 'DOCUMENT_INTELLIGENCE':
-            if not all([self.get_endpoint('DOCUMENT_INTELLIGENCE'),
-                       self.get_key('DOCUMENT_INTELLIGENCE')]):
-                raise ImproperlyConfigured("Missing required Azure Document Intelligence configuration")
-        elif service == 'STORAGE':
+        if service == "SEARCH":
+            if not all([self.get_endpoint("SEARCH"), self.get_key("SEARCH")]):
+                raise ImproperlyConfigured(
+                    "Missing required Azure Search configuration"
+                )
+        elif service == "OPENAI":
+            if not all([self.get_endpoint("OPENAI"), self.get_key("OPENAI")]):
+                raise ImproperlyConfigured(
+                    "Missing required Azure OpenAI configuration"
+                )
+        elif service == "DOCUMENT_INTELLIGENCE":
+            if not all(
+                [
+                    self.get_endpoint("DOCUMENT_INTELLIGENCE"),
+                    self.get_key("DOCUMENT_INTELLIGENCE"),
+                ]
+            ):
+                raise ImproperlyConfigured(
+                    "Missing required Azure Document Intelligence configuration"
+                )
+        elif service == "STORAGE":
             if not self.get_storage_connection_string():
-                raise ImproperlyConfigured("Missing required Azure Storage configuration")
-        elif service == 'BOT':
+                raise ImproperlyConfigured(
+                    "Missing required Azure Storage configuration"
+                )
+        elif service == "BOT":
             # Require Bot Framework App ID and Password for adapter
-            if not all([self.get_setting('MICROSOFT_APP_ID'), self.get_setting('MICROSOFT_APP_PASSWORD')]):
-                raise ImproperlyConfigured("Missing required Bot Framework MICROSOFT_APP_ID or MICROSOFT_APP_PASSWORD")
+            if not all(
+                [
+                    self.get_setting("MICROSOFT_APP_ID"),
+                    self.get_setting("MICROSOFT_APP_PASSWORD"),
+                ]
+            ):
+                raise ImproperlyConfigured(
+                    "Missing required Bot Framework MICROSOFT_APP_ID or MICROSOFT_APP_PASSWORD"
+                )
             # Optional: validate BOT endpoint if provided
-            bot_ep = self.get_endpoint('BOT')
-            if bot_ep and not bot_ep.startswith(('http://', 'https://')):
-                raise ImproperlyConfigured("AZURE_BOT_ENDPOINT must be a valid URL if set")
+            bot_ep = self.get_endpoint("BOT")
+            if bot_ep and not bot_ep.startswith(("http://", "https://")):
+                raise ImproperlyConfigured(
+                    "AZURE_BOT_ENDPOINT must be a valid URL if set"
+                )

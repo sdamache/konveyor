@@ -14,6 +14,7 @@ from konveyor.core.formatters.markdown import MarkdownFormatter
 
 logger = logging.getLogger(__name__)
 
+
 class FormatterFactory:
     """
     Factory for creating formatters.
@@ -60,7 +61,9 @@ class FormatterFactory:
         return formatter
 
     @classmethod
-    def register_formatter(cls, format_type: str, formatter: FormatterInterface) -> None:
+    def register_formatter(
+        cls, format_type: str, formatter: FormatterInterface
+    ) -> None:
         """
         Register a custom formatter.
 

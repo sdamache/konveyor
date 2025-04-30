@@ -11,6 +11,7 @@ from konveyor.core.agent import AgentOrchestratorSkill, SkillRegistry
 
 logger = logging.getLogger(__name__)
 
+
 class KonveyorBot(ActivityHandler):
     """
     Bot implementation for Konveyor.
@@ -45,9 +46,12 @@ class KonveyorBot(ActivityHandler):
 
             # Register the ChatSkill
             chat_skill = ChatSkill()
-            self.orchestrator.register_skill(chat_skill, "ChatSkill",
-                                           "Handles general chat interactions and questions",
-                                           ["chat", "question", "answer", "help"])
+            self.orchestrator.register_skill(
+                chat_skill,
+                "ChatSkill",
+                "Handles general chat interactions and questions",
+                ["chat", "question", "answer", "help"],
+            )
             logger.info("Registered ChatSkill with orchestrator")
 
             # Initialize conversation state
@@ -73,7 +77,7 @@ class KonveyorBot(ActivityHandler):
                 return await turn_context.send_activity(
                     Activity(
                         type=ActivityTypes.message,
-                        text="I received your message but it was empty. Please try again."
+                        text="I received your message but it was empty. Please try again.",
                     )
                 )
 
@@ -86,7 +90,7 @@ class KonveyorBot(ActivityHandler):
             context = {
                 "history": self.conversations[conversation_id].get("history", ""),
                 "user_id": turn_context.activity.from_property.id,
-                "conversation_id": conversation_id
+                "conversation_id": conversation_id,
             }
 
             # Process the request through the orchestrator
@@ -114,10 +118,7 @@ class KonveyorBot(ActivityHandler):
 
             # Send the response
             await turn_context.send_activity(
-                Activity(
-                    type=ActivityTypes.message,
-                    text=response_text
-                )
+                Activity(type=ActivityTypes.message, text=response_text)
             )
 
         except Exception as e:
@@ -126,7 +127,7 @@ class KonveyorBot(ActivityHandler):
             await turn_context.send_activity(
                 Activity(
                     type=ActivityTypes.message,
-                    text=f"I encountered an error while processing your request: {str(e)}"
+                    text=f"I encountered an error while processing your request: {str(e)}",
                 )
             )
 
@@ -143,6 +144,6 @@ class KonveyorBot(ActivityHandler):
                 await turn_context.send_activity(
                     Activity(
                         type=ActivityTypes.message,
-                        text="Welcome to Konveyor Bot! I can help you with questions, chat, and more. Type something to get started."
+                        text="Welcome to Konveyor Bot! I can help you with questions, chat, and more. Type something to get started.",
                     )
                 )

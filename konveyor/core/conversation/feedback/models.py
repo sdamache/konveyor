@@ -19,12 +19,15 @@ from enum import Enum
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
 
+
 class FeedbackType(str, Enum):
     """Enum for feedback types."""
+
     POSITIVE = "positive"
     NEGATIVE = "negative"
     NEUTRAL = "neutral"
     REMOVED = "removed"
+
 
 class FeedbackStorageProvider:
     """

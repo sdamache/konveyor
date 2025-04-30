@@ -44,12 +44,15 @@ from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
+
 class FeedbackType(str, Enum):
     """Enum for feedback types."""
+
     POSITIVE = "positive"
     NEGATIVE = "negative"
     NEUTRAL = "neutral"
     REMOVED = "removed"
+
 
 class FeedbackService:
     """
@@ -60,8 +63,15 @@ class FeedbackService:
     """
 
     # Map of reaction emojis to feedback types
-    POSITIVE_REACTIONS = ['thumbsup', '+1', 'thumbs_up', 'clap', 'raised_hands', 'heart']
-    NEGATIVE_REACTIONS = ['thumbsdown', '-1', 'thumbs_down', 'x', 'no_entry']
+    POSITIVE_REACTIONS = [
+        "thumbsup",
+        "+1",
+        "thumbs_up",
+        "clap",
+        "raised_hands",
+        "heart",
+    ]
+    NEGATIVE_REACTIONS = ["thumbsdown", "-1", "thumbs_down", "x", "no_entry"]
 
     def __init__(self, storage_provider=None):
         """
@@ -84,19 +94,19 @@ class FeedbackService:
             The recorded feedback data, or None if the event was not processed
         """
         # Extract event data
-        item = event.get('item', {})
-        reaction = event.get('reaction', '')
-        user_id = event.get('user', '')
-        event_type = event.get('type', '')  # 'reaction_added' or 'reaction_removed'
+        item = event.get("item", {})
+        reaction = event.get("reaction", "")
+        user_id = event.get("user", "")
+        event_type = event.get("type", "")  # 'reaction_added' or 'reaction_removed'
 
         # Only process message reactions
-        if item.get('type') != 'message':
+        if item.get("type") != "message":
             logger.debug(f"Ignoring non-message reaction: {reaction}")
             return None
 
         # Get message details
-        channel_id = item.get('channel', '')
-        message_ts = item.get('ts', '')
+        channel_id = item.get("channel", "")
+        message_ts = item.get("ts", "")
 
         if not channel_id or not message_ts or not user_id or not reaction:
             logger.warning("Missing required data in reaction event")
@@ -106,19 +116,23 @@ class FeedbackService:
         feedback_type = self._get_feedback_type(reaction, event_type)
 
         if not feedback_type:
-            logger.debug(f"Ignoring reaction that is not mapped to feedback: {reaction}")
+            logger.debug(
+                f"Ignoring reaction that is not mapped to feedback: {reaction}"
+            )
             return None
 
-        logger.info(f"Processing {feedback_type} feedback from user {user_id} on message {message_ts}")
+        logger.info(
+            f"Processing {feedback_type} feedback from user {user_id} on message {message_ts}"
+        )
 
         # Create feedback data
         feedback_data = {
-            'message_id': message_ts,
-            'channel_id': channel_id,
-            'user_id': user_id,
-            'feedback_type': feedback_type,
-            'reaction': reaction,
-            'timestamp': datetime.now().isoformat()
+            "message_id": message_ts,
+            "channel_id": channel_id,
+            "user_id": user_id,
+            "feedback_type": feedback_type,
+            "reaction": reaction,
+            "timestamp": datetime.now().isoformat(),
         }
 
         # Store feedback if a storage provider is available
@@ -145,7 +159,7 @@ class FeedbackService:
             The feedback type ('positive', 'negative', 'neutral', 'removed'), or None if not applicable
         """
         # Handle reaction removal
-        if event_type == 'reaction_removed':
+        if event_type == "reaction_removed":
             return FeedbackType.REMOVED
 
         # Check if this is a positive reaction
@@ -159,10 +173,16 @@ class FeedbackService:
         # Not a feedback reaction
         return None
 
-    def update_message_content(self, message_id: str, channel_id: str,
-                               question: str = None, answer: str = None,
-                               skill_used: str = None, function_used: str = None,
-                               conversation_id: str = None) -> bool:
+    def update_message_content(
+        self,
+        message_id: str,
+        channel_id: str,
+        question: str = None,
+        answer: str = None,
+        skill_used: str = None,
+        function_used: str = None,
+        conversation_id: str = None,
+    ) -> bool:
         """
         Update the content of a message that has received feedback.
 
@@ -187,22 +207,19 @@ class FeedbackService:
 
         try:
             # Create update data
-            update_data = {
-                'message_id': message_id,
-                'channel_id': channel_id
-            }
+            update_data = {"message_id": message_id, "channel_id": channel_id}
 
             # Add optional fields
             if question is not None:
-                update_data['question'] = question
+                update_data["question"] = question
             if answer is not None:
-                update_data['answer'] = answer
+                update_data["answer"] = answer
             if skill_used is not None:
-                update_data['skill_used'] = skill_used
+                update_data["skill_used"] = skill_used
             if function_used is not None:
-                update_data['function_used'] = function_used
+                update_data["function_used"] = function_used
             if conversation_id is not None:
-                update_data['conversation_id'] = conversation_id
+                update_data["conversation_id"] = conversation_id
 
             # Update the feedback entries
             result = self.storage_provider.update_feedback_content(update_data)
@@ -225,12 +242,12 @@ class FeedbackService:
         if not self.storage_provider:
             logger.warning("No storage provider available for getting feedback stats")
             return {
-                'total_feedback': 0,
-                'positive_count': 0,
-                'negative_count': 0,
-                'positive_percentage': 0,
-                'counts_by_type': {},
-                'days': days
+                "total_feedback": 0,
+                "positive_count": 0,
+                "negative_count": 0,
+                "positive_percentage": 0,
+                "counts_by_type": {},
+                "days": days,
             }
 
         try:
@@ -238,13 +255,13 @@ class FeedbackService:
         except Exception as e:
             logger.error(f"Error getting feedback stats: {str(e)}")
             return {
-                'total_feedback': 0,
-                'positive_count': 0,
-                'negative_count': 0,
-                'positive_percentage': 0,
-                'counts_by_type': {},
-                'days': days,
-                'error': str(e)
+                "total_feedback": 0,
+                "positive_count": 0,
+                "negative_count": 0,
+                "positive_percentage": 0,
+                "counts_by_type": {},
+                "days": days,
+                "error": str(e),
             }
 
     def get_feedback_by_skill(self, days: int = 30) -> List[Dict[str, Any]]:
@@ -258,7 +275,9 @@ class FeedbackService:
             List of dictionaries containing feedback statistics by skill
         """
         if not self.storage_provider:
-            logger.warning("No storage provider available for getting feedback by skill")
+            logger.warning(
+                "No storage provider available for getting feedback by skill"
+            )
             return []
 
         try:
@@ -267,7 +286,7 @@ class FeedbackService:
             logger.error(f"Error getting feedback by skill: {str(e)}")
             return []
 
-    def export_feedback_data(self, days: int = 30, format: str = 'json') -> str:
+    def export_feedback_data(self, days: int = 30, format: str = "json") -> str:
         """
         Export feedback data in the specified format.
 
@@ -285,23 +304,23 @@ class FeedbackService:
         try:
             data = self.storage_provider.get_feedback_data(days)
 
-            if format.lower() == 'json':
+            if format.lower() == "json":
                 return json.dumps(data, indent=2)
-            elif format.lower() == 'csv':
+            elif format.lower() == "csv":
                 # Simple CSV conversion
                 if not data:
                     return "No data available"
 
                 # Get headers from the first item
                 headers = list(data[0].keys())
-                csv_lines = [','.join(headers)]
+                csv_lines = [",".join(headers)]
 
                 # Add data rows
                 for item in data:
-                    row = [str(item.get(header, '')) for header in headers]
-                    csv_lines.append(','.join(row))
+                    row = [str(item.get(header, "")) for header in headers]
+                    csv_lines.append(",".join(row))
 
-                return '\n'.join(csv_lines)
+                return "\n".join(csv_lines)
             else:
                 logger.error(f"Unsupported export format: {format}")
                 return ""

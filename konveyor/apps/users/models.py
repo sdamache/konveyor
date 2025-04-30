@@ -7,8 +7,9 @@ class Profile(TimeStampedModel):
     """
     User profile to store additional user information
     """
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     bio = models.TextField(blank=True)
-    
+
     def __str__(self):
-        return f"{self.user.username}'s profile" 
+        return f"{self.user.username}'s profile"

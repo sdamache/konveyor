@@ -8,24 +8,50 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='SearchDocument',
+            name="SearchDocument",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, primary_key=True, serialize=False)),
-                ('document_id', models.UUIDField()),
-                ('blob_path', models.CharField(max_length=512)),
-                ('indexed_at', models.DateTimeField(null=True)),
-                ('status', models.CharField(choices=[('PENDING', 'Pending'), ('INDEXING', 'Indexing'), ('INDEXED', 'Indexed'), ('FAILED', 'Failed')], default='PENDING', max_length=20)),
-                ('error_message', models.TextField(blank=True, null=True)),
-                ('chunk_count', models.IntegerField(default=0)),
-                ('metadata', models.JSONField(default=dict)),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4, primary_key=True, serialize=False
+                    ),
+                ),
+                ("document_id", models.UUIDField()),
+                ("blob_path", models.CharField(max_length=512)),
+                ("indexed_at", models.DateTimeField(null=True)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("PENDING", "Pending"),
+                            ("INDEXING", "Indexing"),
+                            ("INDEXED", "Indexed"),
+                            ("FAILED", "Failed"),
+                        ],
+                        default="PENDING",
+                        max_length=20,
+                    ),
+                ),
+                ("error_message", models.TextField(blank=True, null=True)),
+                ("chunk_count", models.IntegerField(default=0)),
+                ("metadata", models.JSONField(default=dict)),
             ],
             options={
-                'indexes': [models.Index(fields=['document_id'], name='konveyor_se_documen_5f6393_idx'), models.Index(fields=['status'], name='konveyor_se_status_b85624_idx'), models.Index(fields=['indexed_at'], name='konveyor_se_indexed_29946b_idx')],
+                "indexes": [
+                    models.Index(
+                        fields=["document_id"], name="konveyor_se_documen_5f6393_idx"
+                    ),
+                    models.Index(
+                        fields=["status"], name="konveyor_se_status_b85624_idx"
+                    ),
+                    models.Index(
+                        fields=["indexed_at"], name="konveyor_se_indexed_29946b_idx"
+                    ),
+                ],
             },
         ),
     ]

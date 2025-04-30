@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Dict, Any
 from konveyor.core.azure_utils.service import AzureService
 
+
 @dataclass
 class BotSettings:
     name: str
@@ -12,17 +13,18 @@ class BotSettings:
     resource_group: str
     bot_name: str
 
+
 class BotSettingsService(AzureService):
     def __init__(self):
         super().__init__(
-            service_name='BotSettingsService',
+            service_name="BotSettingsService",
             required_config=[
-                'SLACK_CLIENT_ID',
-                'SLACK_CLIENT_SECRET',
-                'SLACK_SIGNING_SECRET',
-                'AZURE_RESOURCE_GROUP', # Assuming this will be needed, based on other services
-                'AZURE_BOT_SERVICE_NAME' # Assuming this will be needed
-            ]
+                "SLACK_CLIENT_ID",
+                "SLACK_CLIENT_SECRET",
+                "SLACK_SIGNING_SECRET",
+                "AZURE_RESOURCE_GROUP",  # Assuming this will be needed, based on other services
+                "AZURE_BOT_SERVICE_NAME",  # Assuming this will be needed
+            ],
         )
         self.settings = BotSettings(
             name="Konveyor Bot",
@@ -30,13 +32,17 @@ class BotSettingsService(AzureService):
             max_response_length=4000,
             default_welcome_message="Hello! I'm Konveyor Bot. I can help you find information in documentation and understand code.",
             error_message="I'm sorry, I encountered an error. Please try again or contact support.",
-            resource_group=self.config.get_setting('AZURE_RESOURCE_GROUP', default="konveyor-rg"), # Use config, provide default
-            bot_name=self.config.get_setting('AZURE_BOT_SERVICE_NAME', default="konveyor-bot") # Use config, provide default
+            resource_group=self.config.get_setting(
+                "AZURE_RESOURCE_GROUP", default="konveyor-rg"
+            ),  # Use config, provide default
+            bot_name=self.config.get_setting(
+                "AZURE_BOT_SERVICE_NAME", default="konveyor-bot"
+            ),  # Use config, provide default
         )
-    
+
     def get_settings(self) -> BotSettings:
         return self.settings
-    
+
     def get_channel_config(self) -> Dict[str, Any]:
         """Get Azure Bot Service channel configuration"""
         return {
@@ -45,9 +51,11 @@ class BotSettingsService(AzureService):
                 "channelName": "SlackChannel",
                 "properties": {
                     "isEnabled": True,
-                    "clientId": self.config.get_setting('SLACK_CLIENT_ID'),
-                    "clientSecret": self.config.get_setting('SLACK_CLIENT_SECRET'),
-                    "verificationToken": self.config.get_setting('SLACK_SIGNING_SECRET')
-                }
-            }
+                    "clientId": self.config.get_setting("SLACK_CLIENT_ID"),
+                    "clientSecret": self.config.get_setting("SLACK_CLIENT_SECRET"),
+                    "verificationToken": self.config.get_setting(
+                        "SLACK_SIGNING_SECRET"
+                    ),
+                },
+            },
         }

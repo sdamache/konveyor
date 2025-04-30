@@ -11,8 +11,12 @@ import logging
 from typing import Optional, Dict, Any
 
 from semantic_kernel import Kernel
-from semantic_kernel.connectors.ai.open_ai.services.azure_chat_completion import AzureChatCompletion
-from semantic_kernel.connectors.ai.open_ai.services.azure_text_embedding import AzureTextEmbedding
+from semantic_kernel.connectors.ai.open_ai.services.azure_chat_completion import (
+    AzureChatCompletion,
+)
+from semantic_kernel.connectors.ai.open_ai.services.azure_text_embedding import (
+    AzureTextEmbedding,
+)
 from semantic_kernel.memory.volatile_memory_store import VolatileMemoryStore
 from konveyor.core.azure_utils.config import AzureConfig
 from konveyor.core.azure_utils.clients import AzureClientManager
@@ -37,14 +41,16 @@ def create_kernel(use_embeddings: bool = False, validate: bool = True) -> Kernel
     # Validate configuration if requested
     if validate:
         try:
-            config.validate_required_config('OPENAI')
+            config.validate_required_config("OPENAI")
         except Exception as e:
             logger.warning(f"Failed to validate OpenAI configuration: {str(e)}")
-            logger.warning("Continuing without validation - this may cause issues if Azure OpenAI services are required")
+            logger.warning(
+                "Continuing without validation - this may cause issues if Azure OpenAI services are required"
+            )
 
     # Get Azure OpenAI configuration
-    endpoint = config.get_endpoint('OPENAI')
-    key_or_secret_name = config.get_key('OPENAI')
+    endpoint = config.get_endpoint("OPENAI")
+    key_or_secret_name = config.get_key("OPENAI")
 
     # Attempt to fetch API key from Key Vault; fallback to environment value if unavailable
     try:
@@ -53,13 +59,20 @@ def create_kernel(use_embeddings: bool = False, validate: bool = True) -> Kernel
         api_key = secret.value
         logger.info("Successfully retrieved OpenAI API key from Key Vault")
     except Exception as e:
-        logger.warning(f"Failed to retrieve key from Key Vault, using environment variable: {str(e)}")
+        logger.warning(
+            f"Failed to retrieve key from Key Vault, using environment variable: {str(e)}"
+        )
         api_key = key_or_secret_name
 
     # Get deployment names and API version
-    chat_deployment = config.get_setting('AZURE_OPENAI_CHAT_DEPLOYMENT') or 'gpt-35-turbo'
-    embedding_deployment = config.get_setting('AZURE_OPENAI_EMBEDDING_DEPLOYMENT') or 'text-embedding-ada-002'
-    api_version = config.get_setting('AZURE_OPENAI_API_VERSION') or '2024-12-01-preview'
+    chat_deployment = (
+        config.get_setting("AZURE_OPENAI_CHAT_DEPLOYMENT") or "gpt-35-turbo"
+    )
+    embedding_deployment = (
+        config.get_setting("AZURE_OPENAI_EMBEDDING_DEPLOYMENT")
+        or "text-embedding-ada-002"
+    )
+    api_version = config.get_setting("AZURE_OPENAI_API_VERSION") or "2024-12-01-preview"
 
     # Create kernel
     kernel = Kernel()
@@ -71,10 +84,12 @@ def create_kernel(use_embeddings: bool = False, validate: bool = True) -> Kernel
             api_key=api_key,
             deployment_name=chat_deployment,
             api_version=api_version,
-            service_id='chat'
+            service_id="chat",
         )
         kernel.add_service(chat_service)
-        logger.debug(f"Added Azure OpenAI chat service with deployment: {chat_deployment}")
+        logger.debug(
+            f"Added Azure OpenAI chat service with deployment: {chat_deployment}"
+        )
     except Exception as e:
         logger.error(f"Failed to add chat service: {str(e)}")
         raise
@@ -87,17 +102,19 @@ def create_kernel(use_embeddings: bool = False, validate: bool = True) -> Kernel
                 api_key=api_key,
                 deployment_name=embedding_deployment,
                 api_version=api_version,
-                service_id='embeddings'
+                service_id="embeddings",
             )
             kernel.add_service(embedding_service)
-            logger.debug(f"Added Azure OpenAI embedding service with deployment: {embedding_deployment}")
+            logger.debug(
+                f"Added Azure OpenAI embedding service with deployment: {embedding_deployment}"
+            )
         except Exception as e:
             logger.warning(f"Failed to add embedding service: {str(e)}")
 
     # Register volatile memory store
     try:
         volatile_memory = VolatileMemoryStore()
-        volatile_memory.service_id = 'volatile'
+        volatile_memory.service_id = "volatile"
         kernel.add_service(volatile_memory)
         logger.debug("Added volatile memory store")
     except Exception as e:
@@ -117,9 +134,12 @@ def get_kernel_settings() -> Dict[str, Any]:
     config = AzureConfig()
 
     return {
-        "endpoint": config.get_endpoint('OPENAI'),
-        "chat_deployment": config.get_setting('AZURE_OPENAI_CHAT_DEPLOYMENT') or 'gpt-35-turbo',
-        "embedding_deployment": config.get_setting('AZURE_OPENAI_EMBEDDING_DEPLOYMENT') or 'text-embedding-ada-002',
-        "api_version": config.get_setting('AZURE_OPENAI_API_VERSION') or '2024-12-01-preview',
-        "has_key_vault": bool(os.environ.get('AZURE_KEY_VAULT_NAME')),
+        "endpoint": config.get_endpoint("OPENAI"),
+        "chat_deployment": config.get_setting("AZURE_OPENAI_CHAT_DEPLOYMENT")
+        or "gpt-35-turbo",
+        "embedding_deployment": config.get_setting("AZURE_OPENAI_EMBEDDING_DEPLOYMENT")
+        or "text-embedding-ada-002",
+        "api_version": config.get_setting("AZURE_OPENAI_API_VERSION")
+        or "2024-12-01-preview",
+        "has_key_vault": bool(os.environ.get("AZURE_KEY_VAULT_NAME")),
     }

@@ -15,6 +15,7 @@ from konveyor.core.generation.generator import ResponseGenerator
 from konveyor.core.generation.factory import ResponseGeneratorFactory
 from konveyor.core.azure_utils.openai_interface import OpenAIClientInterface
 
+
 # Mock classes for testing
 class MockOpenAIClient(OpenAIClientInterface):
     def generate_completion(self, messages, max_tokens=1000):
@@ -23,18 +24,20 @@ class MockOpenAIClient(OpenAIClientInterface):
     def generate_embedding(self, text):
         return [0.1, 0.2, 0.3]
 
+
 class MockContextService:
     async def retrieve_context(self, query, max_chunks=3, **kwargs):
         return [
             {
                 "content": f"Context for: {query}",
                 "source": "test_source.txt",
-                "relevance_score": 0.95
+                "relevance_score": 0.95,
             }
         ]
 
     def format_context(self, context_chunks):
         return "\n".join([chunk["content"] for chunk in context_chunks])
+
 
 class MockConversationManager:
     async def create_conversation(self, user_id=None, metadata=None):
@@ -45,23 +48,26 @@ class MockConversationManager:
             "id": "test_message_id",
             "conversation_id": conversation_id,
             "content": content,
-            "type": message_type
+            "type": message_type,
         }
 
-    async def get_conversation_context(self, conversation_id, format="string", max_messages=None):
+    async def get_conversation_context(
+        self, conversation_id, format="string", max_messages=None
+    ):
         if format == "string":
             return "User: Test query\nAssistant: Test response"
         elif format == "dict":
             return [
                 {"type": "user", "content": "Test query"},
-                {"type": "assistant", "content": "Test response"}
+                {"type": "assistant", "content": "Test response"},
             ]
         elif format == "openai":
             return [
                 {"role": "user", "content": "Test query"},
-                {"role": "assistant", "content": "Test response"}
+                {"role": "assistant", "content": "Test response"},
             ]
         return ""
+
 
 # Test the ResponseGenerator
 @pytest.mark.asyncio
@@ -74,6 +80,7 @@ async def test_response_generator():
 
     # Register our mock client with the factory
     from konveyor.core.azure_utils.openai_factory import OpenAIClientFactory
+
     OpenAIClientFactory.register_client("mock", openai_client)
 
     # Create a response generator
@@ -81,7 +88,7 @@ async def test_response_generator():
         openai_client_type="mock",
         openai_config=None,
         context_service=context_service,
-        conversation_service=conversation_service
+        conversation_service=conversation_service,
     )
 
     # Replace the OpenAI client with our mock
@@ -89,8 +96,7 @@ async def test_response_generator():
 
     # Test generate_direct
     response_data = await generator.generate_direct(
-        query="What is the capital of France?",
-        conversation_id="test_conversation_id"
+        query="What is the capital of France?", conversation_id="test_conversation_id"
     )
 
     # Verify the response
@@ -104,8 +110,7 @@ async def test_response_generator():
 
     # Test generate_with_rag
     rag_response_data = await generator.generate_with_rag(
-        query="What is the capital of Germany?",
-        conversation_id="test_conversation_id"
+        query="What is the capital of Germany?", conversation_id="test_conversation_id"
     )
 
     # Verify the response
@@ -123,7 +128,7 @@ async def test_response_generator():
     response_data = await generator.generate_response(
         query="What is the capital of Italy?",
         conversation_id="test_conversation_id",
-        use_rag=True
+        use_rag=True,
     )
 
     # Verify the response
@@ -139,7 +144,7 @@ async def test_response_generator():
     response_data = await generator.generate_response(
         query="What is the capital of Spain?",
         conversation_id="test_conversation_id",
-        use_rag=False
+        use_rag=False,
     )
 
     # Verify the response
@@ -171,9 +176,7 @@ async def test_response_generator():
 
     # Test format_prompt
     prompt = generator.format_prompt(
-        template_type="default",
-        context="Test context",
-        query="Test query"
+        template_type="default", context="Test context", query="Test query"
     )
 
     # Verify the prompt
@@ -182,6 +185,7 @@ async def test_response_generator():
     assert "user" in prompt
     # The default template might not include the context in the system prompt
     assert "Test query" in prompt["user"]
+
 
 # Test the ResponseGeneratorFactory
 def test_response_generator_factory():
@@ -193,6 +197,7 @@ def test_response_generator_factory():
 
     # Register our mock client with the factory
     from konveyor.core.azure_utils.openai_factory import OpenAIClientFactory
+
     OpenAIClientFactory.register_client("mock", openai_client)
 
     # Create a configuration
@@ -200,7 +205,7 @@ def test_response_generator_factory():
         "openai_client_type": "mock",
         "openai_config": None,
         "context_service": context_service,
-        "conversation_service": conversation_service
+        "conversation_service": conversation_service,
     }
 
     # Get a default generator
@@ -249,7 +254,10 @@ def test_response_generator_factory():
             return {"system": "Custom system prompt", "user": "Custom user prompt"}
 
         def format_prompt(self, template_type, context, query, **kwargs):
-            return {"system": f"Custom system prompt with {context}", "user": f"Custom user prompt with {query}"}
+            return {
+                "system": f"Custom system prompt with {context}",
+                "user": f"Custom user prompt with {query}",
+            }
 
     custom_generator = CustomGenerator()
     ResponseGeneratorFactory.register_generator("custom", custom_generator)
@@ -265,6 +273,7 @@ def test_response_generator_factory():
     # Test invalid generator registration
     with pytest.raises(ValueError):
         ResponseGeneratorFactory.register_generator("invalid", "not a generator")
+
 
 # Run the tests
 if __name__ == "__main__":

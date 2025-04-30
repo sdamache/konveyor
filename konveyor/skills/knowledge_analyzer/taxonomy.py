@@ -13,6 +13,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+
 class KnowledgeTaxonomyLoader:
     """
     Loads and provides access to the knowledge taxonomy.
@@ -44,15 +45,17 @@ class KnowledgeTaxonomyLoader:
 
         Returns:
             Dict[str, Any]: The loaded taxonomy as a dictionary.
-            
+
         Raises:
             FileNotFoundError: If the taxonomy file does not exist.
             yaml.YAMLError: If the YAML file is invalid.
         """
         try:
-            with open(self.taxonomy_file, 'r') as file:
+            with open(self.taxonomy_file, "r") as file:
                 taxonomy = yaml.safe_load(file)
-                logger.debug(f"Successfully loaded taxonomy: {len(taxonomy.get('domains', []))} domains")
+                logger.debug(
+                    f"Successfully loaded taxonomy: {len(taxonomy.get('domains', []))} domains"
+                )
                 return taxonomy
         except FileNotFoundError:
             logger.error(f"Taxonomy file not found: {self.taxonomy_file}")
@@ -61,7 +64,6 @@ class KnowledgeTaxonomyLoader:
             logger.error(f"Error parsing taxonomy YAML: {e}")
             raise
 
-
     def get_all_domains(self) -> List[Dict[str, Any]]:
         """
         Get all knowledge domains.
@@ -69,8 +71,7 @@ class KnowledgeTaxonomyLoader:
         Returns:
             List[Dict[str, Any]]: List of all knowledge domains.
         """
-        return self.taxonomy.get('domains', [])
-
+        return self.taxonomy.get("domains", [])
 
     def get_domain_by_id(self, domain_id: str) -> Optional[Dict[str, Any]]:
         """
@@ -82,8 +83,8 @@ class KnowledgeTaxonomyLoader:
         Returns:
             Optional[Dict[str, Any]]: The domain if found, None otherwise.
         """
-        for domain in self.taxonomy.get('domains', []):
-            if domain.get('id') == domain_id:
+        for domain in self.taxonomy.get("domains", []):
+            if domain.get("id") == domain_id:
                 return domain
         return None
 
@@ -99,7 +100,7 @@ class KnowledgeTaxonomyLoader:
         """
         domain = self.get_domain_by_id(domain_id)
         if domain:
-            return domain.get('subcategories', [])
+            return domain.get("subcategories", [])
         return []
 
     def get_learning_paths(self) -> List[Dict[str, Any]]:
@@ -109,8 +110,7 @@ class KnowledgeTaxonomyLoader:
         Returns:
             List[Dict[str, Any]]: List of all learning paths.
         """
-        return self.taxonomy.get('learning_paths', [])
-
+        return self.taxonomy.get("learning_paths", [])
 
     def get_learning_path_by_role(self, role: str) -> Optional[Dict[str, Any]]:
         """
@@ -121,11 +121,10 @@ class KnowledgeTaxonomyLoader:
         Returns:
             Optional[Dict[str, Any]]: The learning path if found, None otherwise.
         """
-        for path in self.taxonomy.get('learning_paths', []):
-            if path.get('role') == role:
+        for path in self.taxonomy.get("learning_paths", []):
+            if path.get("role") == role:
                 return path
         return None
-
 
     def get_relationships(self) -> List[Dict[str, Any]]:
         """
@@ -134,7 +133,7 @@ class KnowledgeTaxonomyLoader:
         Returns:
             List[Dict[str, Any]]: List of all relationships.
         """
-        return self.taxonomy.get('relationships', [])
+        return self.taxonomy.get("relationships", [])
 
     def get_keywords_for_domain(self, domain_id: str) -> List[str]:
         """
@@ -150,7 +149,7 @@ class KnowledgeTaxonomyLoader:
         subcategories = self.get_subcategories(domain_id)
 
         for subcategory in subcategories:
-            keywords.extend(subcategory.get('keywords', []))
+            keywords.extend(subcategory.get("keywords", []))
 
         return keywords
 
@@ -166,10 +165,10 @@ class KnowledgeTaxonomyLoader:
         """
         matching_domains = []
         keyword = keyword.lower()
-        
+
         for domain in self.get_all_domains():
-            for subcategory in domain.get('subcategories', []):
-                if any(keyword in kw.lower() for kw in subcategory.get('keywords', [])):
+            for subcategory in domain.get("subcategories", []):
+                if any(keyword in kw.lower() for kw in subcategory.get("keywords", [])):
                     matching_domains.append(domain)
                     break
 
@@ -183,10 +182,9 @@ class KnowledgeTaxonomyLoader:
             Dict[str, str]: Dictionary containing metadata.
         """
         return {
-            'version': self.taxonomy.get('version', 'unknown'),
-            'last_updated': self.taxonomy.get('last_updated', 'unknown')
+            "version": self.taxonomy.get("version", "unknown"),
+            "last_updated": self.taxonomy.get("last_updated", "unknown"),
         }
-
 
     def map_query_to_domains(self, query: str) -> List[Dict[str, Any]]:
         """
@@ -212,7 +210,7 @@ class KnowledgeTaxonomyLoader:
 
         # Check each domain and its keywords
         for domain in self.get_all_domains():
-            domain_id = domain.get('id')
+            domain_id = domain.get("id")
             keywords = self.get_keywords_for_domain(domain_id)
 
             # Check if any keyword is in the query

@@ -27,8 +27,9 @@ class OpenAIClientInterface(ABC):
     """
 
     @abstractmethod
-    def generate_completion(self, messages: List[Dict[str, str]],
-                          max_tokens: int = 1000) -> str:
+    def generate_completion(
+        self, messages: List[Dict[str, str]], max_tokens: int = 1000
+    ) -> str:
         """
         Generate a chat completion response.
 

@@ -1,18 +1,19 @@
 from konveyor.core.azure_utils.service import AzureService
 
+
 class SecureCredentialService(AzureService):
     """Service for securely managing bot credentials using Azure Key Vault"""
 
     def __init__(self):
         super().__init__(
-            service_name='SecureCredentialService',
+            service_name="SecureCredentialService",
             required_config=[
-                'AZURE_KEY_VAULT_URL',
-                'SLACK_CLIENT_ID',
-                'SLACK_CLIENT_SECRET',
-                'SLACK_SIGNING_SECRET',
-                'SLACK_BOT_TOKEN'
-            ]
+                "AZURE_KEY_VAULT_URL",
+                "SLACK_CLIENT_ID",
+                "SLACK_CLIENT_SECRET",
+                "SLACK_SIGNING_SECRET",
+                "SLACK_BOT_TOKEN",
+            ],
         )
         # Get the secret client from the centralized manager
         self.secret_client = self.client_manager.get_secret_client()
@@ -23,11 +24,19 @@ class SecureCredentialService(AzureService):
         try:
             # Store Slack credentials
             # Fetch credentials from central config to store them
-            self._set_secret('slack-client-id', self.config.get_setting('SLACK_CLIENT_ID'))
-            self._set_secret('slack-client-secret', self.config.get_setting('SLACK_CLIENT_SECRET'))
-            self._set_secret('slack-signing-secret', self.config.get_setting('SLACK_SIGNING_SECRET'))
-            self._set_secret('slack-bot-token', self.config.get_setting('SLACK_BOT_TOKEN'))
-            
+            self._set_secret(
+                "slack-client-id", self.config.get_setting("SLACK_CLIENT_ID")
+            )
+            self._set_secret(
+                "slack-client-secret", self.config.get_setting("SLACK_CLIENT_SECRET")
+            )
+            self._set_secret(
+                "slack-signing-secret", self.config.get_setting("SLACK_SIGNING_SECRET")
+            )
+            self._set_secret(
+                "slack-bot-token", self.config.get_setting("SLACK_BOT_TOKEN")
+            )
+
             print("✓ Successfully stored bot credentials in Key Vault")
             return True
         except Exception as e:
@@ -38,10 +47,10 @@ class SecureCredentialService(AzureService):
         """Retrieve bot credentials from Azure Key Vault"""
         try:
             return {
-                'SLACK_CLIENT_ID': self._get_secret('slack-client-id'),
-                'SLACK_CLIENT_SECRET': self._get_secret('slack-client-secret'),
-                'SLACK_SIGNING_SECRET': self._get_secret('slack-signing-secret'),
-                'SLACK_BOT_TOKEN': self._get_secret('slack-bot-token')
+                "SLACK_CLIENT_ID": self._get_secret("slack-client-id"),
+                "SLACK_CLIENT_SECRET": self._get_secret("slack-client-secret"),
+                "SLACK_SIGNING_SECRET": self._get_secret("slack-signing-secret"),
+                "SLACK_BOT_TOKEN": self._get_secret("slack-bot-token"),
             }
         except Exception as e:
             print(f"⚠ Error retrieving bot credentials: {str(e)}")

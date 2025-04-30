@@ -23,10 +23,15 @@ ssl._create_default_https_context = ssl._create_unverified_context
 logger = logging.getLogger(__name__)
 
 # Define a generic type for function return values
-T = TypeVar('T')
+T = TypeVar("T")
 
-def retry_on_slack_error(max_retries: int = 3, initial_delay: float = 1.0,
-                        max_delay: float = 8.0, backoff_factor: float = 2.0):
+
+def retry_on_slack_error(
+    max_retries: int = 3,
+    initial_delay: float = 1.0,
+    max_delay: float = 8.0,
+    backoff_factor: float = 2.0,
+):
     """
     Decorator to retry a function on Slack API errors with exponential backoff.
 
@@ -39,6 +44,7 @@ def retry_on_slack_error(max_retries: int = 3, initial_delay: float = 1.0,
     Returns:
         Decorated function
     """
+
     def decorator(func: Callable[..., Optional[T]]) -> Callable[..., Optional[T]]:
         def wrapper(*args, **kwargs) -> Optional[T]:
             delay = initial_delay
@@ -47,7 +53,9 @@ def retry_on_slack_error(max_retries: int = 3, initial_delay: float = 1.0,
             for retry in range(max_retries + 1):  # +1 for the initial attempt
                 try:
                     if retry > 0:
-                        logger.info(f"Retry attempt {retry}/{max_retries} for {func.__name__}")
+                        logger.info(
+                            f"Retry attempt {retry}/{max_retries} for {func.__name__}"
+                        )
                     return func(*args, **kwargs)
                 except SlackApiError as e:
                     last_exception = e
@@ -63,17 +71,23 @@ def retry_on_slack_error(max_retries: int = 3, initial_delay: float = 1.0,
                         retry_after = getattr(e.response.headers, "Retry-After", None)
                         if retry_after:
                             delay = float(retry_after)
-                            logger.warning(f"Rate limited by Slack. Waiting {delay}s as specified by Retry-After header")
+                            logger.warning(
+                                f"Rate limited by Slack. Waiting {delay}s as specified by Retry-After header"
+                            )
 
                     if retry < max_retries:
                         # Add jitter to avoid thundering herd problem
                         jitter = random.uniform(0, 0.1 * delay)
                         sleep_time = min(delay + jitter, max_delay)
-                        logger.warning(f"Slack API error: {str(e)}. Retrying in {sleep_time:.2f}s...")
+                        logger.warning(
+                            f"Slack API error: {str(e)}. Retrying in {sleep_time:.2f}s..."
+                        )
                         time.sleep(sleep_time)
                         delay = min(delay * backoff_factor, max_delay)
                     else:
-                        logger.error(f"Max retries ({max_retries}) exceeded for {func.__name__}: {str(e)}")
+                        logger.error(
+                            f"Max retries ({max_retries}) exceeded for {func.__name__}: {str(e)}"
+                        )
                 except Exception as e:
                     logger.error(f"Unexpected error in {func.__name__}: {str(e)}")
                     last_exception = e
@@ -81,11 +95,15 @@ def retry_on_slack_error(max_retries: int = 3, initial_delay: float = 1.0,
 
             # If we got here, all retries failed
             if last_exception:
-                logger.error(f"All attempts failed for {func.__name__}: {str(last_exception)}")
+                logger.error(
+                    f"All attempts failed for {func.__name__}: {str(last_exception)}"
+                )
             return None
 
         return wrapper
+
     return decorator
+
 
 class SlackService:
     """
@@ -102,17 +120,24 @@ class SlackService:
         Args:
             token: Optional Slack bot token (defaults to settings.SLACK_BOT_TOKEN)
         """
-        self.token = token or getattr(settings, 'SLACK_BOT_TOKEN', None)
+        self.token = token or getattr(settings, "SLACK_BOT_TOKEN", None)
         if not self.token:
-            logger.warning("No Slack token provided. Slack service will not function properly.")
+            logger.warning(
+                "No Slack token provided. Slack service will not function properly."
+            )
             self.client = None
         else:
             self.client = WebClient(token=self.token)
             logger.info("Initialized Slack client with token")
 
     @retry_on_slack_error(max_retries=3)
-    def send_message(self, channel: str, text: str, blocks: Optional[List[Dict[str, Any]]] = None,
-                    thread_ts: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    def send_message(
+        self,
+        channel: str,
+        text: str,
+        blocks: Optional[List[Dict[str, Any]]] = None,
+        thread_ts: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
         """
         Send a message to a Slack channel.
 
@@ -141,10 +166,7 @@ class SlackService:
         if thread_ts:
             logger.debug(f"Sending as reply in thread: {thread_ts}")
 
-        kwargs = {
-            "channel": channel,
-            "text": text
-        }
+        kwargs = {"channel": channel, "text": text}
 
         if blocks:
             kwargs["blocks"] = blocks
@@ -178,11 +200,16 @@ class SlackService:
         logger.info(f"Looking up user by email: {email}")
         response = self.client.users_lookupByEmail(email=email)
         logger.info(f"Found user: {response.get('user', {}).get('name')}")
-        return response.get('user')
+        return response.get("user")
 
     @retry_on_slack_error(max_retries=3)
-    def send_direct_message(self, user_id: str, text: str, blocks: Optional[List[Dict[str, Any]]] = None,
-                           thread_ts: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    def send_direct_message(
+        self,
+        user_id: str,
+        text: str,
+        blocks: Optional[List[Dict[str, Any]]] = None,
+        thread_ts: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
         """
         Send a direct message to a user.
 
@@ -204,7 +231,9 @@ class SlackService:
         try:
             conversations_open = self.client.conversations_open(users=[user_id])
             if not conversations_open["ok"]:
-                logger.error(f"Failed to open DM channel: {conversations_open.get('error', 'Unknown error')}")
+                logger.error(
+                    f"Failed to open DM channel: {conversations_open.get('error', 'Unknown error')}"
+                )
                 return None
 
             # Get the channel ID
@@ -217,8 +246,13 @@ class SlackService:
             logger.error(f"Error opening DM channel with user {user_id}: {str(e)}")
             return None
 
-    def send_direct_message_by_email(self, email: str, text: str, blocks: Optional[List[Dict[str, Any]]] = None,
-                                 thread_ts: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    def send_direct_message_by_email(
+        self,
+        email: str,
+        text: str,
+        blocks: Optional[List[Dict[str, Any]]] = None,
+        thread_ts: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
         """
         Send a direct message to a user by email.
 
@@ -236,7 +270,7 @@ class SlackService:
             logger.error(f"Could not find user with email: {email}")
             return None
 
-        return self.send_direct_message(user.get('id'), text, blocks, thread_ts)
+        return self.send_direct_message(user.get("id"), text, blocks, thread_ts)
 
     @retry_on_slack_error(max_retries=3)
     def get_bot_user_id(self) -> Optional[str]:
@@ -258,8 +292,9 @@ class SlackService:
             return None
 
     @retry_on_slack_error(max_retries=3)
-    def get_conversation_history(self, channel: str, limit: int = 10,
-                               thread_ts: Optional[str] = None) -> Optional[List[Dict[str, Any]]]:
+    def get_conversation_history(
+        self, channel: str, limit: int = 10, thread_ts: Optional[str] = None
+    ) -> Optional[List[Dict[str, Any]]]:
         """
         Get the conversation history for a channel or thread.
 
@@ -272,15 +307,14 @@ class SlackService:
             List of messages, or None if there was an error
         """
         if not self.client:
-            logger.error("Cannot get conversation history: Slack client not initialized")
+            logger.error(
+                "Cannot get conversation history: Slack client not initialized"
+            )
             return None
 
         logger.info(f"Getting conversation history for channel {channel}")
 
-        kwargs = {
-            "channel": channel,
-            "limit": limit
-        }
+        kwargs = {"channel": channel, "limit": limit}
 
         if thread_ts:
             logger.info(f"Getting thread replies for thread: {thread_ts}")
@@ -295,11 +329,15 @@ class SlackService:
                 response = self.client.conversations_history(**kwargs)
 
             if not response["ok"]:
-                logger.error(f"Failed to get conversation history: {response.get('error', 'Unknown error')}")
+                logger.error(
+                    f"Failed to get conversation history: {response.get('error', 'Unknown error')}"
+                )
                 return None
 
             messages = response.get("messages", [])
-            logger.info(f"Retrieved {len(messages)} messages from {'thread' if thread_ts else 'channel'} {channel}")
+            logger.info(
+                f"Retrieved {len(messages)} messages from {'thread' if thread_ts else 'channel'} {channel}"
+            )
             return messages
 
         except Exception as e:
@@ -307,7 +345,12 @@ class SlackService:
             return None
 
     @staticmethod
-    def verify_request(request_body: bytes, signature: str, timestamp: str, signing_secret: Optional[str] = None) -> bool:
+    def verify_request(
+        request_body: bytes,
+        signature: str,
+        timestamp: str,
+        signing_secret: Optional[str] = None,
+    ) -> bool:
         """
         Verify that a request is from Slack.
 
@@ -321,7 +364,9 @@ class SlackService:
             True if the request is valid, False otherwise
         """
         # Get the signing secret from settings if not provided
-        signing_secret = signing_secret or getattr(settings, 'SLACK_SIGNING_SECRET', None)
+        signing_secret = signing_secret or getattr(
+            settings, "SLACK_SIGNING_SECRET", None
+        )
         if not signing_secret:
             logger.error("No Slack signing secret available for request verification")
             return False

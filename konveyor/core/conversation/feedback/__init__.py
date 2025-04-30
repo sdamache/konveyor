@@ -13,8 +13,13 @@ implementations while maintaining a consistent API.
 """
 
 from konveyor.core.conversation.feedback.service import FeedbackService
-from konveyor.core.conversation.feedback.models import FeedbackType, FeedbackStorageProvider
-from konveyor.core.conversation.feedback.django_feedback_repository import DjangoFeedbackRepository
+from konveyor.core.conversation.feedback.models import (
+    FeedbackType,
+    FeedbackStorageProvider,
+)
+from konveyor.core.conversation.feedback.django_feedback_repository import (
+    DjangoFeedbackRepository,
+)
 from konveyor.core.conversation.feedback.factory import create_feedback_service
 
 __all__ = [
@@ -22,5 +27,5 @@ __all__ = [
     "FeedbackType",
     "FeedbackStorageProvider",
     "DjangoFeedbackRepository",
-    "create_feedback_service"
+    "create_feedback_service",
 ]

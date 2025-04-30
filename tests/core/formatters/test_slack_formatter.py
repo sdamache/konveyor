@@ -37,8 +37,11 @@ def test_format_message_with_code_block():
     assert len(result["blocks"]) >= 3  # At least 3 blocks: text, code, text
 
     # Find the code block
-    code_blocks = [block for block in result["blocks"]
-                  if block["type"] == "section" and "```python" in block["text"]["text"]]
+    code_blocks = [
+        block
+        for block in result["blocks"]
+        if block["type"] == "section" and "```python" in block["text"]["text"]
+    ]
     assert len(code_blocks) == 1
 
     # Find the language context
@@ -74,8 +77,11 @@ function hello() {
     assert "blocks" in result
 
     # Find the code blocks
-    code_blocks = [block for block in result["blocks"]
-                  if block["type"] == "section" and "```" in block["text"]["text"]]
+    code_blocks = [
+        block
+        for block in result["blocks"]
+        if block["type"] == "section" and "```" in block["text"]["text"]
+    ]
     assert len(code_blocks) == 2
 
     # Find the language contexts
@@ -112,7 +118,9 @@ def test_format_code_block():
     formatter = SlackFormatter()
 
     # Format a code block with language
-    result = formatter.format_code_block("def hello():\n    return 'Hello, world!'", "python")
+    result = formatter.format_code_block(
+        "def hello():\n    return 'Hello, world!'", "python"
+    )
 
     # Verify the result
     assert "text" in result
@@ -123,7 +131,9 @@ def test_format_code_block():
     assert "```python" in result["blocks"][0]["text"]["text"]
     assert result["blocks"][1]["type"] == "context"
     assert "Language" in result["blocks"][1]["elements"][0]["text"]
-    assert "Python" in result["blocks"][1]["elements"][0]["text"]  # Capitalized language name
+    assert (
+        "Python" in result["blocks"][1]["elements"][0]["text"]
+    )  # Capitalized language name
 
     # Format a code block with language alias
     result = formatter.format_code_block("x = 42", "py")
@@ -134,7 +144,9 @@ def test_format_code_block():
     assert "blocks" in result
     assert len(result["blocks"]) == 2
     assert result["blocks"][1]["type"] == "context"
-    assert "Python" in result["blocks"][1]["elements"][0]["text"]  # Should display full language name
+    assert (
+        "Python" in result["blocks"][1]["elements"][0]["text"]
+    )  # Should display full language name
 
     # Format a code block without language
     result = formatter.format_code_block("const x = 42;")
@@ -157,7 +169,7 @@ def test_format_table():
     rows = [
         ["Alice", "30", "Engineer"],
         ["Bob", "25", "Designer"],
-        ["Charlie", "35", "Manager"]
+        ["Charlie", "35", "Manager"],
     ]
     result = formatter.format_table(headers, rows)
 
@@ -177,7 +189,9 @@ def test_format_visualization():
     formatter = SlackFormatter()
 
     # Format a visualization without image
-    result = formatter.format_visualization("User Activity", "Chart showing user activity over time")
+    result = formatter.format_visualization(
+        "User Activity", "Chart showing user activity over time"
+    )
 
     # Verify the result
     assert "text" in result
@@ -188,13 +202,15 @@ def test_format_visualization():
     assert result["blocks"][0]["type"] == "header"
     assert "User Activity" in result["blocks"][0]["text"]["text"]
     assert result["blocks"][1]["type"] == "section"
-    assert "Chart showing user activity over time" in result["blocks"][1]["text"]["text"]
+    assert (
+        "Chart showing user activity over time" in result["blocks"][1]["text"]["text"]
+    )
 
     # Format a visualization with image
     result = formatter.format_visualization(
         "User Activity",
         "Chart showing user activity over time",
-        "https://example.com/chart.png"
+        "https://example.com/chart.png",
     )
 
     # Verify the result

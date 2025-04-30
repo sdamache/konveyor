@@ -24,8 +24,9 @@ from konveyor.core.agent import AgentOrchestratorSkill, SkillRegistry
 from konveyor.core.chat import ChatSkill
 
 # Configure logging for tests
-logging.basicConfig(level=logging.INFO,
-                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 # Load environment variables
@@ -33,11 +34,13 @@ load_dotenv()
 
 # Skip all tests if required environment variables are not set
 pytestmark = pytest.mark.skipif(
-    not all([
-        os.environ.get('AZURE_OPENAI_ENDPOINT'),
-        os.environ.get('AZURE_OPENAI_API_KEY')
-    ]),
-    reason="Azure OpenAI credentials not found in environment variables"
+    not all(
+        [
+            os.environ.get("AZURE_OPENAI_ENDPOINT"),
+            os.environ.get("AZURE_OPENAI_API_KEY"),
+        ]
+    ),
+    reason="Azure OpenAI credentials not found in environment variables",
 )
 
 
@@ -68,9 +71,12 @@ def chat_skill():
 def orchestrator(real_kernel, registry, chat_skill):
     """Create an AgentOrchestratorSkill for testing."""
     orchestrator = AgentOrchestratorSkill(real_kernel, registry)
-    orchestrator.register_skill(chat_skill, "ChatSkill",
-                              "Handles general chat interactions and questions",
-                              ["chat", "question", "answer", "help"])
+    orchestrator.register_skill(
+        chat_skill,
+        "ChatSkill",
+        "Handles general chat interactions and questions",
+        ["chat", "question", "answer", "help"],
+    )
     return orchestrator
 
 
@@ -131,6 +137,7 @@ async def test_process_request_with_empty_request(orchestrator):
 
 def test_register_skill(orchestrator, registry):
     """Test registering a skill with real registry."""
+
     # Create a new skill
     class TestSkill:
         def test_function(self):
@@ -139,9 +146,9 @@ def test_register_skill(orchestrator, registry):
     skill = TestSkill()
 
     # Register the skill
-    skill_name = orchestrator.register_skill(skill, "TestSkill",
-                                          "A test skill",
-                                          ["test", "example"])
+    skill_name = orchestrator.register_skill(
+        skill, "TestSkill", "A test skill", ["test", "example"]
+    )
 
     # Check that the skill was registered
     assert skill_name == "TestSkill"

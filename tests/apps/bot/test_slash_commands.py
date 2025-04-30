@@ -11,14 +11,21 @@ from django.utils import timezone
 
 from konveyor.apps.bot.views import slack_slash_command
 from konveyor.apps.bot.slash_commands import (
-    register_command, get_command_handler, get_all_commands,
-    handle_help_command, handle_status_command, handle_info_command, handle_code_command,
-    handle_preferences_command, handle_profile_command
+    register_command,
+    get_command_handler,
+    get_all_commands,
+    handle_help_command,
+    handle_status_command,
+    handle_info_command,
+    handle_code_command,
+    handle_preferences_command,
+    handle_profile_command,
 )
 
 
 def test_register_and_get_command():
     """Test registering and retrieving commands."""
+
     # Mock handler function
     def mock_handler(text, user_id, channel_id, response_url):
         return {"text": "Mock response"}
@@ -45,7 +52,9 @@ def test_register_and_get_command():
 
 def test_help_command():
     """Test the help command handler."""
-    response = handle_help_command("", "test_user", "test_channel", "http://example.com")
+    response = handle_help_command(
+        "", "test_user", "test_channel", "http://example.com"
+    )
 
     # Verify the response structure
     assert "response_type" in response
@@ -64,7 +73,9 @@ def test_help_command():
 
 def test_status_command():
     """Test the status command handler."""
-    response = handle_status_command("", "test_user", "test_channel", "http://example.com")
+    response = handle_status_command(
+        "", "test_user", "test_channel", "http://example.com"
+    )
 
     # Verify the response structure
     assert "response_type" in response
@@ -87,7 +98,9 @@ def test_status_command():
 
 def test_info_command():
     """Test the info command handler."""
-    response = handle_info_command("", "test_user", "test_channel", "http://example.com")
+    response = handle_info_command(
+        "", "test_user", "test_channel", "http://example.com"
+    )
 
     # Verify the response structure
     assert "response_type" in response
@@ -106,7 +119,9 @@ def test_info_command():
 
 def test_code_command():
     """Test the code command handler."""
-    response = handle_code_command("", "test_user", "test_channel", "http://example.com")
+    response = handle_code_command(
+        "", "test_user", "test_channel", "http://example.com"
+    )
 
     # Verify the response structure
     assert "response_type" in response
@@ -137,7 +152,9 @@ def test_code_command():
 def test_preferences_command():
     """Test the preferences command handler."""
     # Mock the SlackUserProfileService
-    with patch('konveyor.apps.bot.slash_commands.slack_user_profile_service') as mock_service:
+    with patch(
+        "konveyor.apps.bot.slash_commands.slack_user_profile_service"
+    ) as mock_service:
         # Create a mock profile
         mock_profile = MagicMock()
         mock_profile.code_language_preference = "python"
@@ -145,7 +162,9 @@ def test_preferences_command():
         mock_service.get_or_create_profile.return_value = mock_profile
 
         # Test with no arguments (show current preferences)
-        response = handle_preferences_command("", "test_user", "test_channel", "http://example.com")
+        response = handle_preferences_command(
+            "", "test_user", "test_channel", "http://example.com"
+        )
 
         # Verify the response structure
         assert "response_type" in response
@@ -163,7 +182,12 @@ def test_preferences_command():
 
         # Test setting a preference
         mock_service.update_preference.return_value = mock_profile
-        response = handle_preferences_command("set code_language javascript", "test_user", "test_channel", "http://example.com")
+        response = handle_preferences_command(
+            "set code_language javascript",
+            "test_user",
+            "test_channel",
+            "http://example.com",
+        )
 
         # Verify the response
         assert "response_type" in response
@@ -173,14 +197,18 @@ def test_preferences_command():
         assert "javascript" in response["text"]
 
         # Verify the service was called correctly
-        mock_service.update_preference.assert_called_once_with("test_user", "code_language", "javascript")
+        mock_service.update_preference.assert_called_once_with(
+            "test_user", "code_language", "javascript"
+        )
 
 
 @pytest.mark.django_db
 def test_profile_command():
     """Test the profile command handler."""
     # Mock the SlackUserProfileService
-    with patch('konveyor.apps.bot.slash_commands.slack_user_profile_service') as mock_service:
+    with patch(
+        "konveyor.apps.bot.slash_commands.slack_user_profile_service"
+    ) as mock_service:
         # Create a mock profile
         mock_profile = MagicMock()
         mock_profile.slack_id = "test_user"
@@ -193,7 +221,9 @@ def test_profile_command():
         mock_service.get_or_create_profile.return_value = mock_profile
 
         # Test the profile command
-        response = handle_profile_command("", "test_user", "test_channel", "http://example.com")
+        response = handle_profile_command(
+            "", "test_user", "test_channel", "http://example.com"
+        )
 
         # Verify the response structure
         assert "response_type" in response
@@ -220,36 +250,36 @@ def test_slash_command_endpoint():
     factory = RequestFactory()
 
     # Mock the SlackService
-    with patch('konveyor.apps.bot.views.slack_service') as mock_slack_service, \
-         patch('konveyor.apps.bot.views.get_command_handler') as mock_get_command_handler:
+    with patch("konveyor.apps.bot.views.slack_service") as mock_slack_service, patch(
+        "konveyor.apps.bot.views.get_command_handler"
+    ) as mock_get_command_handler:
 
         # Set up the mocks
         mock_slack_service.verify_request.return_value = True
 
         # Mock a command handler
-        mock_handler = MagicMock(return_value={
-            "response_type": "ephemeral",
-            "text": "Test response"
-        })
+        mock_handler = MagicMock(
+            return_value={"response_type": "ephemeral", "text": "Test response"}
+        )
 
         # Set up the command handler mock
         mock_get_command_handler.return_value = {
             "handler": mock_handler,
-            "description": "Test command"
+            "description": "Test command",
         }
 
         # Create a POST request with form data
         post_data = {
-            'command': '/test',
-            'text': 'test argument',
-            'user_id': 'test_user',
-            'channel_id': 'test_channel',
-            'response_url': 'http://example.com'
+            "command": "/test",
+            "text": "test argument",
+            "user_id": "test_user",
+            "channel_id": "test_channel",
+            "response_url": "http://example.com",
         }
         post_request = factory.post(
-            '/api/bot/slack/commands/',
+            "/api/bot/slack/commands/",
             data=post_data,
-            content_type='application/x-www-form-urlencoded'
+            content_type="application/x-www-form-urlencoded",
         )
 
         # Mock the request.POST dictionary
@@ -264,7 +294,7 @@ def test_slash_command_endpoint():
 
         # Verify the command handler was called with the correct arguments
         mock_handler.assert_called_once_with(
-            'test argument', 'test_user', 'test_channel', 'http://example.com'
+            "test argument", "test_user", "test_channel", "http://example.com"
         )
 
 
@@ -275,8 +305,9 @@ def test_slash_command_unknown_command():
     factory = RequestFactory()
 
     # Mock the SlackService
-    with patch('konveyor.apps.bot.views.slack_service') as mock_slack_service, \
-         patch('konveyor.apps.bot.views.get_command_handler') as mock_get_command_handler:
+    with patch("konveyor.apps.bot.views.slack_service") as mock_slack_service, patch(
+        "konveyor.apps.bot.views.get_command_handler"
+    ) as mock_get_command_handler:
 
         # Set up the mocks
         mock_slack_service.verify_request.return_value = True
@@ -286,16 +317,16 @@ def test_slash_command_unknown_command():
 
         # Create a POST request with form data
         post_data = {
-            'command': '/unknown',
-            'text': '',
-            'user_id': 'test_user',
-            'channel_id': 'test_channel',
-            'response_url': 'http://example.com'
+            "command": "/unknown",
+            "text": "",
+            "user_id": "test_user",
+            "channel_id": "test_channel",
+            "response_url": "http://example.com",
         }
         post_request = factory.post(
-            '/api/bot/slack/commands/',
+            "/api/bot/slack/commands/",
             data=post_data,
-            content_type='application/x-www-form-urlencoded'
+            content_type="application/x-www-form-urlencoded",
         )
 
         # Mock the request.POST dictionary

@@ -17,41 +17,43 @@ from konveyor.core.chat import ChatSkill
 
 
 # Check if we're in a CI environment or if Azure credentials are available
-IN_CI = os.environ.get('CI') == 'true'
-HAS_AZURE_CREDENTIALS = bool(os.environ.get('AZURE_OPENAI_ENDPOINT'))
+IN_CI = os.environ.get("CI") == "true"
+HAS_AZURE_CREDENTIALS = bool(os.environ.get("AZURE_OPENAI_ENDPOINT"))
 
 
 @pytest.fixture
 def mock_kernel():
     """Mock Kernel for testing when real credentials aren't available."""
-    with patch('konveyor.core.kernel.factory.Kernel') as mock_kernel_class:
+    with patch("konveyor.core.kernel.factory.Kernel") as mock_kernel_class:
         kernel_instance = MagicMock()
 
         # Mock the run_function method
         def mock_run_function(func, **kwargs):
             # Get the function name
-            func_name = func.name if hasattr(func, 'name') else 'unknown'
+            func_name = func.name if hasattr(func, "name") else "unknown"
 
             # Return different responses based on the function
-            if func_name == 'answer_question':
-                question = kwargs.get('input_str', '')
+            if func_name == "answer_question":
+                question = kwargs.get("input_str", "")
                 return f"Mocked answer to: {question}"
-            elif func_name == 'chat':
-                message = kwargs.get('input_str', '')
+            elif func_name == "chat":
+                message = kwargs.get("input_str", "")
                 return {
                     "response": f"Mocked chat response to: {message}",
-                    "history": f"User: {message}\nAssistant: Mocked response"
+                    "history": f"User: {message}\nAssistant: Mocked response",
                 }
-            elif func_name == 'format_for_slack':
-                text = kwargs.get('input_str', '')
+            elif func_name == "format_for_slack":
+                text = kwargs.get("input_str", "")
                 return text.replace("*", "_")
-            elif func_name == 'greet':
-                name = kwargs.get('input_str', '')
+            elif func_name == "greet":
+                name = kwargs.get("input_str", "")
                 return f"Hello, {name}! Welcome to Konveyor."
-            elif func_name == 'format_as_bullet_list':
-                text = kwargs.get('input_str', '')
-                lines = text.strip().split('\n')
-                return '\n'.join([f"• {line.strip()}" for line in lines if line.strip()])
+            elif func_name == "format_as_bullet_list":
+                text = kwargs.get("input_str", "")
+                lines = text.strip().split("\n")
+                return "\n".join(
+                    [f"• {line.strip()}" for line in lines if line.strip()]
+                )
 
             return "Mocked response"
 
@@ -64,7 +66,13 @@ def mock_kernel():
 
             # If it's a ChatSkill, add its functions
             if isinstance(skill, ChatSkill):
-                for method_name in ['answer_question', 'chat', 'format_for_slack', 'greet', 'format_as_bullet_list']:
+                for method_name in [
+                    "answer_question",
+                    "chat",
+                    "format_for_slack",
+                    "greet",
+                    "format_as_bullet_list",
+                ]:
                     mock_function = MagicMock()
                     mock_function.name = method_name
                     functions[method_name] = mock_function
@@ -104,8 +112,7 @@ def test_chat_skill_answer_question(real_or_mock_kernel):
     # Test with a simple question
     question = "What is Semantic Kernel?"
     result = real_or_mock_kernel.run_function(
-        functions["answer_question"],
-        input_str=question
+        functions["answer_question"], input_str=question
     )
 
     # Check that we got a non-empty string response
@@ -125,10 +132,7 @@ def test_chat_skill_chat_function(real_or_mock_kernel):
 
     # Test with a simple message
     message = "Hello, how are you?"
-    result = real_or_mock_kernel.run_function(
-        functions["chat"],
-        input_str=message
-    )
+    result = real_or_mock_kernel.run_function(functions["chat"], input_str=message)
 
     # Check that we got a dictionary with the expected keys
     assert isinstance(result, dict)
@@ -148,8 +152,7 @@ def test_chat_skill_format_for_slack(real_or_mock_kernel):
     # Test with a message containing Markdown
     markdown_text = "This is *bold* text"
     result = real_or_mock_kernel.run_function(
-        functions["format_for_slack"],
-        input_str=markdown_text
+        functions["format_for_slack"], input_str=markdown_text
     )
 
     # Check that bold markers were converted to italic for Slack
@@ -165,10 +168,7 @@ def test_chat_skill_greet(real_or_mock_kernel):
 
     # Test with a name
     name = "Developer"
-    result = real_or_mock_kernel.run_function(
-        functions["greet"],
-        input_str=name
-    )
+    result = real_or_mock_kernel.run_function(functions["greet"], input_str=name)
 
     # Check that the greeting contains the name
     assert isinstance(result, str)
@@ -189,8 +189,7 @@ def test_chat_skill_format_as_bullet_list(real_or_mock_kernel):
     # Test with a list of items
     items = "Item 1\nItem 2\nItem 3"
     result = real_or_mock_kernel.run_function(
-        functions["format_as_bullet_list"],
-        input_str=items
+        functions["format_as_bullet_list"], input_str=items
     )
 
     # Check that the result contains bullet points
@@ -200,17 +199,17 @@ def test_chat_skill_format_as_bullet_list(real_or_mock_kernel):
     assert "• Item 3" in result
 
     # Check that the number of lines matches the input
-    assert len(result.strip().split('\n')) == 3
+    assert len(result.strip().split("\n")) == 3
 
 
 @pytest.fixture
 def mock_azure_client_manager():
     """Mock AzureClientManager for testing."""
-    with patch('konveyor.core.kernel.factory.AzureClientManager') as mock_manager:
+    with patch("konveyor.core.kernel.factory.AzureClientManager") as mock_manager:
         manager_instance = MagicMock()
         kv_client = MagicMock()
         secret = MagicMock()
-        secret.value = 'test-key-from-vault'
+        secret.value = "test-key-from-vault"
         kv_client.get_secret.return_value = secret
         manager_instance.get_key_vault_client.return_value = kv_client
         mock_manager.return_value = manager_instance
@@ -220,7 +219,7 @@ def mock_azure_client_manager():
 @pytest.fixture
 def mock_azure_chat_completion():
     """Mock AzureChatCompletion for testing."""
-    with patch('konveyor.core.kernel.factory.AzureChatCompletion') as mock_chat:
+    with patch("konveyor.core.kernel.factory.AzureChatCompletion") as mock_chat:
         chat_instance = MagicMock()
         mock_chat.return_value = chat_instance
         yield mock_chat
@@ -229,13 +228,18 @@ def mock_azure_chat_completion():
 @pytest.fixture
 def mock_volatile_memory_store():
     """Mock VolatileMemoryStore for testing."""
-    with patch('konveyor.core.kernel.factory.VolatileMemoryStore') as mock_store:
+    with patch("konveyor.core.kernel.factory.VolatileMemoryStore") as mock_store:
         store_instance = MagicMock()
         mock_store.return_value = store_instance
         yield mock_store, store_instance
 
 
-def test_create_kernel_with_key_vault(mock_kernel, mock_azure_client_manager, mock_azure_chat_completion, mock_volatile_memory_store):
+def test_create_kernel_with_key_vault(
+    mock_kernel,
+    mock_azure_client_manager,
+    mock_azure_chat_completion,
+    mock_volatile_memory_store,
+):
     """Test creating a kernel with Key Vault integration."""
     # Call the function
     result = create_kernel()
@@ -244,10 +248,17 @@ def test_create_kernel_with_key_vault(mock_kernel, mock_azure_client_manager, mo
     mock_azure_client_manager.return_value.get_key_vault_client.assert_called_once()
 
 
-def test_create_kernel_fallback_to_env_key(mock_kernel, mock_azure_client_manager, mock_azure_chat_completion, mock_volatile_memory_store):
+def test_create_kernel_fallback_to_env_key(
+    mock_kernel,
+    mock_azure_client_manager,
+    mock_azure_chat_completion,
+    mock_volatile_memory_store,
+):
     """Test creating a kernel with fallback to environment variable when Key Vault fails."""
     # Make Key Vault client raise an exception
-    mock_azure_client_manager.return_value.get_key_vault_client.side_effect = Exception("Key Vault error")
+    mock_azure_client_manager.return_value.get_key_vault_client.side_effect = Exception(
+        "Key Vault error"
+    )
 
     # Call the function
     result = create_kernel()
@@ -257,8 +268,7 @@ def test_create_kernel_fallback_to_env_key(mock_kernel, mock_azure_client_manage
 
 
 @pytest.mark.skipif(
-    IN_CI or not HAS_AZURE_CREDENTIALS,
-    reason="Requires Azure OpenAI credentials"
+    IN_CI or not HAS_AZURE_CREDENTIALS, reason="Requires Azure OpenAI credentials"
 )
 def test_kernel_settings():
     """Test that kernel settings are correctly retrieved from environment."""

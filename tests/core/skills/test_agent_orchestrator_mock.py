@@ -26,20 +26,22 @@ def mock_kernel():
     # Mock the invoke method
     async def mock_invoke(function, **kwargs):
         # Return different responses based on the function name
-        if hasattr(function, 'name'):
-            if function.name == 'answer_question':
+        if hasattr(function, "name"):
+            if function.name == "answer_question":
                 return f"Answer to: {kwargs.get('question', '')}"
-            elif function.name == 'chat':
+            elif function.name == "chat":
                 return {
                     "response": f"Chat response to: {kwargs.get('message', '')}",
-                    "history": f"User: {kwargs.get('message', '')}\nAssistant: Chat response"
+                    "history": f"User: {kwargs.get('message', '')}\nAssistant: Chat response",
                 }
-            elif function.name == 'greet':
+            elif function.name == "greet":
                 return f"Hello, {kwargs.get('name', 'there')}!"
-            elif function.name == 'format_as_bullet_list':
-                text = kwargs.get('text', '')
-                lines = text.strip().split('\n')
-                return '\n'.join([f"• {line.strip()}" for line in lines if line.strip()])
+            elif function.name == "format_as_bullet_list":
+                text = kwargs.get("text", "")
+                lines = text.strip().split("\n")
+                return "\n".join(
+                    [f"• {line.strip()}" for line in lines if line.strip()]
+                )
 
         return "Mock response"
 
@@ -52,7 +54,12 @@ def mock_kernel():
 
         # If it's a ChatSkill, add its functions
         if isinstance(skill, ChatSkill):
-            for method_name in ['answer_question', 'chat', 'greet', 'format_as_bullet_list']:
+            for method_name in [
+                "answer_question",
+                "chat",
+                "greet",
+                "format_as_bullet_list",
+            ]:
                 mock_function = MagicMock()
                 mock_function.name = method_name
                 functions[method_name] = mock_function
@@ -84,9 +91,12 @@ def chat_skill():
 def orchestrator(mock_kernel, registry, chat_skill):
     """Create an AgentOrchestratorSkill for testing."""
     orchestrator = AgentOrchestratorSkill(mock_kernel, registry)
-    orchestrator.register_skill(chat_skill, "ChatSkill",
-                              "Handles general chat interactions and questions",
-                              ["chat", "question", "answer", "help"])
+    orchestrator.register_skill(
+        chat_skill,
+        "ChatSkill",
+        "Handles general chat interactions and questions",
+        ["chat", "question", "answer", "help"],
+    )
     return orchestrator
 
 
@@ -101,10 +111,15 @@ async def test_process_request_with_chat(orchestrator, mock_kernel):
     assert isinstance(result, dict)
     assert "response" in result
     # The response could be either format depending on the mock implementation
-    assert ("Chat response to: Hello, how are you today?" in result["response"] or
-            "Hello" in result["response"])
+    assert (
+        "Chat response to: Hello, how are you today?" in result["response"]
+        or "Hello" in result["response"]
+    )
     assert result["skill_name"] == "ChatSkill"
-    assert result["function_name"] in ["chat", "greet"]  # Could be either depending on the implementation
+    assert result["function_name"] in [
+        "chat",
+        "greet",
+    ]  # Could be either depending on the implementation
     assert result["success"] is True
 
 
@@ -194,6 +209,7 @@ async def test_process_request_with_error(orchestrator, mock_kernel):
 
 def test_register_skill(orchestrator, registry):
     """Test registering a skill."""
+
     # Create a new skill
     class TestSkill:
         def test_function(self):
@@ -202,9 +218,9 @@ def test_register_skill(orchestrator, registry):
     skill = TestSkill()
 
     # Register the skill
-    skill_name = orchestrator.register_skill(skill, "TestSkill",
-                                          "A test skill",
-                                          ["test", "example"])
+    skill_name = orchestrator.register_skill(
+        skill, "TestSkill", "A test skill", ["test", "example"]
+    )
 
     # Check that the skill was registered
     assert skill_name == "TestSkill"
@@ -229,15 +245,16 @@ def test_get_available_skills(orchestrator, registry, chat_skill):
 
 def test_find_skills_by_keywords(registry):
     """Test finding skills by keywords."""
+
     # Register a test skill
     class TestSkill:
         def test_function(self):
             return "Test result"
 
     skill = TestSkill()
-    registry.register_skill(skill, "TestSkill",
-                          "A test skill for testing",
-                          ["test", "example", "demo"])
+    registry.register_skill(
+        skill, "TestSkill", "A test skill for testing", ["test", "example", "demo"]
+    )
 
     # Find skills by keywords
     matches = registry.find_skills_by_keywords("test example")

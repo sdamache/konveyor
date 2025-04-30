@@ -16,8 +16,8 @@ from pathlib import Path
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler()]
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
 
@@ -27,130 +27,127 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 # Define test categories
 TEST_CATEGORIES = {
-    'unit': {
-        'description': 'Unit tests that do not require external services',
-        'paths': [
-            'tests/unit',
-            'konveyor/apps/*/tests',
+    "unit": {
+        "description": "Unit tests that do not require external services",
+        "paths": [
+            "tests/unit",
+            "konveyor/apps/*/tests",
         ],
-        'requires_real_services': False,
+        "requires_real_services": False,
     },
-    'integration': {
-        'description': 'Integration tests that may use mocked services',
-        'paths': [
-            'tests/integration',
+    "integration": {
+        "description": "Integration tests that may use mocked services",
+        "paths": [
+            "tests/integration",
         ],
-        'requires_real_services': False,
+        "requires_real_services": False,
     },
-    'real': {
-        'description': 'Tests that connect to real Azure and Slack services',
-        'paths': [
-            'tests/real',
+    "real": {
+        "description": "Tests that connect to real Azure and Slack services",
+        "paths": [
+            "tests/real",
         ],
-        'requires_real_services': True,
+        "requires_real_services": True,
     },
-    'search': {
-        'description': 'Tests related to search functionality',
-        'paths': [
-            'tests/real/test_search_init.py',
-            'tests/real/test_documentation_navigator_real.py',
-            'konveyor/apps/search/tests',
+    "search": {
+        "description": "Tests related to search functionality",
+        "paths": [
+            "tests/real/test_search_init.py",
+            "tests/real/test_documentation_navigator_real.py",
+            "konveyor/apps/search/tests",
         ],
-        'requires_real_services': True,
+        "requires_real_services": True,
     },
-    'document': {
-        'description': 'Tests related to document processing',
-        'paths': [
-            'tests/real/test_pdf_parsing.py',
-            'konveyor/apps/documents/tests',
+    "document": {
+        "description": "Tests related to document processing",
+        "paths": [
+            "tests/real/test_pdf_parsing.py",
+            "konveyor/apps/documents/tests",
         ],
-        'requires_real_services': True,
+        "requires_real_services": True,
     },
-    'slack': {
-        'description': 'Tests related to Slack integration',
-        'paths': [
-            'tests/real/test_slack_integration.py',
-            'tests/real/test_user_profile_integration.py',
+    "slack": {
+        "description": "Tests related to Slack integration",
+        "paths": [
+            "tests/real/test_slack_integration.py",
+            "tests/real/test_user_profile_integration.py",
         ],
-        'requires_real_services': True,
+        "requires_real_services": True,
     },
-    'all': {
-        'description': 'All tests',
-        'paths': [
-            'tests',
-            'konveyor/apps/*/tests',
+    "all": {
+        "description": "All tests",
+        "paths": [
+            "tests",
+            "konveyor/apps/*/tests",
         ],
-        'requires_real_services': True,
+        "requires_real_services": True,
     },
 }
 
 # Define environment configurations
 ENVIRONMENTS = {
-    'dev': {
-        'description': 'Development environment',
-        'settings_module': 'konveyor.settings.development',
+    "dev": {
+        "description": "Development environment",
+        "settings_module": "konveyor.settings.development",
     },
-    'test': {
-        'description': 'Test environment',
-        'settings_module': 'konveyor.settings.testing',
+    "test": {
+        "description": "Test environment",
+        "settings_module": "konveyor.settings.testing",
     },
-    'prod': {
-        'description': 'Production environment',
-        'settings_module': 'konveyor.settings.production',
+    "prod": {
+        "description": "Production environment",
+        "settings_module": "konveyor.settings.production",
     },
 }
 
+
 def parse_arguments():
     """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(description='Run Konveyor tests')
+    parser = argparse.ArgumentParser(description="Run Konveyor tests")
 
     # Test selection options
     parser.add_argument(
-        '--category',
+        "--category",
         choices=TEST_CATEGORIES.keys(),
-        default='all',
-        help='Test category to run'
+        default="all",
+        help="Test category to run",
     )
-    parser.add_argument(
-        '--test-file',
-        help='Specific test file to run'
-    )
+    parser.add_argument("--test-file", help="Specific test file to run")
 
     # Environment options
     parser.add_argument(
-        '--env',
+        "--env",
         choices=ENVIRONMENTS.keys(),
-        default='dev',
-        help='Environment to run tests in'
+        default="dev",
+        help="Environment to run tests in",
     )
 
     # Test mode options
     parser.add_argument(
-        '--real',
-        action='store_true',
-        help='Run tests with real services (default: False)'
+        "--real",
+        action="store_true",
+        help="Run tests with real services (default: False)",
     )
     parser.add_argument(
-        '--mock',
-        action='store_true',
-        help='Run tests with mocked services (default: True)'
+        "--mock",
+        action="store_true",
+        help="Run tests with mocked services (default: True)",
     )
 
     # Verbosity options
     parser.add_argument(
-        '-v', '--verbose',
-        action='store_true',
-        help='Increase verbosity'
+        "-v", "--verbose", action="store_true", help="Increase verbosity"
     )
 
     return parser.parse_args()
+
 
 def setup_environment(env):
     """Set up the environment for testing."""
     logger.info(f"Setting up {env} environment")
 
     # Set Django settings module
-    os.environ['DJANGO_SETTINGS_MODULE'] = ENVIRONMENTS[env]['settings_module']
+    os.environ["DJANGO_SETTINGS_MODULE"] = ENVIRONMENTS[env]["settings_module"]
 
     # Set Python path
     if str(PROJECT_ROOT) not in sys.path:
@@ -159,11 +156,15 @@ def setup_environment(env):
     # Import Django and set it up
     try:
         import django
+
         django.setup()
-        logger.info(f"Django set up with settings module: {os.environ['DJANGO_SETTINGS_MODULE']}")
+        logger.info(
+            f"Django set up with settings module: {os.environ['DJANGO_SETTINGS_MODULE']}"
+        )
     except Exception as e:
         logger.error(f"Failed to set up Django: {e}")
         sys.exit(1)
+
 
 def find_test_files(category, test_file=None):
     """Find test files based on category and optional specific file."""
@@ -179,23 +180,27 @@ def find_test_files(category, test_file=None):
     category_info = TEST_CATEGORIES[category]
     test_files = []
 
-    for path_pattern in category_info['paths']:
+    for path_pattern in category_info["paths"]:
         # Handle directory patterns with wildcards
-        if '*' in path_pattern:
-            base_dir, pattern = path_pattern.split('*', 1)
-            for directory in Path(PROJECT_ROOT / base_dir).glob('*'):
+        if "*" in path_pattern:
+            base_dir, pattern = path_pattern.split("*", 1)
+            for directory in Path(PROJECT_ROOT / base_dir).glob("*"):
                 if directory.is_dir():
-                    pattern_path = directory / pattern.lstrip('/')
+                    pattern_path = directory / pattern.lstrip("/")
                     if pattern_path.exists():
-                        for test_file in pattern_path.glob('test_*.py'):
+                        for test_file in pattern_path.glob("test_*.py"):
                             test_files.append(str(test_file))
         else:
             # Handle direct paths
             path = Path(PROJECT_ROOT / path_pattern)
-            if path.is_file() and path.name.startswith('test_') and path.suffix == '.py':
+            if (
+                path.is_file()
+                and path.name.startswith("test_")
+                and path.suffix == ".py"
+            ):
                 test_files.append(str(path))
             elif path.is_dir():
-                for test_file in path.glob('test_*.py'):
+                for test_file in path.glob("test_*.py"):
                     test_files.append(str(test_file))
 
     if not test_files:
@@ -203,27 +208,28 @@ def find_test_files(category, test_file=None):
 
     return sorted(test_files)
 
+
 def run_test_file(test_file, verbose=False):
     """Run a single test file."""
     logger.info(f"Running test file: {test_file}")
 
     # Determine how to run the test file
-    if test_file.endswith('.py'):
+    if test_file.endswith(".py"):
         # Check if the file uses pytest
-        with open(test_file, 'r') as f:
+        with open(test_file, "r") as f:
             content = f.read()
-            uses_pytest = 'import pytest' in content or 'pytest' in content
+            uses_pytest = "import pytest" in content or "pytest" in content
 
         if uses_pytest:
             # Run with pytest
-            cmd = ['pytest', test_file]
+            cmd = ["pytest", test_file]
             if verbose:
-                cmd.append('-v')
+                cmd.append("-v")
         else:
             # Run Python file directly
             cmd = [sys.executable, test_file]
             if verbose:
-                cmd.append('-v')
+                cmd.append("-v")
     else:
         logger.error(f"Unsupported test file format: {test_file}")
         return False
@@ -244,6 +250,7 @@ def run_test_file(test_file, verbose=False):
         logger.error(f"Error running test {test_file}: {e}")
         return False
 
+
 def run_tests(args):
     """Run tests based on the provided arguments."""
     # Set up the environment
@@ -255,17 +262,21 @@ def run_tests(args):
 
     # Check if real services are required
     category_info = TEST_CATEGORIES[args.category]
-    requires_real = category_info['requires_real_services']
+    requires_real = category_info["requires_real_services"]
 
     if requires_real and not args.real and not args.mock:
-        logger.warning(f"Category '{args.category}' requires real services. Use --real to run these tests.")
-        logger.warning("Defaulting to mock mode, but tests may fail if they require real services.")
+        logger.warning(
+            f"Category '{args.category}' requires real services. Use --real to run these tests."
+        )
+        logger.warning(
+            "Defaulting to mock mode, but tests may fail if they require real services."
+        )
 
     # Run the tests
     results = []
     for test_file in test_files:
         # Skip real tests if mock mode is specified
-        if args.mock and 'real' in test_file and not args.real:
+        if args.mock and "real" in test_file and not args.real:
             logger.info(f"Skipping real test in mock mode: {test_file}")
             continue
 
@@ -293,6 +304,7 @@ def run_tests(args):
 
     return failed == 0
 
+
 def main():
     """Main entry point."""
     args = parse_arguments()
@@ -307,6 +319,7 @@ def main():
 
     success = run_tests(args)
     return 0 if success else 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

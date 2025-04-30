@@ -31,8 +31,12 @@ class AgentOrchestratorSkill:
         default_skill_name (str): Name of the default skill to use when no match is found
     """
 
-    def __init__(self, kernel: Kernel, registry: Optional[SkillRegistry] = None,
-                default_skill_name: str = "ChatSkill"):
+    def __init__(
+        self,
+        kernel: Kernel,
+        registry: Optional[SkillRegistry] = None,
+        default_skill_name: str = "ChatSkill",
+    ):
         """
         Initialize the Agent Orchestrator Skill.
 
@@ -44,13 +48,17 @@ class AgentOrchestratorSkill:
         self.kernel = kernel
         self.registry = registry or SkillRegistry()
         self.default_skill_name = default_skill_name
-        logger.info(f"Initialized AgentOrchestratorSkill with default skill: {default_skill_name}")
+        logger.info(
+            f"Initialized AgentOrchestratorSkill with default skill: {default_skill_name}"
+        )
 
     @kernel_function(
         description="Process a user request and route it to the appropriate skill",
-        name="process_request"
+        name="process_request",
     )
-    async def process_request(self, request: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def process_request(
+        self, request: str, context: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """
         Process a user request and route it to the appropriate skill.
 
@@ -70,7 +78,7 @@ class AgentOrchestratorSkill:
                 "I need a request to process. Please provide one.",
                 skill_name="AgentOrchestratorSkill",
                 function_name="process_request",
-                success=False
+                success=False,
             )
 
         logger.info(f"Processing request: {request[:50]}...")
@@ -80,13 +88,17 @@ class AgentOrchestratorSkill:
         try:
             # Determine the appropriate skill for this request
             logger.info("Determining appropriate skill and function...")
-            skill_name, function_name = await self._determine_skill_and_function(request)
+            skill_name, function_name = await self._determine_skill_and_function(
+                request
+            )
 
             if not skill_name:
                 logger.warning(f"No skill found for request: {request[:50]}...")
                 skill_name = self.default_skill_name
                 function_name = "chat"  # Default function for ChatSkill
-                logger.info(f"Using default skill: {skill_name} and function: {function_name}")
+                logger.info(
+                    f"Using default skill: {skill_name} and function: {function_name}"
+                )
 
             logger.info(f"Selected skill: {skill_name}, function: {function_name}")
 
@@ -99,23 +111,22 @@ class AgentOrchestratorSkill:
                     f"I couldn't find the skill '{skill_name}' to handle your request.",
                     skill_name="AgentOrchestratorSkill",
                     function_name="process_request",
-                    success=False
+                    success=False,
                 )
 
             logger.info(f"Got skill: {skill.__class__.__name__}")
 
             # Invoke the skill function
             logger.info(f"Invoking skill function: {skill_name}.{function_name}...")
-            result = await self._invoke_skill_function(skill, skill_name, function_name, request, context)
+            result = await self._invoke_skill_function(
+                skill, skill_name, function_name, request, context
+            )
             logger.info(f"Function invocation successful")
 
             # Format the response
             logger.info("Creating response...")
             response = self._create_response(
-                result,
-                skill_name=skill_name,
-                function_name=function_name,
-                success=True
+                result, skill_name=skill_name, function_name=function_name, success=True
             )
             logger.info("Response created successfully")
             logger.info(f"=== REQUEST PROCESSING COMPLETE ===")
@@ -129,10 +140,12 @@ class AgentOrchestratorSkill:
                 skill_name="AgentOrchestratorSkill",
                 function_name="process_request",
                 success=False,
-                error=str(e)
+                error=str(e),
             )
 
-    def process_request_sync(self, request: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def process_request_sync(
+        self, request: str, context: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """
         Synchronous wrapper for process_request.
 
@@ -157,16 +170,25 @@ class AgentOrchestratorSkill:
 
                 # Check if we're in a running event loop
                 if loop.is_running():
-                    logger.info("Event loop is already running, using asyncio.run_coroutine_threadsafe")
+                    logger.info(
+                        "Event loop is already running, using asyncio.run_coroutine_threadsafe"
+                    )
                     # We need to use a different approach when the loop is already running
                     import concurrent.futures
+
                     with concurrent.futures.ThreadPoolExecutor() as executor:
-                        future = executor.submit(asyncio.run, self.process_request(request, context))
+                        future = executor.submit(
+                            asyncio.run, self.process_request(request, context)
+                        )
                         return future.result()
                 else:
                     # We have a loop but it's not running
-                    logger.info("Event loop exists but is not running, using run_until_complete")
-                    return loop.run_until_complete(self.process_request(request, context))
+                    logger.info(
+                        "Event loop exists but is not running, using run_until_complete"
+                    )
+                    return loop.run_until_complete(
+                        self.process_request(request, context)
+                    )
 
             except RuntimeError:
                 # If no event loop exists in this thread, create a new one
@@ -183,10 +205,12 @@ class AgentOrchestratorSkill:
                 skill_name="AgentOrchestratorSkill",
                 function_name="process_request_sync",
                 success=False,
-                error=str(e)
+                error=str(e),
             )
 
-    async def _determine_skill_and_function(self, request: str) -> Tuple[Optional[str], Optional[str]]:
+    async def _determine_skill_and_function(
+        self, request: str
+    ) -> Tuple[Optional[str], Optional[str]]:
         """
         Determine the appropriate skill and function for a request.
 
@@ -221,7 +245,7 @@ class AgentOrchestratorSkill:
             "documentation": "DocumentationNavigatorSkill",
             "explain": "CodeUnderstandingSkill",
             "code": "CodeUnderstandingSkill",
-            "analyze": "CodeUnderstandingSkill"
+            "analyze": "CodeUnderstandingSkill",
         }
 
         # Check if any route keywords are in the request
@@ -231,29 +255,51 @@ class AgentOrchestratorSkill:
                 if route_skill in self.registry.get_all_skills():
                     skill_name = route_skill
                     function_name = "run"  # Most skills have a "run" function
-                    logger.info(f"Detected route keyword '{keyword}', routing to skill: {skill_name}")
+                    logger.info(
+                        f"Detected route keyword '{keyword}', routing to skill: {skill_name}"
+                    )
                     break
                 else:
-                    logger.warning(f"Route skill '{route_skill}' not found in registry, ignoring route")
+                    logger.warning(
+                        f"Route skill '{route_skill}' not found in registry, ignoring route"
+                    )
 
         # Check for question patterns
-        question_patterns = ["what", "how", "why", "when", "where", "who", "can you explain"]
+        question_patterns = [
+            "what",
+            "how",
+            "why",
+            "when",
+            "where",
+            "who",
+            "can you explain",
+        ]
         question_keywords = ["what", "how", "why", "when", "where", "who"]
 
         # Check if the request starts with a question pattern
         if any(request_lower.startswith(q) for q in question_patterns):
             function_name = "answer_question"
-            matching_patterns = [q for q in question_patterns if request_lower.startswith(q)]
-            logger.info(f"Detected question pattern at start: {matching_patterns}, using function: {function_name}")
+            matching_patterns = [
+                q for q in question_patterns if request_lower.startswith(q)
+            ]
+            logger.info(
+                f"Detected question pattern at start: {matching_patterns}, using function: {function_name}"
+            )
         # Check if the request contains a question mark
         elif "?" in request_lower:
             function_name = "answer_question"
-            logger.info(f"Detected question mark in request, using function: {function_name}")
+            logger.info(
+                f"Detected question mark in request, using function: {function_name}"
+            )
         # Check if the request contains question keywords
         elif any(q in request_lower.split() for q in question_keywords):
             function_name = "answer_question"
-            matching_keywords = [q for q in question_keywords if q in request_lower.split()]
-            logger.info(f"Detected question keywords: {matching_keywords}, using function: {function_name}")
+            matching_keywords = [
+                q for q in question_keywords if q in request_lower.split()
+            ]
+            logger.info(
+                f"Detected question keywords: {matching_keywords}, using function: {function_name}"
+            )
 
         # Check for greeting patterns
         elif any(g in request_lower for g in ["hello", "hi ", "hey", "greetings"]):
@@ -261,11 +307,19 @@ class AgentOrchestratorSkill:
             skill = self.registry.get_skill(skill_name)
             if skill and hasattr(skill, "greet") and callable(getattr(skill, "greet")):
                 function_name = "greet"
-                matching_patterns = [g for g in ["hello", "hi ", "hey", "greetings"] if g in request_lower]
-                logger.info(f"Detected greeting pattern: {matching_patterns}, using function: {function_name}")
+                matching_patterns = [
+                    g
+                    for g in ["hello", "hi ", "hey", "greetings"]
+                    if g in request_lower
+                ]
+                logger.info(
+                    f"Detected greeting pattern: {matching_patterns}, using function: {function_name}"
+                )
             else:
                 function_name = "chat"
-                logger.info(f"Detected greeting pattern but skill doesn't have greet function, using chat instead")
+                logger.info(
+                    f"Detected greeting pattern but skill doesn't have greet function, using chat instead"
+                )
 
         # Check for formatting requests
         elif "format" in request_lower and "bullet" in request_lower:
@@ -274,13 +328,23 @@ class AgentOrchestratorSkill:
 
         # Default case
         else:
-            logger.info(f"No specific pattern detected, using default function: {function_name}")
+            logger.info(
+                f"No specific pattern detected, using default function: {function_name}"
+            )
 
-        logger.info(f"Final determination - Skill: {skill_name}, Function: {function_name}")
+        logger.info(
+            f"Final determination - Skill: {skill_name}, Function: {function_name}"
+        )
         return skill_name, function_name
 
-    async def _invoke_skill_function(self, skill: Any, skill_name: str, function_name: str,
-                                   request: str, context: Dict[str, Any]) -> Any:
+    async def _invoke_skill_function(
+        self,
+        skill: Any,
+        skill_name: str,
+        function_name: str,
+        request: str,
+        context: Dict[str, Any],
+    ) -> Any:
         """
         Invoke a skill function.
 
@@ -294,7 +358,9 @@ class AgentOrchestratorSkill:
         Returns:
             The result of the function invocation
         """
-        logger.info(f"Invoking {skill_name}.{function_name} with request: {request[:50]}...")
+        logger.info(
+            f"Invoking {skill_name}.{function_name} with request: {request[:50]}..."
+        )
         logger.info(f"Context: {context}")
 
         # Get the plugin from the kernel
@@ -303,7 +369,9 @@ class AgentOrchestratorSkill:
 
         if skill_name not in plugins:
             # Register the skill with the kernel if not already registered
-            logger.info(f"Skill {skill_name} not registered with kernel, registering now")
+            logger.info(
+                f"Skill {skill_name} not registered with kernel, registering now"
+            )
             plugin = self.kernel.add_plugin(skill, plugin_name=skill_name)
             logger.info(f"Registered skill {skill_name} with kernel")
         else:
@@ -313,12 +381,14 @@ class AgentOrchestratorSkill:
         # Check if the function exists
         try:
             # Try to get available functions using different methods depending on the plugin type
-            if hasattr(plugin, 'keys'):
+            if hasattr(plugin, "keys"):
                 available_functions = list(plugin.keys())
-            elif hasattr(plugin, 'functions'):
+            elif hasattr(plugin, "functions"):
                 available_functions = list(plugin.functions.keys())
-            elif hasattr(plugin, '__dict__'):
-                available_functions = [name for name in dir(plugin) if not name.startswith('_')]
+            elif hasattr(plugin, "__dict__"):
+                available_functions = [
+                    name for name in dir(plugin) if not name.startswith("_")
+                ]
             else:
                 available_functions = []
 
@@ -328,7 +398,9 @@ class AgentOrchestratorSkill:
             function_exists = function_name in available_functions
 
             if not function_exists:
-                logger.warning(f"Function {function_name} not found in skill {skill_name}, falling back to chat")
+                logger.warning(
+                    f"Function {function_name} not found in skill {skill_name}, falling back to chat"
+                )
                 function_name = "chat"  # Default fallback
                 function_exists = function_name in available_functions
 
@@ -344,20 +416,26 @@ class AgentOrchestratorSkill:
         logger.info(f"Preparing arguments for {function_name}")
         try:
             # Get the function object from the plugin
-            if hasattr(plugin, 'functions') and function_name in plugin.functions:
+            if hasattr(plugin, "functions") and function_name in plugin.functions:
                 function_obj = plugin.functions[function_name]
                 logger.info(f"Found function {function_name} in plugin functions")
-            elif hasattr(plugin, function_name) and callable(getattr(plugin, function_name)):
+            elif hasattr(plugin, function_name) and callable(
+                getattr(plugin, function_name)
+            ):
                 function_obj = getattr(plugin, function_name)
                 logger.info(f"Found function {function_name} as callable attribute")
             else:
-                logger.warning(f"Function {function_name} not found in plugin, trying direct invocation")
+                logger.warning(
+                    f"Function {function_name} not found in plugin, trying direct invocation"
+                )
                 function_obj = function_name  # Fallback to string name
 
             # Prepare arguments based on the function
             if function_name == "answer_question":
                 # For answer_question, pass the request as the question
-                logger.info(f"Invoking answer_question with question: {request[:50]}...")
+                logger.info(
+                    f"Invoking answer_question with question: {request[:50]}..."
+                )
                 result = await self.kernel.invoke(function_obj, question=request)
             elif function_name == "chat":
                 # For chat, pass the request as the message
@@ -373,21 +451,29 @@ class AgentOrchestratorSkill:
             elif function_name == "format_as_bullet_list":
                 # For format_as_bullet_list, extract the content to format
                 # Simple extraction - could be improved with NLP
-                content = request.split("format", 1)[1] if "format" in request else request
-                logger.info(f"Invoking format_as_bullet_list with text: {content[:50]}...")
+                content = (
+                    request.split("format", 1)[1] if "format" in request else request
+                )
+                logger.info(
+                    f"Invoking format_as_bullet_list with text: {content[:50]}..."
+                )
                 result = await self.kernel.invoke(function_obj, text=content)
             else:
                 # For other functions, pass the request as input
                 logger.info(f"Invoking {function_name} with input: {request[:50]}...")
                 result = await self.kernel.invoke(function_obj, input=request)
         except Exception as e:
-            logger.error(f"Error invoking function {function_name} in skill {skill_name}: {str(e)}")
+            logger.error(
+                f"Error invoking function {function_name} in skill {skill_name}: {str(e)}"
+            )
             # Try a fallback approach for older versions of Semantic Kernel
             try:
                 logger.info(f"Trying fallback approach for invoking {function_name}...")
                 # Try to call the method directly on the skill instance
                 if hasattr(skill, function_name):
-                    logger.info(f"Found method {function_name} directly on skill instance")
+                    logger.info(
+                        f"Found method {function_name} directly on skill instance"
+                    )
                     func = getattr(skill, function_name)
                     if function_name == "answer_question":
                         result = func(question=request)
@@ -398,15 +484,24 @@ class AgentOrchestratorSkill:
                         name = words[-1] if len(words) > 1 else "there"
                         result = func(name=name)
                     elif function_name == "format_as_bullet_list":
-                        content = request.split("format", 1)[1] if "format" in request else request
+                        content = (
+                            request.split("format", 1)[1]
+                            if "format" in request
+                            else request
+                        )
                         result = func(text=content)
                     else:
                         result = func(request)
                 else:
                     # Try to find the function in the plugin's functions dictionary
-                    if hasattr(plugin, 'functions') and function_name in plugin.functions:
+                    if (
+                        hasattr(plugin, "functions")
+                        and function_name in plugin.functions
+                    ):
                         func = plugin.functions[function_name]
-                        logger.info(f"Found function {function_name} in plugin functions dictionary")
+                        logger.info(
+                            f"Found function {function_name} in plugin functions dictionary"
+                        )
                         if function_name == "answer_question":
                             result = await func.invoke(question=request)
                         elif function_name == "chat":
@@ -416,12 +511,18 @@ class AgentOrchestratorSkill:
                             name = words[-1] if len(words) > 1 else "there"
                             result = await func.invoke(name=name)
                         elif function_name == "format_as_bullet_list":
-                            content = request.split("format", 1)[1] if "format" in request else request
+                            content = (
+                                request.split("format", 1)[1]
+                                if "format" in request
+                                else request
+                            )
                             result = await func.invoke(text=content)
                         else:
                             result = await func.invoke(input=request)
                     else:
-                        raise ValueError(f"Function {function_name} not found in skill {skill_name}")
+                        raise ValueError(
+                            f"Function {function_name} not found in skill {skill_name}"
+                        )
             except Exception as fallback_error:
                 logger.error(f"Fallback approach also failed: {str(fallback_error)}")
                 raise
@@ -429,8 +530,14 @@ class AgentOrchestratorSkill:
         logger.info(f"Result from {skill_name}.{function_name}: {result}")
         return result
 
-    def _create_response(self, result: Any, skill_name: str, function_name: str,
-                        success: bool, error: Optional[str] = None) -> Dict[str, Any]:
+    def _create_response(
+        self,
+        result: Any,
+        skill_name: str,
+        function_name: str,
+        success: bool,
+        error: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """
         Create a standardized response dictionary.
 
@@ -458,7 +565,7 @@ class AgentOrchestratorSkill:
             # Preserve other keys from the original result
             response = {**result}
             logger.info(f"Preserving original keys: {list(result.keys())}")
-        elif hasattr(result, 'content') and result.content:
+        elif hasattr(result, "content") and result.content:
             # Handle Semantic Kernel FunctionResult objects
             response_text = result.content
             logger.info(f"Using content from FunctionResult: {response_text[:50]}...")
@@ -470,15 +577,19 @@ class AgentOrchestratorSkill:
             response = {"response": response_text}
         else:
             # For other types, try to extract meaningful content before converting to string
-            if hasattr(result, 'value') and result.value:
+            if hasattr(result, "value") and result.value:
                 # Some Semantic Kernel results have a value attribute
                 if isinstance(result.value, dict) and "response" in result.value:
                     response_text = result.value["response"]
-                    logger.info(f"Using response from result.value dictionary: {response_text[:50]}...")
+                    logger.info(
+                        f"Using response from result.value dictionary: {response_text[:50]}..."
+                    )
                     response = {"response": response_text}
                 else:
                     response_text = str(result.value)
-                    logger.info(f"Using string from result.value: {response_text[:50]}...")
+                    logger.info(
+                        f"Using string from result.value: {response_text[:50]}..."
+                    )
                     response = {"response": response_text}
             else:
                 # Last resort: convert to string
@@ -487,11 +598,13 @@ class AgentOrchestratorSkill:
                 response = {"response": response_text}
 
         # Add metadata
-        response.update({
-            "skill_name": skill_name,
-            "function_name": function_name,
-            "success": success
-        })
+        response.update(
+            {
+                "skill_name": skill_name,
+                "function_name": function_name,
+                "success": success,
+            }
+        )
         logger.info(f"Added metadata to response")
 
         if error:
@@ -502,12 +615,15 @@ class AgentOrchestratorSkill:
         return response
 
     @kernel_function(
-        description="Register a skill with the orchestrator",
-        name="register_skill"
+        description="Register a skill with the orchestrator", name="register_skill"
     )
-    def register_skill(self, skill: Any, skill_name: Optional[str] = None,
-                      description: Optional[str] = None,
-                      keywords: Optional[List[str]] = None) -> str:
+    def register_skill(
+        self,
+        skill: Any,
+        skill_name: Optional[str] = None,
+        description: Optional[str] = None,
+        keywords: Optional[List[str]] = None,
+    ) -> str:
         """
         Register a skill with the orchestrator.
 
@@ -524,7 +640,7 @@ class AgentOrchestratorSkill:
 
     @kernel_function(
         description="Get information about available skills",
-        name="get_available_skills"
+        name="get_available_skills",
     )
     def get_available_skills(self) -> str:
         """
@@ -539,7 +655,10 @@ class AgentOrchestratorSkill:
 
         result = "Available skills:\n\n"
         for skill_name in skills:
-            description = self.registry.get_skill_description(skill_name) or "No description available"
+            description = (
+                self.registry.get_skill_description(skill_name)
+                or "No description available"
+            )
             functions = self.registry.get_function_descriptions(skill_name)
 
             result += f"• {skill_name}: {description}\n"

@@ -1,18 +1,20 @@
 import os
 
+
 def get_secret(secret_name, default=None):
     """
     Get a secret from environment variables.
     This is a placeholder for future Azure Key Vault integration.
-    
+
     Args:
         secret_name: The name of the secret
         default: Default value if the secret is not found
-        
+
     Returns:
         The secret value or default
     """
     return os.environ.get(secret_name, default)
+
 
 # TODO: Add Azure Key Vault integration when needed
 # Example implementation for future reference:
@@ -34,4 +36,4 @@ def get_secret_from_key_vault(secret_name, default=None):
     
     # Fall back to environment variable
     return os.environ.get(secret_name, default)
-""" 
+"""
