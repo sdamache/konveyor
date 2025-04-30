@@ -25,7 +25,7 @@ from azure.core.exceptions import \
     AzureError  # Keep for potential specific error handling
 # Removed tenacity, azure.core.credentials, azure.search.documents.SearchClient
 # Keep SearchIndexClient for index management if needed by create_search_index
-from azure.search.documents.indexes import SearchIndexClient
+# Removed: from azure.search.documents.indexes import SearchIndexClient
 from azure.search.documents.indexes.models import (
     HnswAlgorithmConfiguration, SearchableField, SearchField,
     SearchFieldDataType, SearchIndex, SimpleField, VectorSearch,

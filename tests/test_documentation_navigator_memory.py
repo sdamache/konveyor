@@ -5,15 +5,16 @@ This module tests the conversation memory features of the DocumentationNavigator
 including creating conversations, adding messages, and handling follow-up questions.
 """
 
-import asyncio
+# Removed: import asyncio
 # Mock the necessary modules before importing DocumentationNavigatorSkill
 import sys
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+# Removed: from typing import Any, Dict, List, Optional
 from unittest.mock import MagicMock, patch
 
 import pytest
+from konveyor.skills.documentation_navigator.DocumentationNavigatorSkill import DocumentationNavigatorSkill
 
 sys.modules["konveyor.apps.documents.models"] = MagicMock()
 sys.modules["konveyor.apps.search.services.search_service"] = MagicMock()
@@ -211,9 +212,7 @@ sys.modules["konveyor.core.conversation.factory"].ConversationManagerFactory = (
     MockConversationManagerFactory
 )
 
-# Now import the DocumentationNavigatorSkill
-from konveyor.skills.documentation_navigator.DocumentationNavigatorSkill import \
-    DocumentationNavigatorSkill
+# DocumentationNavigatorSkill is imported at the top of the file
 
 
 class TestDocumentationNavigatorMemory:

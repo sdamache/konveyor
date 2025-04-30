@@ -4,13 +4,13 @@ This module contains tests for the SearchService class, which provides
 functionality for document search using Azure Cognitive Search.
 """
 
-import json
+# Removed: import json
 import os
 import uuid
-from datetime import datetime
+# Removed: from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
-from unittest.mock import Mock, patch
+# Removed: from typing import Any, Dict, List
+# Removed: from unittest.mock import Mock, patch
 
 # Removed time and logging imports
 import pytest
@@ -20,8 +20,8 @@ from django.conf import settings
 from django.test import TestCase
 
 from konveyor.apps.search.services.indexing_service import IndexingService
-from konveyor.apps.search.services.search_service import SearchService
-from konveyor.core.azure_utils.clients import AzureClientManager
+# Removed: from konveyor.apps.search.services.search_service import SearchService
+# Removed: from konveyor.core.azure_utils.clients import AzureClientManager
 from konveyor.core.documents.document_service import DocumentService
 
 # Removed dotenv import

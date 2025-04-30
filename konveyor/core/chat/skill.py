@@ -233,7 +233,7 @@ class ChatSkill:
                 settings = chat_service.get_prompt_execution_settings_class()()
 
                 # Use asyncio to run the async method in a synchronous context
-                import asyncio
+# Removed: import asyncio
 
                 async def get_completion():
                     result = await chat_service.get_chat_message_content(

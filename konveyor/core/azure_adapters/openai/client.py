@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Any, Dict, List, Optional
+# Removed: from typing import Any, Dict, List, Optional
 
 import requests
 from tenacity import (retry, retry_if_exception_type, stop_after_attempt,

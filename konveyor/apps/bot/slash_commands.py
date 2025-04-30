@@ -4,11 +4,12 @@ Slash command handlers for the Slack bot.
 This module contains handlers for Slack slash commands.
 """
 
-import json
+# Removed: import json
 import logging
 from typing import Any, Callable, Dict, List, Optional
 
 from django.conf import settings
+from konveyor.apps.bot.services.slack_user_profile_service import SlackUserProfileService
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -302,10 +303,6 @@ def handle_code_command(
         "blocks": blocks,
     }
 
-
-# Import the SlackUserProfileService
-from konveyor.apps.bot.services.slack_user_profile_service import \
-    SlackUserProfileService
 
 # Initialize the service
 slack_user_profile_service = SlackUserProfileService()

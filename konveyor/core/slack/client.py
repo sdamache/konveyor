@@ -13,7 +13,7 @@ import ssl
 import time
 from typing import Any, Callable, Dict, List, Optional, TypeVar
 
-import certifi
+# Removed: import certifi
 from django.conf import settings
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError

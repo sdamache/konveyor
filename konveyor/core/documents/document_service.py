@@ -14,9 +14,9 @@ Example:
     ```
 """
 
-import logging
+# Removed: import logging
 import time
-from functools import wraps
+# Removed: from functools import wraps
 from typing import (Any, BinaryIO, Callable, Dict, List, Optional, Tuple,
                     TypeVar)
 

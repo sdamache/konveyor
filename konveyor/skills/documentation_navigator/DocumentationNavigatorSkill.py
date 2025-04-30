@@ -7,7 +7,7 @@ It also integrates with the conversation memory system to maintain context
 across interactions.
 """
 
-import asyncio
+# Removed: import asyncio
 import logging
 import re
 import uuid
@@ -19,7 +19,7 @@ from semantic_kernel.functions import kernel_function
 
 from konveyor.apps.search.services.search_service import SearchService
 from konveyor.core.conversation.factory import ConversationManagerFactory
-from konveyor.core.conversation.interface import ConversationInterface
+# Removed: from konveyor.core.conversation.interface import ConversationInterface
 
 # Configure logging
 logger = logging.getLogger(__name__)

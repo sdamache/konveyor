@@ -8,21 +8,20 @@ This updated version uses the new core components for conversation management,
 message formatting, and response generation.
 """
 
+import asyncio
 import datetime
+import hashlib
 import json
 import logging
 import ssl
 import traceback
 from typing import Any, Dict, Optional
 
-import certifi
-from django.conf import settings
+# Removed: import certifi
+# Removed: from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-
-# Fix SSL certificate issues on macOS
-ssl._create_default_https_context = ssl._create_unverified_context
 
 from konveyor.apps.bot.services.slack_service import SlackService
 from konveyor.core.agent import AgentOrchestratorSkill, SkillRegistry
@@ -30,6 +29,9 @@ from konveyor.core.chat import ChatSkill
 from konveyor.core.conversation.factory import ConversationManagerFactory
 from konveyor.core.formatters.factory import FormatterFactory
 from konveyor.core.kernel import create_kernel
+
+# Fix SSL certificate issues on macOS
+ssl._create_default_https_context = ssl._create_unverified_context
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -71,8 +73,6 @@ async def init_conversation_manager():
 
 
 # Initialize the conversation manager
-import asyncio
-
 try:
     asyncio.run(init_conversation_manager())
 except Exception as e:
@@ -216,8 +216,6 @@ def slack_webhook(request):
         event_user = event.get("user", "")
 
         # Create a composite ID for more reliable deduplication
-        import hashlib
-
         text_hash = (
             hashlib.md5(event_text.encode()).hexdigest()[:8] if event_text else ""
         )
@@ -389,8 +387,6 @@ def process_message(text: str, user_id: str, channel_id: str) -> Dict[str, Any]:
     if conversation_manager:
         try:
             # Use asyncio to run the async method in a synchronous context
-            import asyncio
-
             async def get_or_create_conversation():
                 # Try to find an existing conversation for this user
                 user_conversations = await conversation_manager.get_user_conversations(

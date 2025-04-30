@@ -36,7 +36,7 @@ import logging
 import os
 from typing import Any, Dict, Optional
 
-from azure.core.credentials import AzureKeyCredential, TokenCredential
+# Removed: from azure.core.credentials import AzureKeyCredential, TokenCredential
 from azure.identity import AzureCliCredential, DefaultAzureCredential
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
