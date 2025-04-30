@@ -202,10 +202,15 @@ jobs:
             echo "passed=false" >> $GITHUB_OUTPUT
           fi
 
+      # Create test results directory if it doesn't exist
+      - name: Create test results directory
+        if: always()
+        run: mkdir -p tests/results
+
       # Upload test results as artifacts
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: |
