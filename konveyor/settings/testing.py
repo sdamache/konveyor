@@ -35,6 +35,7 @@ if not AZURE_COGNITIVE_SEARCH_ENDPOINT:
 if not AZURE_SEARCH_API_KEY:
     AZURE_SEARCH_API_KEY = "mock-search-api-key"
 
+
 # Just validate critical settings
 def validate_settings():
     # For CI/CD, we don't require real Azure credentials

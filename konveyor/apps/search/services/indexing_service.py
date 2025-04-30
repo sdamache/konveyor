@@ -26,7 +26,6 @@ from konveyor.core.documents.document_service import DocumentService
 # Removed logging and time imports
 
 
-
 class IndexingService(AzureService):
     """Service for indexing documents in Azure Cognitive Search.
 

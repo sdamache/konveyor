@@ -304,9 +304,8 @@ def handle_code_command(
 
 
 # Import the SlackUserProfileService
-from konveyor.apps.bot.services.slack_user_profile_service import (
-    SlackUserProfileService,
-)
+from konveyor.apps.bot.services.slack_user_profile_service import \
+    SlackUserProfileService
 
 # Initialize the service
 slack_user_profile_service = SlackUserProfileService()
