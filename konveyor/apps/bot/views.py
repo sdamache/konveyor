@@ -28,9 +28,13 @@ from konveyor.core.agent import AgentOrchestratorSkill, SkillRegistry
 from konveyor.core.chat import ChatSkill
 from konveyor.core.formatters.factory import FormatterFactory
 from konveyor.core.conversation.factory import ConversationManagerFactory
+from konveyor.core.conversation.feedback.factory import create_feedback_service
 from konveyor.apps.bot.services.slack_service import SlackService
 from konveyor.apps.bot.services.slack_user_profile_service import SlackUserProfileService
 from konveyor.apps.bot.slash_commands import get_command_handler
+
+# Import the feedback service directly from the core module
+# This replaces the previous import from konveyor.apps.bot.services.feedback_service
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -40,6 +44,9 @@ slack_service = SlackService()
 
 # Initialize the Slack user profile service
 slack_user_profile_service = SlackUserProfileService(slack_service=slack_service)
+
+# Initialize the feedback service
+feedback_service = create_feedback_service()
 
 # Initialize the Agent Orchestration components
 kernel = create_kernel(validate=False)
@@ -221,6 +228,31 @@ def slack_webhook(request):
                 slack_webhook.processed_events = set(list(slack_webhook.processed_events)[-1000:])
                 logger.debug(f"Trimmed processed events to {len(slack_webhook.processed_events)} items")
 
+        # Process reaction events
+        if event_subtype == 'reaction_added' or event_subtype == 'reaction_removed':
+            logger.info(f"Processing {event_subtype} event")
+
+            # Extract reaction details
+            reaction = event.get('reaction', '')
+            user_id = event.get('user', '')
+            item = event.get('item', {})
+
+            logger.info(f"Reaction: {reaction}, User: {user_id}, Item type: {item.get('type', '')}")
+
+            # Process the reaction using the feedback service
+            if item.get('type') == 'message':
+                try:
+                    feedback = feedback_service.process_reaction_event(event)
+                    if feedback:
+                        logger.info(f"Recorded feedback: {feedback.get('feedback_type')} from user {user_id}")
+                    else:
+                        logger.debug(f"No feedback recorded for reaction: {reaction}")
+                except Exception as e:
+                    logger.error(f"Error processing reaction: {str(e)}")
+                    logger.error(traceback.format_exc())
+
+            return HttpResponse(status=200)
+
         # Process message events
         if event_subtype == 'message':
             # Skip messages from our own bot to avoid infinite loops
@@ -304,6 +336,26 @@ def slack_webhook(request):
                         # Don't raise an exception here, just log the error
                     else:
                         logger.debug(f"Message sent successfully to {channel_type} {channel}{thread_info}")
+
+                        # Store message content for potential feedback
+                        try:
+                            # Get the message timestamp from the response
+                            message_ts = response.get('ts')
+                            if message_ts:
+                                # Update the feedback service with message content
+                                feedback_service.update_message_content(
+                                    message_id=message_ts,  # Changed from message_ts to message_id
+                                    channel_id=channel,
+                                    question=text,
+                                    answer=response_text,
+                                    skill_used=skill_name,
+                                    function_used=result.get('function_name'),
+                                    conversation_id=conversation_id
+                                )
+                                logger.debug(f"Stored message content for feedback: {message_ts}")
+                        except Exception as e:
+                            logger.error(f"Error storing message content for feedback: {str(e)}")
+                            logger.error(traceback.format_exc())
                 except Exception as e:
                     error_type = type(e).__name__
                     error_message = str(e)

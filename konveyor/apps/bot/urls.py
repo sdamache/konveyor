@@ -8,6 +8,7 @@ import logging
 from django.urls import path
 from django.http import HttpResponse
 from . import views
+from . import views_feedback
 
 logger = logging.getLogger(__name__)
 
@@ -30,4 +31,9 @@ urlpatterns = [
     path('slack/events/', views.slack_webhook, name='slack_webhook'),
     path('slack/commands/', views.slack_slash_command, name='slack_slash_command'),
     path('debug/', debug_view, name='debug_view'),
+
+    # Feedback API endpoints
+    path('feedback/stats/', views_feedback.feedback_stats_api, name='feedback_stats_api'),
+    path('feedback/by-skill/', views_feedback.feedback_by_skill_api, name='feedback_by_skill_api'),
+    path('feedback/export/', views_feedback.export_feedback_api, name='feedback_export_api'),
 ]
