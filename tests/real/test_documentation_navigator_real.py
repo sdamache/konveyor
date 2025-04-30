@@ -25,7 +25,7 @@ konveyor_logger = logging.getLogger('konveyor')
 konveyor_logger.setLevel(logging.DEBUG)
 
 # Add the project root to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 # Set environment variables for the real SearchService
 os.environ["AZURE_SEARCH_SERVICE_ENDPOINT"] = "https://konveyor-test-search-989f50a2.search.windows.net"
@@ -161,13 +161,8 @@ async def test_documentation_navigator():
     logger.info("=" * 80)
 
     try:
-        # Mock the necessary modules
-        logger.info("Mocking necessary modules for testing")
-        sys.modules['konveyor.apps.documents.models'] = MagicMock()
-        sys.modules['konveyor.core.documents.document_service'] = MagicMock()
-        sys.modules['konveyor.core.azure_utils.service'] = MagicMock()
-        sys.modules['konveyor.core.azure_utils.retry'] = MagicMock()
-        sys.modules['konveyor.core.azure_utils.mixins'] = MagicMock()
+        # Use the real services for testing
+        logger.info("Using real services for testing")
 
         # Use the real SearchService
         logger.info("Setting up RealSearchService to connect to actual Azure Cognitive Search")

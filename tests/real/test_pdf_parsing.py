@@ -5,7 +5,7 @@ from io import BytesIO
 from dotenv import load_dotenv
 
 # Add project root to sys.path to allow importing konveyor modules
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
 sys.path.insert(0, project_root)
 
 from konveyor.core.documents.document_service import DocumentService
@@ -27,7 +27,7 @@ def test_pdf_parsing():
     except Exception as e:
         logging.error(f"Failed to initialize DocumentService: {e}", exc_info=True)
         return
-
+    
     # Define path to the sample PDF file
     pdf_file_path = os.path.join(
         project_root,
@@ -38,13 +38,13 @@ def test_pdf_parsing():
         'test_files',
         'sample.pdf'
     )
-
+    
     if not os.path.exists(pdf_file_path):
         logging.error(f"PDF file not found at: {pdf_file_path}")
         return
-
+    
     logging.info(f"Attempting to parse PDF: {pdf_file_path}")
-
+    
     try:
         # Open the file in binary mode
         with open(pdf_file_path, 'rb') as f:

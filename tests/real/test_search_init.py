@@ -1,4 +1,4 @@
-# scripts/test_search_init.py
+# tests/real/test_search_init.py
 import os
 import sys
 import django
@@ -7,7 +7,7 @@ import logging
 
 # --- Configuration ---
 # Add the project root to the Python path to allow importing konveyor modules
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
@@ -70,7 +70,7 @@ def check_environment_variables():
 
 
 # --- Main Execution ---
-if __name__ == "__main__":
+def test_search_init():
     logger.info("--- Starting SearchService Initialization Test ---")
 
     # 1. Check environment variables
@@ -100,10 +100,11 @@ if __name__ == "__main__":
         logger.info("--- SearchService initialized successfully! ---")
         # Optional: Log success details if needed
         # logger.info(f"Initialized with index: {search_service.index_name}")
-
+        return True
     except Exception as e:
         logger.error("--- Failed to initialize SearchService ---", exc_info=True)
-        sys.exit(1)
+        return False
 
-    logger.info("--- Initialization Test Completed ---")
-    sys.exit(0) # Explicit success exit code
+if __name__ == "__main__":
+    success = test_search_init()
+    sys.exit(0 if success else 1)

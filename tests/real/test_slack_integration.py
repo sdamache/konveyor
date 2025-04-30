@@ -16,7 +16,7 @@ from pathlib import Path
 ssl._create_default_https_context = ssl._create_unverified_context
 
 # Add the project root to the Python path
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
 # Set up Django
