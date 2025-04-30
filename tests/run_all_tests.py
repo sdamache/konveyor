@@ -220,35 +220,63 @@ def run_test_file(test_file, verbose=False):
             content = f.read()
             uses_pytest = "import pytest" in content or "pytest" in content
 
+        # Ensure results directory exists
+        results_dir = Path(PROJECT_ROOT) / "tests" / "results"
+        results_dir.mkdir(exist_ok=True)
+        
+        # Generate a unique name for the XML file based on the test file name
+        test_name = Path(test_file).stem
+        xml_path = results_dir / f"test-{test_name}.xml"
+
         if uses_pytest:
             # Run with pytest
-            cmd = ["pytest", test_file]
-            if verbose:
-                cmd.append("-v")
+            cmd = [sys.executable, "-m", "pytest", test_file, "-v", f"--junitxml={xml_path}"]
         else:
-            # Run Python file directly
-            cmd = [sys.executable, test_file]
+            # Run with unittest but generate XML output
+            cmd = [sys.executable, "-m", "unittest", test_file]
             if verbose:
                 cmd.append("-v")
-    else:
-        logger.error(f"Unsupported test file format: {test_file}")
-        return False
-
-    # Run the test
+                
+        # Run the test
     try:
-        logger.info(f"Executing command: {' '.join(cmd)}")
-        result = subprocess.run(cmd, check=False)
-        success = result.returncode == 0
-
-        if success:
-            logger.info(f"Test passed: {test_file}")
+        logger.info(f"Running command: {' '.join(cmd)}")
+        result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+        
+        # Always write stdout/stderr to log files for debugging
+        with open(results_dir / f"{test_name}-stdout.log", "w") as f:
+            f.write(result.stdout)
+        
+        with open(results_dir / f"{test_name}-stderr.log", "w") as f:
+            f.write(result.stderr)
+        
+        if result.returncode != 0:
+            logger.error(f"Test failed with exit code {result.returncode}")
+            logger.error(result.stderr)
+            return False
         else:
-            logger.error(f"Test failed: {test_file} (exit code: {result.returncode})")
-
-        return success
+            logger.info(f"Test passed: {test_file}")
+            if verbose:
+                logger.info(result.stdout)
+            return True
     except Exception as e:
         logger.error(f"Error running test {test_file}: {e}")
+        # Create a failure XML file even if the test fails to run
+        create_failure_xml(xml_path, test_file, str(e))
         return False
+
+def create_failure_xml(xml_path, test_file, error_message):
+    """Create a failure XML file for tests that fail to run."""
+    import xml.etree.ElementTree as ET
+    
+    root = ET.Element("testsuites")
+    testsuite = ET.SubElement(root, "testsuite", name=f"failed_{Path(test_file).stem}", tests="1", failures="1", errors="0")
+    testcase = ET.SubElement(testsuite, "testcase", classname="TestRunnerFailure", name="test_execution_failure")
+    failure = ET.SubElement(testcase, "failure", message="Test execution failed", type="RuntimeError")
+    failure.text = error_message
+    
+    tree = ET.ElementTree(root)
+    tree.write(str(xml_path))
+    logger.info(f"Created failure XML file at {xml_path}")
 
 
 def run_tests(args):
