@@ -7,10 +7,10 @@ ResponseGeneratorInterface. It supports both RAG and direct generation approache
 
 import logging
 import os
-from typing import Dict, Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
-from konveyor.core.generation.interface import ResponseGeneratorInterface
 from konveyor.core.azure_utils.openai_factory import OpenAIClientFactory
+from konveyor.core.generation.interface import ResponseGeneratorInterface
 
 logger = logging.getLogger(__name__)
 

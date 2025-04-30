@@ -5,9 +5,10 @@ This module provides a registry for Semantic Kernel skills, allowing the
 orchestrator to discover and invoke the appropriate skills based on user requests.
 """
 
-import logging
 import inspect
-from typing import Dict, Any, List, Optional, Type, Set
+import logging
+from typing import Any, Dict, List, Optional, Set, Type
+
 from semantic_kernel.functions import KernelFunction
 
 logger = logging.getLogger(__name__)

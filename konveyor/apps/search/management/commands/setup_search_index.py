@@ -1,7 +1,9 @@
-from django.core.management.base import BaseCommand
-from django.conf import settings
-from ...services.search_service import SearchService
 import logging
+
+from django.conf import settings
+from django.core.management.base import BaseCommand
+
+from ...services.search_service import SearchService
 
 logger = logging.getLogger(__name__)
 

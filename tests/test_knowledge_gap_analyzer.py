@@ -3,11 +3,13 @@ Unit tests for the Knowledge Gap Analyzer.
 """
 
 import json
+
 import pytest
-from konveyor.skills.knowledge_analyzer.knowledge_gap_analyzer import (
-    KnowledgeGapAnalyzerSkill,
-)
-from konveyor.skills.knowledge_analyzer.user_knowledge import UserKnowledgeStore
+
+from konveyor.skills.knowledge_analyzer.knowledge_gap_analyzer import \
+    KnowledgeGapAnalyzerSkill
+from konveyor.skills.knowledge_analyzer.user_knowledge import \
+    UserKnowledgeStore
 
 
 class TestUserKnowledgeStore:

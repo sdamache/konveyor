@@ -7,7 +7,7 @@ specified storage type and configuration.
 
 import logging
 import os
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 from konveyor.core.conversation.interface import ConversationInterface
 from konveyor.core.conversation.memory import InMemoryConversationManager

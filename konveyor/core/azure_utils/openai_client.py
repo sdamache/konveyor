@@ -8,20 +8,15 @@ OpenAI SDK and the custom AzureOpenAIClient implementation.
 
 import logging
 import os
-from typing import Dict, Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from openai import AzureOpenAI
-from tenacity import (
-    retry,
-    stop_after_attempt,
-    wait_exponential,
-    retry_if_exception_type,
-)
+from tenacity import (retry, retry_if_exception_type, stop_after_attempt,
+                      wait_exponential)
 
+from konveyor.core.azure_adapters.openai.client import \
+    AzureOpenAIClient as CustomAzureOpenAIClient
 from konveyor.core.azure_utils.openai_interface import OpenAIClientInterface
-from konveyor.core.azure_adapters.openai.client import (
-    AzureOpenAIClient as CustomAzureOpenAIClient,
-)
 
 logger = logging.getLogger(__name__)
 

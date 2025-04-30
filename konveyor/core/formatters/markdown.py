@@ -6,7 +6,7 @@ It handles formatting messages in Markdown format for general use.
 """
 
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from konveyor.core.formatters.interface import FormatterInterface
 

@@ -5,10 +5,11 @@ This module contains integration tests for the updated RAG service,
 verifying that it works correctly with the new core components.
 """
 
-import pytest
 import asyncio
-from unittest.mock import MagicMock, AsyncMock, patch
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from konveyor.core.rag.rag_service_updated import RAGService
 

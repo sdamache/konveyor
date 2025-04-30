@@ -11,9 +11,10 @@ message formatting, and response generation.
 
 import logging
 import traceback
-from typing import List, Dict, Any, Optional
-from semantic_kernel.functions import kernel_function
+from typing import Any, Dict, List, Optional
+
 from semantic_kernel import Kernel
+from semantic_kernel.functions import kernel_function
 
 from konveyor.core.conversation.factory import ConversationManagerFactory
 from konveyor.core.formatters.factory import FormatterFactory
@@ -186,11 +187,8 @@ class ChatSkill:
                 # https://learn.microsoft.com/en-us/semantic-kernel/concepts/ai-services/chat-completion/?tabs=csharp-AzureOpenAI%2Cpython-AzureOpenAI%2Cjava-AzureOpenAI&pivots=programming-language-python
 
                 # Convert our messages to the proper format
-                from semantic_kernel.contents import (
-                    ChatMessageContent,
-                    AuthorRole,
-                    ChatHistory,
-                )
+                from semantic_kernel.contents import (AuthorRole, ChatHistory,
+                                                      ChatMessageContent)
 
                 # Create a ChatHistory object
                 chat_history = ChatHistory()

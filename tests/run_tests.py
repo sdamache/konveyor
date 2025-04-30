@@ -5,12 +5,13 @@ Test runner for the app modernization tests.
 This script runs all the tests for the app modernization components.
 """
 
-import os
-import sys
-import pytest
 import asyncio
 import logging
+import os
+import sys
 from pathlib import Path
+
+import pytest
 
 # Configure logging
 logging.basicConfig(

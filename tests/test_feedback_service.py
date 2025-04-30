@@ -3,8 +3,8 @@ Unit tests for the feedback service.
 """
 
 import unittest
-from unittest.mock import MagicMock, patch
 from enum import Enum
+from unittest.mock import MagicMock, patch
 
 
 # Mock the FeedbackType enum to avoid Django dependencies

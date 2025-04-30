@@ -5,14 +5,16 @@ This module provides a Semantic Kernel skill to analyze user questions,
 map them to knowledge areas, and identify potential knowledge gaps.
 """
 
-import logging
 import json
-from typing import Dict, List, Any, Optional, Tuple
-from semantic_kernel.functions import kernel_function, KernelFunction
+import logging
+from typing import Any, Dict, List, Optional, Tuple
+
 from semantic_kernel import Kernel
+from semantic_kernel.functions import KernelFunction, kernel_function
 
 from konveyor.skills.knowledge_analyzer.taxonomy import KnowledgeTaxonomyLoader
-from konveyor.skills.knowledge_analyzer.user_knowledge import UserKnowledgeStore
+from konveyor.skills.knowledge_analyzer.user_knowledge import \
+    UserKnowledgeStore
 
 logger = logging.getLogger(__name__)
 

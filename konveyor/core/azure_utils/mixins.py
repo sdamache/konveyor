@@ -1,13 +1,15 @@
 """Mixins for Azure services providing common functionality."""
 
-import os
 import logging
-from typing import Optional, Any
+import os
+from typing import Any, Optional
+
+from azure.ai.documentintelligence import DocumentIntelligenceClient
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents import SearchClient
 from azure.search.documents.indexes import SearchIndexClient
-from azure.ai.documentintelligence import DocumentIntelligenceClient
 from openai import AzureOpenAI
+
 from konveyor.core.azure_adapters.openai.client import AzureOpenAIClient
 
 logger = logging.getLogger(__name__)

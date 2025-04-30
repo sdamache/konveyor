@@ -5,14 +5,14 @@ This updated version uses the new core components for conversation management,
 message formatting, and response generation.
 """
 
-from rest_framework import viewsets, status
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from konveyor.core.azure_utils.clients import AzureClientManager
-from konveyor.core.rag.rag_service_updated import RAGService
 from konveyor.core.conversation.factory import ConversationManagerFactory
 from konveyor.core.formatters.factory import FormatterFactory
+from konveyor.core.rag.rag_service_updated import RAGService
 
 # Constants for message types
 MESSAGE_TYPE_USER = "user"

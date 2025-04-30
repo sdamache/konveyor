@@ -8,32 +8,32 @@ This updated version uses the new core components for conversation management,
 message formatting, and response generation.
 """
 
+import datetime
 import json
 import logging
-import traceback
 import ssl
+import traceback
+from typing import Any, Dict, Optional
+
 import certifi
-import datetime
-from typing import Dict, Any, Optional
+from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from django.conf import settings
 
 # Fix SSL certificate issues on macOS
 ssl._create_default_https_context = ssl._create_unverified_context
 
-from konveyor.core.kernel import create_kernel
+from konveyor.apps.bot.services.slack_service import SlackService
+from konveyor.apps.bot.services.slack_user_profile_service import \
+    SlackUserProfileService
+from konveyor.apps.bot.slash_commands import get_command_handler
 from konveyor.core.agent import AgentOrchestratorSkill, SkillRegistry
 from konveyor.core.chat import ChatSkill
-from konveyor.core.formatters.factory import FormatterFactory
 from konveyor.core.conversation.factory import ConversationManagerFactory
 from konveyor.core.conversation.feedback.factory import create_feedback_service
-from konveyor.apps.bot.services.slack_service import SlackService
-from konveyor.apps.bot.services.slack_user_profile_service import (
-    SlackUserProfileService,
-)
-from konveyor.apps.bot.slash_commands import get_command_handler
+from konveyor.core.formatters.factory import FormatterFactory
+from konveyor.core.kernel import create_kernel
 
 # Import the feedback service directly from the core module
 # This replaces the previous import from konveyor.apps.bot.services.feedback_service

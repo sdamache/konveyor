@@ -4,9 +4,9 @@ Example script to demonstrate the usage of the KnowledgeTaxonomyLoader.
 This script shows how to load the knowledge taxonomy and access its components.
 """
 
+import logging
 import os
 import sys
-import logging
 from pathlib import Path
 
 # Add the parent directory to the Python path to allow importing the module

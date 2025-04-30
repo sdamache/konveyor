@@ -8,17 +8,14 @@ This file uses unittest.mock to mock the Semantic Kernel, Bot Framework, and the
 allowing tests to run without requiring real Azure OpenAI credentials or a real bot deployment.
 """
 
-import pytest
 import asyncio
 import logging
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from botbuilder.core import TurnContext
-from botbuilder.schema import (
-    Activity,
-    ConversationAccount,
-    ChannelAccount,
-    ActivityTypes,
-)
+from botbuilder.schema import (Activity, ActivityTypes, ChannelAccount,
+                               ConversationAccount)
 
 from konveyor.apps.bot.bot import KonveyorBot
 from konveyor.core.agent import AgentOrchestratorSkill, SkillRegistry

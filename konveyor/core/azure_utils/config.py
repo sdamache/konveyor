@@ -32,14 +32,15 @@ Example:
     ```
 """
 
-import os
 import logging
-from typing import Optional, Dict, Any
-from azure.identity import DefaultAzureCredential, AzureCliCredential
+import os
+from typing import Any, Dict, Optional
+
 from azure.core.credentials import AzureKeyCredential, TokenCredential
-from django.core.exceptions import ImproperlyConfigured
-from dotenv import load_dotenv, find_dotenv
+from azure.identity import AzureCliCredential, DefaultAzureCredential
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
+from dotenv import find_dotenv, load_dotenv
 
 logger = logging.getLogger(__name__)
 

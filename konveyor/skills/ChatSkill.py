@@ -20,6 +20,7 @@ implementations or clearly defining their boundaries.
 """
 
 import logging
+
 from konveyor.core.chat.skill import ChatSkill
 
 # Configure logging

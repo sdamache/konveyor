@@ -17,26 +17,22 @@ Example:
 import logging
 import time
 from functools import wraps
-from typing import Dict, Any, List, Optional, BinaryIO, Tuple, Callable, TypeVar
-from bs4 import BeautifulSoup
+from typing import (Any, BinaryIO, Callable, Dict, List, Optional, Tuple,
+                    TypeVar)
+
 import docx
 import markdown
-
 from azure.core.exceptions import AzureError, ResourceExistsError
-
-# Removed AzureKeyCredential, DocumentIntelligenceClient imports
-from konveyor.core.azure_utils.service import AzureService  # Import base service
-from konveyor.core.azure_utils.clients import (
-    AzureClientManager,
-)  # Import client manager
-
+from bs4 import BeautifulSoup
 # Removed ServiceLoggingMixin, AzureClientMixin imports
-from tenacity import (
-    retry,
-    stop_after_attempt,
-    wait_exponential,
-    retry_if_exception_type,
-)
+from tenacity import (retry, retry_if_exception_type, stop_after_attempt,
+                      wait_exponential)
+
+from konveyor.core.azure_utils.clients import \
+    AzureClientManager  # Import client manager
+# Removed AzureKeyCredential, DocumentIntelligenceClient imports
+from konveyor.core.azure_utils.service import \
+    AzureService  # Import base service
 
 # Removed module-level logger
 

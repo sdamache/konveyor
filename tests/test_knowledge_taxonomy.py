@@ -3,8 +3,10 @@ Unit tests for the Knowledge Taxonomy Loader.
 """
 
 import os
-import pytest
 from pathlib import Path
+
+import pytest
+
 from konveyor.skills.knowledge_analyzer.taxonomy import KnowledgeTaxonomyLoader
 
 

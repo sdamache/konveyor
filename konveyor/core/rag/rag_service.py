@@ -7,13 +7,13 @@ message formatting, and response generation.
 """
 
 import os
-from typing import List, Dict, Optional, Any
+from typing import Any, Dict, List, Optional
 
-from konveyor.core.rag.context_service import ContextService
 from konveyor.core.azure_utils.clients import AzureClientManager
 from konveyor.core.conversation.factory import ConversationManagerFactory
 from konveyor.core.formatters.factory import FormatterFactory
 from konveyor.core.generation.factory import ResponseGeneratorFactory
+from konveyor.core.rag.context_service import ContextService
 
 
 class RAGService:

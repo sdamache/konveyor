@@ -1,6 +1,8 @@
 import os
-from .base import *
+
 from django.core.exceptions import ImproperlyConfigured
+
+from .base import *
 
 DEBUG = False
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]

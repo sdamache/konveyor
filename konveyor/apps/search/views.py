@@ -1,11 +1,13 @@
+import logging
+
+from django.http import JsonResponse
 from django.shortcuts import render
 from rest_framework import status, views
 from rest_framework.response import Response
-from django.http import JsonResponse
-from .services.search_service import SearchService
-from .services.indexing_service import IndexingService
+
 from .models import SearchQuery, SearchResult
-import logging
+from .services.indexing_service import IndexingService
+from .services.search_service import SearchService
 
 # Configure logger
 logger = logging.getLogger(__name__)

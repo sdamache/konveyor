@@ -6,6 +6,7 @@ which has been moved to konveyor.core.slack.client.
 """
 
 import logging
+
 from konveyor.core.slack.client import SlackService, retry_on_slack_error
 
 # Configure logging

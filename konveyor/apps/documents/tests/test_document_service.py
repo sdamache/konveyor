@@ -1,11 +1,14 @@
 """Tests for document processing service."""
 
 import io
-import os
-import pytest
 import logging  # Add logging import
+import os
+
+import pytest
 from django.test import TestCase
-from konveyor.apps.documents.services.document_adapter import DjangoDocumentService
+
+from konveyor.apps.documents.services.document_adapter import \
+    DjangoDocumentService
 
 
 class TestDjangoDocumentService(TestCase):

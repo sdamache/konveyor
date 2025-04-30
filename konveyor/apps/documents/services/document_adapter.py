@@ -5,17 +5,19 @@ It handles Django model integration and framework-specific features while
 delegating core document processing to the framework-agnostic service.
 """
 
-import os  # Add os import for content type detection
-from typing import BinaryIO, Dict, Any
-from django.core.exceptions import ValidationError
-from konveyor.core.documents.document_service import (
-    DocumentService,
-)  # Ensure this points to the core service
-from ..models import Document, DocumentChunk
-from langchain.text_splitter import RecursiveCharacterTextSplitter  # Keep for now
-
 # Removed ThreadPoolExecutor import (unused)
 import logging
+import os  # Add os import for content type detection
+from typing import Any, BinaryIO, Dict
+
+from django.core.exceptions import ValidationError
+from langchain.text_splitter import \
+    RecursiveCharacterTextSplitter  # Keep for now
+
+from konveyor.core.documents.document_service import \
+    DocumentService  # Ensure this points to the core service
+
+from ..models import Document, DocumentChunk
 
 logger = logging.getLogger(__name__)
 

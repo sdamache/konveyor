@@ -15,19 +15,16 @@ Optional environment variables:
 Note: These tests use mocked Bot Framework components but real Azure OpenAI services.
 """
 
-import pytest
 import asyncio
 import logging
 import os
-from dotenv import load_dotenv
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from botbuilder.core import TurnContext
-from botbuilder.schema import (
-    Activity,
-    ConversationAccount,
-    ChannelAccount,
-    ActivityTypes,
-)
+from botbuilder.schema import (Activity, ActivityTypes, ChannelAccount,
+                               ConversationAccount)
+from dotenv import load_dotenv
 
 from konveyor.apps.bot.bot import KonveyorBot
 from konveyor.core.agent import AgentOrchestratorSkill, SkillRegistry

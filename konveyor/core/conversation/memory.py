@@ -5,11 +5,11 @@ This module provides an in-memory implementation of the ConversationInterface.
 It's designed for development, testing, and scenarios where persistence is not required.
 """
 
-import uuid
-import logging
-from datetime import datetime
-from typing import Dict, List, Optional, Any, Union
 import json
+import logging
+import uuid
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Union
 
 from konveyor.core.conversation.interface import ConversationInterface
 

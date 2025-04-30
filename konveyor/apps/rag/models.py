@@ -2,9 +2,11 @@
 Models for the RAG Django app using Azure storage.
 """
 
-from typing import Dict, List, Optional
 from datetime import datetime
+from typing import Dict, List, Optional
+
 from django.conf import settings
+
 from konveyor.core.conversation.storage import AzureStorageManager
 
 

@@ -1,7 +1,8 @@
-from django.db import models
-import uuid
 import os
+import uuid
+
 from django.core.exceptions import ValidationError
+from django.db import models
 
 
 def validate_file_extension(value):

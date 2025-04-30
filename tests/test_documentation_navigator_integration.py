@@ -9,17 +9,18 @@ To run these tests, use:
     pytest tests/test_documentation_navigator_integration.py -v
 """
 
-import pytest
-import os
 import asyncio
-from typing import Dict, Any, List, Optional
+import os
+from typing import Any, Dict, List, Optional
+
+import pytest
 
 # Set environment variables for integration testing
 os.environ["DJANGO_SETTINGS_MODULE"] = "konveyor.settings.integration_test"
 
+from konveyor.skills.documentation_navigator import DocumentationNavigatorSkill
 # Import the DocumentationNavigatorSkill
 from konveyor.skills.setup import create_kernel
-from konveyor.skills.documentation_navigator import DocumentationNavigatorSkill
 
 
 @pytest.mark.integration

@@ -1,6 +1,7 @@
-from django.http import JsonResponse
-from django.conf import settings
 import os
+
+from django.conf import settings
+from django.http import JsonResponse
 
 
 def azure_openai_status(request):

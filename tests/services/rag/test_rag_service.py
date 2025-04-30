@@ -1,8 +1,10 @@
-import pytest
 from unittest.mock import AsyncMock
-from konveyor.core.rag.rag_service import RAGService
-from konveyor.core.rag.context_service import ContextService
+
+import pytest
+
 from konveyor.core.azure_utils.clients import AzureClientManager
+from konveyor.core.rag.context_service import ContextService
+from konveyor.core.rag.rag_service import RAGService
 
 
 @pytest.fixture

@@ -6,20 +6,19 @@ with Azure OpenAI integration. It handles all the configuration, validation, and
 service registration needed for the kernel to function properly.
 """
 
-import os
 import logging
-from typing import Optional, Dict, Any
+import os
+from typing import Any, Dict, Optional
 
 from semantic_kernel import Kernel
-from semantic_kernel.connectors.ai.open_ai.services.azure_chat_completion import (
-    AzureChatCompletion,
-)
-from semantic_kernel.connectors.ai.open_ai.services.azure_text_embedding import (
-    AzureTextEmbedding,
-)
+from semantic_kernel.connectors.ai.open_ai.services.azure_chat_completion import \
+    AzureChatCompletion
+from semantic_kernel.connectors.ai.open_ai.services.azure_text_embedding import \
+    AzureTextEmbedding
 from semantic_kernel.memory.volatile_memory_store import VolatileMemoryStore
-from konveyor.core.azure_utils.config import AzureConfig
+
 from konveyor.core.azure_utils.clients import AzureClientManager
+from konveyor.core.azure_utils.config import AzureConfig
 
 logger = logging.getLogger(__name__)
 

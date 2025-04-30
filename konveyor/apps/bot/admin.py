@@ -3,6 +3,7 @@ Admin configuration for the bot app.
 """
 
 from django.contrib import admin
+
 from konveyor.apps.bot.models import SlackUserProfile
 
 

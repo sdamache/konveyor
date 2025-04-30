@@ -6,11 +6,13 @@ to the appropriate Semantic Kernel skills and tools.
 """
 
 import logging
-import traceback
 import sys
-from typing import Dict, Any, List, Optional, Tuple
+import traceback
+from typing import Any, Dict, List, Optional, Tuple
+
 from semantic_kernel import Kernel
 from semantic_kernel.functions import kernel_function
+
 from konveyor.core.agent.registry import SkillRegistry
 
 # Configure logging

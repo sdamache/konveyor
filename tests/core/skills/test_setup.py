@@ -1,9 +1,11 @@
 import os
+import traceback
+
 import pytest
 from semantic_kernel import Kernel
-from konveyor.core.kernel import create_kernel
-import traceback
+
 from konveyor.core.azure_utils.config import AzureConfig
+from konveyor.core.kernel import create_kernel
 
 config = AzureConfig()
 

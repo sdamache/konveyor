@@ -2,8 +2,9 @@
 
 import os
 import sys
-import django
 from pathlib import Path
+
+import django
 
 
 def pytest_configure():

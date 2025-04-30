@@ -5,11 +5,12 @@ This module provides functionality to load and access the knowledge taxonomy
 defined in the knowledge_taxonomy.yaml file.
 """
 
-import os
-import yaml
 import logging
-from typing import Dict, List, Any, Optional, Union
+import os
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+
+import yaml
 
 logger = logging.getLogger(__name__)
 

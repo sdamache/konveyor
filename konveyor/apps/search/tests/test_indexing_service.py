@@ -5,29 +5,28 @@ document indexing in Azure Cognitive Search.
 """
 
 import os
-import uuid
-import pytest
 import unittest
+import uuid
 from datetime import datetime
-from django.conf import settings
-from django.test import TestCase
 from io import BytesIO
-
 # Removed logging and dotenv imports
 from unittest.mock import Mock, patch
 
+import pytest
+from django.conf import settings
+from django.test import TestCase
+
+from konveyor.apps.documents.models import Document, DocumentChunk
+from konveyor.apps.search.services.indexing_service import IndexingService
+from konveyor.apps.search.services.search_service import SearchService
 # Import Azure client manager
 from konveyor.core.azure_utils.clients import AzureClientManager
 from konveyor.core.azure_utils.config import AzureConfig
+from konveyor.core.documents.document_service import DocumentService
 
 # Load environment variables
 # Removed load_dotenv() call
 
-from konveyor.apps.documents.models import Document, DocumentChunk
-from konveyor.core.documents.document_service import DocumentService
-from konveyor.apps.search.services.indexing_service import IndexingService
-from konveyor.apps.search.services.search_service import SearchService
-from konveyor.core.azure_utils.clients import AzureClientManager
 
 # Removed module-level logger definition
 
@@ -550,7 +549,8 @@ class TestIndexingService(TestCase):
                 )
 
                 # Create a document record manually
-                from konveyor.apps.documents.models import Document, DocumentChunk
+                from konveyor.apps.documents.models import (Document,
+                                                            DocumentChunk)
 
                 document = Document.objects.create(
                     title=f"Test {filename}",

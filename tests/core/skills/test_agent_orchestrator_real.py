@@ -13,15 +13,16 @@ Optional environment variables:
 - AZURE_OPENAI_API_VERSION: The API version (default: "2024-12-01-preview")
 """
 
-import pytest
 import logging
 import os
-from dotenv import load_dotenv
 
+import pytest
+from dotenv import load_dotenv
 from semantic_kernel import Kernel
-from konveyor.core.kernel import create_kernel
+
 from konveyor.core.agent import AgentOrchestratorSkill, SkillRegistry
 from konveyor.core.chat import ChatSkill
+from konveyor.core.kernel import create_kernel
 
 # Configure logging for tests
 logging.basicConfig(

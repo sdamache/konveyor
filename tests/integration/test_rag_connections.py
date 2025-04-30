@@ -1,10 +1,10 @@
 """Test connections to RAG infrastructure components."""
 
 import os
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
-from pymongo import MongoClient
 import redis
+from pymongo import MongoClient
 
 from konveyor.settings import settings_loader
 

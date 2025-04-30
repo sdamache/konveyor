@@ -23,17 +23,17 @@ Example:
     ```
 """
 
-import os
 import logging
-from typing import Optional, Tuple, Any
-from azure.core.credentials import TokenCredential
-from azure.identity import DefaultAzureCredential, AzureCliCredential
-from azure.core.credentials import AzureKeyCredential
+import os
+from typing import Any, Optional, Tuple
+
+from azure.ai.documentintelligence import DocumentIntelligenceClient
+from azure.core.credentials import AzureKeyCredential, TokenCredential
+from azure.identity import AzureCliCredential, DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
 from azure.search.documents import SearchClient
 from azure.search.documents.indexes import SearchIndexClient
-from azure.ai.documentintelligence import DocumentIntelligenceClient
 from azure.storage.blob import BlobServiceClient
-from azure.keyvault.secrets import SecretClient
 from openai import AzureOpenAI
 
 from konveyor.core.azure_utils.config import AzureConfig

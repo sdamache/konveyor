@@ -6,10 +6,10 @@ specified generator type and configuration.
 """
 
 import logging
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
-from konveyor.core.generation.interface import ResponseGeneratorInterface
 from konveyor.core.generation.generator import ResponseGenerator
+from konveyor.core.generation.interface import ResponseGeneratorInterface
 
 logger = logging.getLogger(__name__)
 

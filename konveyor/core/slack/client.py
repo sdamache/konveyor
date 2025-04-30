@@ -5,17 +5,18 @@ This module provides functionality for interacting with Slack using the Slack SD
 It handles sending messages, looking up users, and other Slack-related operations.
 """
 
-import logging
-import hmac
 import hashlib
-import time
-import ssl
-import certifi
+import hmac
+import logging
 import random
-from typing import Dict, Any, Optional, List, Callable, TypeVar
+import ssl
+import time
+from typing import Any, Callable, Dict, List, Optional, TypeVar
+
+import certifi
+from django.conf import settings
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
-from django.conf import settings
 
 # Fix SSL certificate issues on macOS
 ssl._create_default_https_context = ssl._create_unverified_context

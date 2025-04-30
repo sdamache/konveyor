@@ -6,7 +6,7 @@ contract for different implementations (RAG, direct generation, etc.).
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 
 class ResponseGeneratorInterface(ABC):

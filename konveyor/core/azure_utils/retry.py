@@ -1,14 +1,11 @@
 """Retry utilities for Azure service operations."""
 
 from functools import wraps
-from tenacity import (
-    retry,
-    stop_after_attempt,
-    wait_exponential,
-    retry_if_exception_type,
-)
+from typing import Any, Callable, TypeVar
+
 from azure.core.exceptions import AzureError
-from typing import Callable, TypeVar, Any
+from tenacity import (retry, retry_if_exception_type, stop_after_attempt,
+                      wait_exponential)
 
 T = TypeVar("T")
 

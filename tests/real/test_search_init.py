@@ -1,9 +1,10 @@
 # tests/real/test_search_init.py
+import logging
 import os
 import sys
+
 import django
 from dotenv import load_dotenv
-import logging
 
 # --- Configuration ---
 # Add the project root to the Python path to allow importing konveyor modules

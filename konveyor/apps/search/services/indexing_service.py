@@ -14,15 +14,17 @@ Example:
     ```
 """
 
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
 from django.db import transaction
+
+from konveyor.apps.documents.models import Document, DocumentChunk
+from konveyor.apps.search.services.search_service import SearchService
+from konveyor.core.azure_utils.service import AzureService
+from konveyor.core.documents.document_service import DocumentService
 
 # Removed logging and time imports
 
-from konveyor.apps.documents.models import Document, DocumentChunk
-from konveyor.core.documents.document_service import DocumentService
-from konveyor.apps.search.services.search_service import SearchService
-from konveyor.core.azure_utils.service import AzureService
 
 
 class IndexingService(AzureService):

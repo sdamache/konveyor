@@ -6,11 +6,13 @@ skills and tools. It handles request analysis, skill selection, and response for
 """
 
 import logging
-import traceback
 import sys
-from typing import Dict, Any, List, Optional, Tuple
+import traceback
+from typing import Any, Dict, List, Optional, Tuple
+
 from semantic_kernel import Kernel
 from semantic_kernel.functions import kernel_function
+
 from .registry import SkillRegistry
 
 # Configure logging

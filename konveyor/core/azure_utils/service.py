@@ -22,9 +22,10 @@ Example:
 """
 
 import logging
-from typing import Optional, Any
-from konveyor.core.azure_utils.config import AzureConfig
+from typing import Any, Optional
+
 from konveyor.core.azure_utils.clients import AzureClientManager
+from konveyor.core.azure_utils.config import AzureConfig
 
 logger = logging.getLogger(__name__)
 

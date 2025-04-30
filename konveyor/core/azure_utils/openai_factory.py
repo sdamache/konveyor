@@ -7,13 +7,12 @@ specified client type and configuration.
 
 import logging
 import os
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
-from konveyor.core.azure_utils.openai_interface import OpenAIClientInterface
+from konveyor.core.azure_adapters.openai.client import \
+    AzureOpenAIClient as CustomAzureOpenAIClient
 from konveyor.core.azure_utils.openai_client import UnifiedAzureOpenAIClient
-from konveyor.core.azure_adapters.openai.client import (
-    AzureOpenAIClient as CustomAzureOpenAIClient,
-)
+from konveyor.core.azure_utils.openai_interface import OpenAIClientInterface
 
 logger = logging.getLogger(__name__)
 

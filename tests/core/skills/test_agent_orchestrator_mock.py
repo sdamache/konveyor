@@ -8,11 +8,12 @@ This file uses unittest.mock to mock the Semantic Kernel and its dependencies,
 allowing tests to run without requiring real Azure OpenAI credentials.
 """
 
-import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
 import logging
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from semantic_kernel import Kernel
+
 from konveyor.core.agent import AgentOrchestratorSkill, SkillRegistry
 from konveyor.core.chat import ChatSkill
 

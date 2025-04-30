@@ -6,7 +6,8 @@ including retrieving, creating, and updating user profiles.
 """
 
 import logging
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
+
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone

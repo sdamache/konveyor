@@ -3,24 +3,23 @@ Tests for Slack slash commands.
 """
 
 import json
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
-from django.test import RequestFactory
 from django.http import JsonResponse
+from django.test import RequestFactory
 from django.utils import timezone
 
+from konveyor.apps.bot.slash_commands import (get_all_commands,
+                                              get_command_handler,
+                                              handle_code_command,
+                                              handle_help_command,
+                                              handle_info_command,
+                                              handle_preferences_command,
+                                              handle_profile_command,
+                                              handle_status_command,
+                                              register_command)
 from konveyor.apps.bot.views import slack_slash_command
-from konveyor.apps.bot.slash_commands import (
-    register_command,
-    get_command_handler,
-    get_all_commands,
-    handle_help_command,
-    handle_status_command,
-    handle_info_command,
-    handle_code_command,
-    handle_preferences_command,
-    handle_profile_command,
-)
 
 
 def test_register_and_get_command():

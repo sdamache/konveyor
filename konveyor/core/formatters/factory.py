@@ -6,11 +6,11 @@ specified format type.
 """
 
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
 
 from konveyor.core.formatters.interface import FormatterInterface
-from konveyor.core.formatters.slack_formatter import SlackFormatter
 from konveyor.core.formatters.markdown import MarkdownFormatter
+from konveyor.core.formatters.slack_formatter import SlackFormatter
 
 logger = logging.getLogger(__name__)
 

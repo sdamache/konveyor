@@ -6,7 +6,7 @@ contract for different implementations (in-memory, persistent storage, etc.).
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Any, Union
+from typing import Any, Dict, List, Optional, Union
 
 
 class ConversationInterface(ABC):

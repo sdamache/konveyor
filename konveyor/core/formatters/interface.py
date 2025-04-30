@@ -6,7 +6,7 @@ contract for different implementations (Slack, Teams, Markdown, etc.).
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 
 class FormatterInterface(ABC):

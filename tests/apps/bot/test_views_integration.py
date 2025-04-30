@@ -5,13 +5,15 @@ This module contains integration tests for the updated bot views,
 verifying that they work correctly with the new core components.
 """
 
-import pytest
 import json
-from unittest.mock import MagicMock, AsyncMock, patch
-from django.test import RequestFactory
-from django.http import HttpResponse, JsonResponse
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from konveyor.apps.bot.views_updated import root_handler, slack_webhook, process_message
+import pytest
+from django.http import HttpResponse, JsonResponse
+from django.test import RequestFactory
+
+from konveyor.apps.bot.views_updated import (process_message, root_handler,
+                                             slack_webhook)
 
 
 # Test the root_handler

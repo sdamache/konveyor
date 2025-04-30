@@ -1,14 +1,15 @@
 import os
+from pathlib import Path
+
 import pytest
 import pytest_asyncio
-from pathlib import Path
 
 # Set Django settings module before importing any Django code
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "konveyor.settings.development")
 
+import django
 # Import Django settings and setup
 from django.conf import settings
-import django
 
 django.setup()
 
@@ -18,14 +19,13 @@ from konveyor.settings.settings_loader import load_settings
 # Load environment settings
 load_settings()
 
-# Now import the rest
-from konveyor.core.rag.rag_service import RAGService
-from konveyor.core.azure_utils.clients import AzureClientManager
+from konveyor.apps.documents.services.document_adapter import \
+    DjangoDocumentService  # Updated import
 from konveyor.apps.search.services.indexing_service import IndexingService
 from konveyor.apps.search.services.search_service import SearchService
-from konveyor.apps.documents.services.document_adapter import (
-    DjangoDocumentService,
-)  # Updated import
+from konveyor.core.azure_utils.clients import AzureClientManager
+# Now import the rest
+from konveyor.core.rag.rag_service import RAGService
 
 
 @pytest.mark.integration

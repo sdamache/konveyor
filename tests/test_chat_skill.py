@@ -7,14 +7,14 @@ Semantic Kernel setup and the ChatSkill functionality.
 """
 
 import os
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
+import pytest
 from semantic_kernel import Kernel
 from semantic_kernel.functions import KernelFunction
-from konveyor.core.kernel import create_kernel, get_kernel_settings
-from konveyor.core.chat import ChatSkill
 
+from konveyor.core.chat import ChatSkill
+from konveyor.core.kernel import create_kernel, get_kernel_settings
 
 # Check if we're in a CI environment or if Azure credentials are available
 IN_CI = os.environ.get("CI") == "true"

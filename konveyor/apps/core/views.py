@@ -1,11 +1,12 @@
-from django.shortcuts import render
-from django.http import JsonResponse, HttpResponse
-from django.db import connection
-from django.conf import settings
-from django.views.decorators.csrf import csrf_exempt
+import json
 import logging
 import os
-import json
+
+from django.conf import settings
+from django.db import connection
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
 
 logger = logging.getLogger(__name__)
 

@@ -8,7 +8,7 @@ including verification, event processing, and response generation.
 import json
 import logging
 import traceback
-from typing import Dict, Any, Optional, Callable
+from typing import Any, Callable, Dict, Optional
 
 from konveyor.core.slack.client import SlackService
 

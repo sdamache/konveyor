@@ -1,13 +1,14 @@
-from aiohttp import web
-from aiohttp.web import Request, Response
-from botbuilder.core import BotFrameworkAdapterSettings, BotFrameworkAdapter
-from botbuilder.schema import Activity
 import sys
 import traceback
-from konveyor.core.botframework.bot import KonveyorBot
-from konveyor.core.azure_utils.config import AzureConfig
+
+from aiohttp import web
+from aiohttp.web import Request, Response
+from botbuilder.core import BotFrameworkAdapter, BotFrameworkAdapterSettings
+from botbuilder.schema import Activity
 from django.conf import settings
 
+from konveyor.core.azure_utils.config import AzureConfig
+from konveyor.core.botframework.bot import KonveyorBot
 
 # Load configuration using AzureConfig
 config = AzureConfig()

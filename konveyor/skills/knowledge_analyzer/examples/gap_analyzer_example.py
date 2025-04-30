@@ -5,19 +5,18 @@ This script shows how to use the KnowledgeGapAnalyzerSkill to analyze questions,
 track user knowledge, and identify knowledge gaps.
 """
 
-import os
-import sys
 import json
 import logging
+import os
+import sys
 from pathlib import Path
 
 # Add the parent directory to the Python path to allow importing the module
 parent_dir = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(parent_dir))
 
-from konveyor.skills.knowledge_analyzer.knowledge_gap_analyzer import (
-    KnowledgeGapAnalyzerSkill,
-)
+from konveyor.skills.knowledge_analyzer.knowledge_gap_analyzer import \
+    KnowledgeGapAnalyzerSkill
 from konveyor.skills.knowledge_analyzer.taxonomy import KnowledgeTaxonomyLoader
 
 # Set up logging

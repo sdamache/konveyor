@@ -5,15 +5,16 @@ This module contains tests for the response generation components,
 including the ResponseGenerator and ResponseGeneratorFactory.
 """
 
-import pytest
 import asyncio
-from unittest.mock import MagicMock, AsyncMock, patch
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from konveyor.core.generation.interface import ResponseGeneratorInterface
-from konveyor.core.generation.generator import ResponseGenerator
-from konveyor.core.generation.factory import ResponseGeneratorFactory
+import pytest
+
 from konveyor.core.azure_utils.openai_interface import OpenAIClientInterface
+from konveyor.core.generation.factory import ResponseGeneratorFactory
+from konveyor.core.generation.generator import ResponseGenerator
+from konveyor.core.generation.interface import ResponseGeneratorInterface
 
 
 # Mock classes for testing

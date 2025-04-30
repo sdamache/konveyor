@@ -6,11 +6,12 @@ This script tests the Slack integration by sending a test message to a channel.
 """
 
 import os
-import sys
-import django
 import ssl
-import certifi
+import sys
 from pathlib import Path
+
+import certifi
+import django
 
 # Fix SSL certificate issues on macOS
 ssl._create_default_https_context = ssl._create_unverified_context

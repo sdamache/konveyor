@@ -5,12 +5,13 @@ This module contains integration tests for the updated RAG views,
 verifying that they work correctly with the new core components.
 """
 
-import pytest
 import json
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from django.test import RequestFactory
-from rest_framework.test import APIRequestFactory
 from rest_framework.response import Response
+from rest_framework.test import APIRequestFactory
 
 from konveyor.apps.rag.views_updated import ConversationViewSet
 

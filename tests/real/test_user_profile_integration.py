@@ -5,10 +5,10 @@ Test script for user profile integration with Slack.
 This script tests the user profile integration with real Slack API calls.
 """
 
+import json
+import logging
 import os
 import sys
-import logging
-import json
 from datetime import datetime
 
 # Add the project directory to the Python path
@@ -30,16 +30,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Import after Django setup
-from konveyor.apps.bot.services.slack_user_profile_service import (
-    SlackUserProfileService,
-)
-from konveyor.apps.bot.services.slack_service import SlackService
 from konveyor.apps.bot.models import SlackUserProfile
-from konveyor.apps.bot.slash_commands import (
-    handle_profile_command,
-    handle_preferences_command,
-)
+from konveyor.apps.bot.services.slack_service import SlackService
+# Import after Django setup
+from konveyor.apps.bot.services.slack_user_profile_service import \
+    SlackUserProfileService
+from konveyor.apps.bot.slash_commands import (handle_preferences_command,
+                                              handle_profile_command)
 
 
 def test_slack_user_profile_service():

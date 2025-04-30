@@ -3,6 +3,7 @@ Tests for the Slack formatter.
 """
 
 import pytest
+
 from konveyor.core.formatters.slack_formatter import SlackFormatter
 
 

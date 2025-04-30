@@ -18,8 +18,9 @@ Example:
 """
 
 import logging
-from typing import List, Dict, Any, Optional, Iterator
 from dataclasses import dataclass
+from typing import Any, Dict, Iterator, List, Optional
+
 from konveyor.core.azure_utils.service import AzureService
 
 logger = logging.getLogger(__name__)

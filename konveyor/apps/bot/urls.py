@@ -5,10 +5,11 @@ This module contains URL patterns for the bot app, including the Slack webhook e
 """
 
 import logging
-from django.urls import path
+
 from django.http import HttpResponse
-from . import views
-from . import views_feedback
+from django.urls import path
+
+from . import views, views_feedback
 
 logger = logging.getLogger(__name__)
 

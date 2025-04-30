@@ -7,14 +7,15 @@ It also integrates with the conversation memory system to maintain context
 across interactions.
 """
 
+import asyncio
 import logging
 import re
 import uuid
-import asyncio
 from datetime import datetime
-from typing import Dict, Any, List, Optional, Union, Tuple
-from semantic_kernel.functions import kernel_function
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 from semantic_kernel import Kernel
+from semantic_kernel.functions import kernel_function
 
 from konveyor.apps.search.services.search_service import SearchService
 from konveyor.core.conversation.factory import ConversationManagerFactory
@@ -68,9 +69,8 @@ class DocumentationNavigatorSkill:
 
             # Fallback to in-memory conversation manager
             try:
-                from konveyor.core.conversation.memory import (
-                    InMemoryConversationManager,
-                )
+                from konveyor.core.conversation.memory import \
+                    InMemoryConversationManager
 
                 self.conversation_manager = lambda: InMemoryConversationManager()
                 logger.info("Initialized fallback in-memory conversation manager")

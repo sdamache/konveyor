@@ -5,13 +5,14 @@ This module contains tests for the formatter components,
 including the SlackFormatter, MarkdownFormatter, and FormatterFactory.
 """
 
-import pytest
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
-from konveyor.core.formatters.interface import FormatterInterface
-from konveyor.core.formatters.slack import SlackFormatter
-from konveyor.core.formatters.markdown import MarkdownFormatter
+import pytest
+
 from konveyor.core.formatters.factory import FormatterFactory
+from konveyor.core.formatters.interface import FormatterInterface
+from konveyor.core.formatters.markdown import MarkdownFormatter
+from konveyor.core.formatters.slack import SlackFormatter
 
 
 def test_slack_formatter():

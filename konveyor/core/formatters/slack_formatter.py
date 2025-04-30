@@ -5,9 +5,9 @@ This module provides formatting utilities for Slack messages, including rich for
 for code blocks, tables, and other technical content.
 """
 
-import re
 import logging
-from typing import Dict, Any, List, Optional, Union
+import re
+from typing import Any, Dict, List, Optional, Union
 
 from konveyor.core.formatters.interface import FormatterInterface
 

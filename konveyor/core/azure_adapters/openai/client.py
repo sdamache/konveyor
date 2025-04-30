@@ -1,13 +1,10 @@
-import os
 import logging
+import os
+from typing import Any, Dict, List, Optional
+
 import requests
-from typing import List, Optional, Dict, Any
-from tenacity import (
-    retry,
-    stop_after_attempt,
-    wait_exponential,
-    retry_if_exception_type,
-)
+from tenacity import (retry, retry_if_exception_type, stop_after_attempt,
+                      wait_exponential)
 
 # Set up logging
 logger = logging.getLogger(__name__)

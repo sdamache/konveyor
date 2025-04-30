@@ -1,15 +1,17 @@
+import logging
 import os
 import sys
-import logging
 from io import BytesIO
+
 from dotenv import load_dotenv
 
 # Add project root to sys.path to allow importing konveyor modules
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.insert(0, project_root)
 
-from konveyor.core.documents.document_service import DocumentService
 from azure.core.exceptions import HttpResponseError
+
+from konveyor.core.documents.document_service import DocumentService
 
 # Configure logging
 logging.basicConfig(

@@ -24,12 +24,13 @@ TODO: Feedback API Enhancements
   - Add user-specific feedback views
 """
 
-import logging
 import json
+import logging
+
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
-from django.contrib.auth.decorators import login_required
 
 from konveyor.core.conversation.feedback.factory import create_feedback_service
 

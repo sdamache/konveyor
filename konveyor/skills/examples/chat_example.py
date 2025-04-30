@@ -9,11 +9,11 @@ Usage:
     python -m konveyor.skills.examples.chat_example
 """
 
+import asyncio
+import logging
 import os
 import sys
-import logging
-import asyncio
-from typing import Dict, Any
+from typing import Any, Dict
 
 # Set up logging
 logging.basicConfig(
@@ -31,8 +31,8 @@ if project_root not in sys.path:
 # Set Django settings module
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "konveyor.settings.development")
 
-from konveyor.core.kernel import create_kernel, get_kernel_settings
 from konveyor.core.chat import ChatSkill
+from konveyor.core.kernel import create_kernel, get_kernel_settings
 
 
 async def run_chat_example() -> Dict[str, Any]:

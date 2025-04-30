@@ -6,6 +6,7 @@ which have been moved to konveyor.core.kernel.
 """
 
 import logging
+
 from konveyor.core.kernel import create_kernel, get_kernel_settings
 
 # Configure logging

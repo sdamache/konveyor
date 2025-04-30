@@ -1,6 +1,7 @@
 import pytest
 from aiohttp import web
-from konveyor.apps.bot.app import messages, ADAPTER, APP
+
+from konveyor.apps.bot.app import ADAPTER, APP, messages
 
 
 class DummyResponse:

@@ -5,14 +5,15 @@ This module contains tests for the conversation management components,
 including the InMemoryConversationManager and the ConversationManagerFactory.
 """
 
-import os
-import pytest
 import asyncio
-from typing import Dict, Any, List
+import os
+from typing import Any, Dict, List
 
+import pytest
+
+from konveyor.core.conversation.factory import ConversationManagerFactory
 from konveyor.core.conversation.interface import ConversationInterface
 from konveyor.core.conversation.memory import InMemoryConversationManager
-from konveyor.core.conversation.factory import ConversationManagerFactory
 
 
 # Test the InMemoryConversationManager

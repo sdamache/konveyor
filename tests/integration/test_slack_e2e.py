@@ -1,10 +1,11 @@
 import os
-import time
-import pytest
-from slack_sdk import WebClient
 import ssl
+import time
+
 import certifi
+import pytest
 from dotenv import load_dotenv
+from slack_sdk import WebClient
 
 load_dotenv()
 

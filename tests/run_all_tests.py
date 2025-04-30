@@ -6,11 +6,11 @@ This script runs tests from both the tests/ and scripts/ directories,
 supporting different test categories and environments.
 """
 
-import os
-import sys
 import argparse
-import subprocess
 import logging
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 # Configure logging

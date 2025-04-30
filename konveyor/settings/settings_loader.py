@@ -4,6 +4,7 @@ Settings loader utility to ensure environment variables are loaded correctly.
 
 import os
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 

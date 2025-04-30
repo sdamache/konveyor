@@ -2,8 +2,10 @@
 
 import io
 import os
-import pytest
 import unittest
+
+import pytest
+
 from konveyor.core.documents.document_service import DocumentService
 
 

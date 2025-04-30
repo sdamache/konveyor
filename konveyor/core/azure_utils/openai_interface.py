@@ -10,7 +10,7 @@ This interface is designed to be compatible with both:
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 
 class OpenAIClientInterface(ABC):

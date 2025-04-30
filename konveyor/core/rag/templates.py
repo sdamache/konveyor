@@ -2,8 +2,8 @@
 Core RAG prompt templates and utilities for Konveyor.
 """
 
-from typing import List, Dict, Optional
 from dataclasses import dataclass
+from typing import Dict, List, Optional
 
 
 @dataclass
