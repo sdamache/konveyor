@@ -6,7 +6,37 @@ on:
   push:
     branches: [ main, dev ]
   workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of tests to run'
+        required: false
+        default: 'mock'
+        type: choice
+        options:
+          - mock
+          - real
+          - both
+      environment:
+        description: 'Environment to run tests in'
+        required: false
+        default: 'test'
+        type: choice
+        options:
+          - dev
+          - test
+          - prod
   workflow_call:
+    inputs:
+      test_type:
+        description: 'Type of tests to run'
+        required: false
+        default: 'mock'
+        type: string
+      environment:
+        description: 'Environment to run tests in'
+        required: false
+        default: 'test'
+        type: string
 
 jobs:
   lint:
@@ -62,6 +92,40 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements/testing.txt
           pip install coverage
+          
+      # Deploy infrastructure for testing if real tests are needed
+      - name: Azure Login
+        if: ${{ github.event.inputs.test_type == 'real' || github.event.inputs.environment == 'test' || github.event.inputs.environment == 'prod' }}
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          
+      - name: Set up Terraform
+        if: ${{ github.event.inputs.test_type == 'real' || github.event.inputs.environment == 'test' || github.event.inputs.environment == 'prod' }}
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.5.7'
+          
+      - name: Deploy Infrastructure
+        if: ${{ github.event.inputs.test_type == 'real' || github.event.inputs.environment == 'test' || github.event.inputs.environment == 'prod' }}
+        id: deploy-infra
+        run: |
+          cd Konveyor-infra/environments/${{ github.event.inputs.environment || 'test' }}
+          terraform init
+          terraform validate
+          terraform plan -out=tfplan
+          terraform apply -auto-approve tfplan
+          
+          # Export environment variables for tests
+          echo "AZURE_SEARCH_ENDPOINT=$(terraform output -raw cognitive_search_endpoint)" >> $GITHUB_ENV
+          echo "AZURE_COGNITIVE_SEARCH_ENDPOINT=$(terraform output -raw cognitive_search_endpoint)" >> $GITHUB_ENV
+          echo "AZURE_SEARCH_API_KEY=$(terraform output -raw cognitive_search_primary_key)" >> $GITHUB_ENV
+          echo "AZURE_OPENAI_ENDPOINT=$(terraform output -raw openai_endpoint)" >> $GITHUB_ENV
+          echo "AZURE_OPENAI_API_KEY=$(terraform output -raw openai_primary_key)" >> $GITHUB_ENV
+          echo "AZURE_OPENAI_EMBEDDING_DEPLOYMENT=$(terraform output -raw openai_embeddings_deployment_name)" >> $GITHUB_ENV
+          echo "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT=$(terraform output -raw document_intelligence_endpoint)" >> $GITHUB_ENV
+          echo "AZURE_DOCUMENT_INTELLIGENCE_API_KEY=$(terraform output -raw document_intelligence_primary_key)" >> $GITHUB_ENV
+          echo "AZURE_STORAGE_CONNECTION_STRING=$(terraform output -raw storage_connection_string)" >> $GITHUB_ENV
 
       - name: Run tests with coverage
         run: |

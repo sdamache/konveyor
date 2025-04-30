@@ -14,6 +14,16 @@ botbuilder-core
 aiohttp
 botbuilder-integration-aiohttp
 cookiecutter
+pytest-django>=4.5.0
+
+# Testing dependencies
+pytest>=7.4.0
+pytest-django>=4.7.0
+factory-boy>=3.3.0
+coverage>=7.4.0
+pytest-mock>=3.12.0
+slack_sdk>=3.19.0
+
 # Add other specific dependencies as needed
 -r requirements/base.txt
 -r requirements/development.txt

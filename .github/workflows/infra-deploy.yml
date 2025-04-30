@@ -1,0 +1,153 @@
+name: "Deploy Infrastructure and Save Variables"
+
+permissions:
+  contents: read
+  id-token: write # Required for GitHub OIDC token authentication
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'The branch, tag or SHA to deploy (e.g., main, v1.0.0)'
+        required: true
+        type: string
+      environment:
+        description: 'Environment to deploy to (test, prod)'
+        required: true
+        default: 'test'
+        type: choice
+        options:
+          - test
+          - prod
+  workflow_call:
+    inputs:
+      ref:
+        description: 'The branch, tag or SHA to deploy (e.g., main, v1.0.0)'
+        required: false
+        type: string
+      environment:
+        description: 'Environment to deploy to (test, prod)'
+        required: false
+        default: 'test'
+        type: string
+
+env:
+  TF_VERSION: '1.5.7'
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+jobs:
+  terraform:
+    name: Deploy Infrastructure (${{ inputs.environment || github.event.inputs.environment || 'test' }})
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || github.event.inputs.environment || 'test' }}
+    
+    outputs:
+      cognitive_search_endpoint: ${{ steps.terraform-outputs.outputs.cognitive_search_endpoint }}
+      openai_endpoint: ${{ steps.terraform-outputs.outputs.openai_endpoint }}
+      openai_embeddings_deployment_name: ${{ steps.terraform-outputs.outputs.openai_embeddings_deployment_name }}
+      document_intelligence_endpoint: ${{ steps.terraform-outputs.outputs.document_intelligence_endpoint }}
+      app_service_name: ${{ steps.terraform-outputs.outputs.app_service_name }}
+      app_service_hostname: ${{ steps.terraform-outputs.outputs.app_service_default_site_hostname }}
+
+    defaults:
+      run:
+        working-directory: Konveyor-infra/environments/${{ inputs.environment || github.event.inputs.environment || 'test' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.event.inputs.ref || github.ref }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
+
+      - name: Extract Terraform Outputs
+        id: terraform-outputs
+        run: |
+          # Extract non-sensitive outputs
+          echo "cognitive_search_endpoint=$(terraform output -raw cognitive_search_endpoint)" >> $GITHUB_OUTPUT
+          echo "openai_endpoint=$(terraform output -raw openai_endpoint)" >> $GITHUB_OUTPUT
+          echo "openai_embeddings_deployment_name=$(terraform output -raw openai_embeddings_deployment_name)" >> $GITHUB_OUTPUT
+          echo "document_intelligence_endpoint=$(terraform output -raw document_intelligence_endpoint)" >> $GITHUB_OUTPUT
+          echo "app_service_name=$(terraform output -raw app_service_name)" >> $GITHUB_OUTPUT
+          echo "app_service_default_site_hostname=$(terraform output -raw app_service_default_site_hostname)" >> $GITHUB_OUTPUT
+          
+          # Extract sensitive outputs to GitHub environment variables
+          echo "AZURE_SEARCH_API_KEY=$(terraform output -raw cognitive_search_primary_key)" >> $GITHUB_ENV
+          echo "AZURE_OPENAI_API_KEY=$(terraform output -raw openai_primary_key)" >> $GITHUB_ENV
+          echo "AZURE_DOCUMENT_INTELLIGENCE_API_KEY=$(terraform output -raw document_intelligence_primary_key)" >> $GITHUB_ENV
+          echo "AZURE_STORAGE_CONNECTION_STRING=$(terraform output -raw storage_connection_string)" >> $GITHUB_ENV
+
+      - name: Save Sensitive Outputs to GitHub Secrets
+        uses: gliech/create-github-secret-action@v1
+        with:
+          name: AZURE_SEARCH_API_KEY_${{ inputs.environment || github.event.inputs.environment || 'TEST' }}
+          value: ${{ env.AZURE_SEARCH_API_KEY }}
+          pa_token: ${{ secrets.GH_PAT }}
+
+      - name: Save OpenAI API Key
+        uses: gliech/create-github-secret-action@v1
+        with:
+          name: AZURE_OPENAI_API_KEY_${{ inputs.environment || github.event.inputs.environment || 'TEST' }}
+          value: ${{ env.AZURE_OPENAI_API_KEY }}
+          pa_token: ${{ secrets.GH_PAT }}
+
+      - name: Save Document Intelligence API Key
+        uses: gliech/create-github-secret-action@v1
+        with:
+          name: AZURE_DOCUMENT_INTELLIGENCE_API_KEY_${{ inputs.environment || github.event.inputs.environment || 'TEST' }}
+          value: ${{ env.AZURE_DOCUMENT_INTELLIGENCE_API_KEY }}
+          pa_token: ${{ secrets.GH_PAT }}
+
+      - name: Save Storage Connection String
+        uses: gliech/create-github-secret-action@v1
+        with:
+          name: AZURE_STORAGE_CONNECTION_STRING_${{ inputs.environment || github.event.inputs.environment || 'TEST' }}
+          value: ${{ env.AZURE_STORAGE_CONNECTION_STRING }}
+          pa_token: ${{ secrets.GH_PAT }}
+
+      - name: Save Non-Sensitive Outputs to GitHub Variables
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const environment = '${{ inputs.environment || github.event.inputs.environment || 'test' }}'.toUpperCase();
+            const variables = {
+              [`AZURE_SEARCH_ENDPOINT_${environment}`]: '${{ steps.terraform-outputs.outputs.cognitive_search_endpoint }}',
+              [`AZURE_OPENAI_ENDPOINT_${environment}`]: '${{ steps.terraform-outputs.outputs.openai_endpoint }}',
+              [`AZURE_OPENAI_EMBEDDING_DEPLOYMENT_${environment}`]: '${{ steps.terraform-outputs.outputs.openai_embeddings_deployment_name }}',
+              [`AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT_${environment}`]: '${{ steps.terraform-outputs.outputs.document_intelligence_endpoint }}',
+              [`APP_SERVICE_NAME_${environment}`]: '${{ steps.terraform-outputs.outputs.app_service_name }}',
+              [`APP_SERVICE_HOSTNAME_${environment}`]: '${{ steps.terraform-outputs.outputs.app_service_default_site_hostname }}'
+            };
+            
+            for (const [name, value] of Object.entries(variables)) {
+              await github.rest.actions.createOrUpdateRepoVariable({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name,
+                value
+              });
+            }

@@ -66,6 +66,9 @@ jobs:
     needs: [branch-naming]
     if: always() && (needs.branch-naming.result == 'success' || needs.branch-naming.result == 'skipped')
     uses: ./.github/workflows/code-quality.yml
+    with:
+      test_type: ${{ github.event.inputs.test_type || 'mock' }}
+      environment: ${{ github.event.inputs.environment || 'test' }}
 
   # Step 3: Run integration tests
   integration-tests:
@@ -100,7 +103,7 @@ jobs:
       always() &&
       needs.integration-tests.outputs.success == 'true' &&
       (github.event.inputs.deploy == 'true' || github.ref_type == 'tag' || contains(github.ref, 'infra'))
-    uses: ./.github/workflows/infra-test.yml
+    uses: ./.github/workflows/infra-deploy.yml
     with:
       ref: ${{ github.event.inputs.ref || github.ref }}
       environment: ${{ github.event.inputs.environment || 'test' }}

@@ -19,7 +19,7 @@ on:
       environment:
         description: 'Environment to run tests in'
         required: true
-        default: 'dev'
+        default: 'test'
         type: choice
         options:
           - dev
@@ -48,12 +48,12 @@ on:
       test_type:
         description: 'Type of tests to run'
         required: false
-        default: 'mock'
+        default: 'real'
         type: string
       environment:
         description: 'Environment to run tests in'
         required: false
-        default: 'dev'
+        default: 'test'
         type: string
       test_category:
         description: 'Category of tests to run'
@@ -80,52 +80,15 @@ jobs:
     env:
       # Django settings
       DJANGO_SETTINGS_MODULE: konveyor.settings.${{ inputs.environment || github.event.inputs.environment || 'testing' }}
-      DJANGO_ENVIRONMENT: ${{ inputs.environment || github.event.inputs.environment || 'testing' }}
-      DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
-      PYTHONPATH: ${{ github.workspace }}
-
-      # Azure credentials
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      # Azure Key Vault
-      AZURE_KEY_VAULT_URL: ${{ secrets.AZURE_KEY_VAULT_URL }}
-
-      # Azure Cognitive Search
-      AZURE_COGNITIVE_SEARCH_ENDPOINT: ${{ secrets.AZURE_COGNITIVE_SEARCH_ENDPOINT }}
-      AZURE_SEARCH_ENDPOINT: ${{ secrets.AZURE_SEARCH_ENDPOINT }}
-      AZURE_SEARCH_API_KEY: ${{ secrets.AZURE_SEARCH_API_KEY }}
-      AZURE_SEARCH_INDEX_NAME: ${{ secrets.AZURE_SEARCH_INDEX_NAME || 'konveyor-documents' }}
-
-      # Azure Document Intelligence
-      AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT: ${{ secrets.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT }}
-      AZURE_DOCUMENT_INTELLIGENCE_API_KEY: ${{ secrets.AZURE_DOCUMENT_INTELLIGENCE_API_KEY }}
-
-      # Azure OpenAI
-      AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
-      AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
-      AZURE_OPENAI_CHAT_DEPLOYMENT: ${{ secrets.AZURE_OPENAI_CHAT_DEPLOYMENT }}
-      AZURE_OPENAI_EMBEDDING_DEPLOYMENT: ${{ secrets.AZURE_OPENAI_EMBEDDING_DEPLOYMENT }}
-      AZURE_OPENAI_API_VERSION: ${{ secrets.AZURE_OPENAI_API_VERSION }}
-
+      DJANGO_ENV: ${{ inputs.environment || github.event.inputs.environment || 'test' }}
+      DJANGO_DEBUG: 'False'
+      DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY || 'django-insecure-test-key-for-ci' }}
+      
       # Database settings (for non-SQLite tests)
-      DB_NAME: ${{ secrets.DB_NAME || 'konveyor' }}
       DB_USER: ${{ secrets.DB_USER || 'postgres' }}
       DB_PASSWORD: ${{ secrets.DB_PASSWORD || 'postgres' }}
       DB_HOST: ${{ secrets.DB_HOST || 'localhost' }}
       DB_PORT: ${{ secrets.DB_PORT || '5432' }}
-
-      # Bot Framework / Slack
-      MICROSOFT_APP_ID: ${{ secrets.MICROSOFT_APP_ID }}
-      MICROSOFT_APP_PASSWORD: ${{ secrets.MICROSOFT_APP_PASSWORD }}
-      SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-      SLACK_APP_TOKEN: ${{ secrets.SLACK_APP_TOKEN }}
-      SLACK_SIGNING_SECRET: ${{ secrets.SLACK_SIGNING_SECRET }}
-      SLACK_CLIENT_ID: ${{ secrets.SLACK_CLIENT_ID }}
-      SLACK_CLIENT_SECRET: ${{ secrets.SLACK_CLIENT_SECRET }}
-      SLACK_TEST_USER_EMAIL: ${{ secrets.SLACK_TEST_USER_EMAIL }}
 
     steps:
       - name: Checkout repository
@@ -140,23 +103,24 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install -r requirements.txt
           pip install -r requirements/testing.txt
-          pip install pytest pytest-django pytest-asyncio
 
-      # Determine test parameters based on workflow_dispatch inputs or defaults
-      - name: Set test parameters
+      # Determine test parameters
+      - name: Determine test parameters
         id: test-params
         run: |
-          # Set test type (mock, real, or both)
+          # Determine environment and test type from inputs
           if [[ "${{ github.event_name }}" == "workflow_dispatch" || "${{ github.event_name }}" == "workflow_call" ]]; then
-            TEST_TYPE="${{ inputs.test_type || github.event.inputs.test_type || 'mock' }}"
-            ENVIRONMENT="${{ inputs.environment || github.event.inputs.environment || 'dev' }}"
+            # Use inputs for workflow_dispatch or workflow_call
+            TEST_TYPE="${{ inputs.test_type || github.event.inputs.test_type || 'real' }}"
+            ENVIRONMENT="${{ inputs.environment || github.event.inputs.environment || 'test' }}"
             TEST_CATEGORY="${{ inputs.test_category || github.event.inputs.test_category || 'all' }}"
             FAST_TRACK="${{ inputs.fast_track || github.event.inputs.fast_track || 'false' }}"
           else
             # Default for push/PR events
-            TEST_TYPE="mock"
-            ENVIRONMENT="dev"
+            TEST_TYPE="real"
+            ENVIRONMENT="test"
             TEST_CATEGORY="all"
             FAST_TRACK="false"
           fi
@@ -177,12 +141,67 @@ jobs:
             # For fast track, only run critical tests
             if [[ "${TEST_CATEGORY}" == "all" ]]; then
               # Override category to unit for fast track
-              ARGS="--category unit --env ${ENVIRONMENT} --mock"
+              ARGS="--category unit --env ${ENVIRONMENT} --real"
             fi
           fi
 
           echo "args=${ARGS}" >> $GITHUB_OUTPUT
+          echo "env=${ENVIRONMENT}" >> $GITHUB_OUTPUT
           echo "Test parameters: ${ARGS}"
+
+      # Set up environment variables from GitHub secrets/variables based on environment
+      - name: Set up environment variables
+        id: env-vars
+        run: |
+          # Determine environment-specific variables
+          ENV_SUFFIX="${{ steps.test-params.outputs.env }}"
+          ENV_SUFFIX_UPPER=$(echo $ENV_SUFFIX | tr '[:lower:]' '[:upper:]')
+          
+          # Use environment-specific secrets and variables
+          if [[ "${{ steps.test-params.outputs.args }}" == *"--real"* ]]; then
+            # For real tests, use the infrastructure-provided values
+            echo "Using real Azure services from environment: $ENV_SUFFIX"
+            
+            # Search service
+            echo "AZURE_SEARCH_ENDPOINT=${{ vars[format('AZURE_SEARCH_ENDPOINT_{0}', env.ENV_SUFFIX_UPPER)] }}" >> $GITHUB_ENV
+            echo "AZURE_COGNITIVE_SEARCH_ENDPOINT=${{ vars[format('AZURE_SEARCH_ENDPOINT_{0}', env.ENV_SUFFIX_UPPER)] }}" >> $GITHUB_ENV
+            echo "AZURE_SEARCH_API_KEY=${{ secrets[format('AZURE_SEARCH_API_KEY_{0}', env.ENV_SUFFIX_UPPER)] }}" >> $GITHUB_ENV
+            echo "AZURE_SEARCH_INDEX_NAME=konveyor-documents" >> $GITHUB_ENV
+            
+            # OpenAI service
+            echo "AZURE_OPENAI_ENDPOINT=${{ vars[format('AZURE_OPENAI_ENDPOINT_{0}', env.ENV_SUFFIX_UPPER)] }}" >> $GITHUB_ENV
+            echo "AZURE_OPENAI_API_KEY=${{ secrets[format('AZURE_OPENAI_API_KEY_{0}', env.ENV_SUFFIX_UPPER)] }}" >> $GITHUB_ENV
+            echo "AZURE_OPENAI_API_VERSION=2024-02-01-preview" >> $GITHUB_ENV
+            echo "AZURE_OPENAI_CHAT_DEPLOYMENT=gpt-4o" >> $GITHUB_ENV
+            echo "AZURE_OPENAI_EMBEDDING_DEPLOYMENT=${{ vars[format('AZURE_OPENAI_EMBEDDING_DEPLOYMENT_{0}', env.ENV_SUFFIX_UPPER)] }}" >> $GITHUB_ENV
+            
+            # Document Intelligence
+            echo "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT=${{ vars[format('AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT_{0}', env.ENV_SUFFIX_UPPER)] }}" >> $GITHUB_ENV
+            echo "AZURE_DOCUMENT_INTELLIGENCE_API_KEY=${{ secrets[format('AZURE_DOCUMENT_INTELLIGENCE_API_KEY_{0}', env.ENV_SUFFIX_UPPER)] }}" >> $GITHUB_ENV
+            
+            # Storage
+            echo "AZURE_STORAGE_CONNECTION_STRING=${{ secrets[format('AZURE_STORAGE_CONNECTION_STRING_{0}', env.ENV_SUFFIX_UPPER)] }}" >> $GITHUB_ENV
+            echo "AZURE_STORAGE_CONTAINER_NAME=documents" >> $GITHUB_ENV
+          else
+            # For mock tests, use dummy values
+            echo "Using mock Azure services"
+            echo "AZURE_SEARCH_ENDPOINT=https://mock-search-endpoint.search.windows.net" >> $GITHUB_ENV
+            echo "AZURE_COGNITIVE_SEARCH_ENDPOINT=https://mock-search-endpoint.search.windows.net" >> $GITHUB_ENV
+            echo "AZURE_SEARCH_API_KEY=mock-search-api-key" >> $GITHUB_ENV
+            echo "AZURE_SEARCH_INDEX_NAME=konveyor-documents" >> $GITHUB_ENV
+            
+            echo "AZURE_OPENAI_ENDPOINT=https://mock-openai-endpoint.openai.azure.com" >> $GITHUB_ENV
+            echo "AZURE_OPENAI_API_KEY=mock-openai-api-key" >> $GITHUB_ENV
+            echo "AZURE_OPENAI_API_VERSION=2024-02-01-preview" >> $GITHUB_ENV
+            echo "AZURE_OPENAI_CHAT_DEPLOYMENT=gpt-35-turbo" >> $GITHUB_ENV
+            echo "AZURE_OPENAI_EMBEDDING_DEPLOYMENT=text-embedding-ada-002" >> $GITHUB_ENV
+            
+            echo "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT=https://mock-docint-endpoint.cognitiveservices.azure.com" >> $GITHUB_ENV
+            echo "AZURE_DOCUMENT_INTELLIGENCE_API_KEY=mock-docint-api-key" >> $GITHUB_ENV
+            
+            echo "AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=https;AccountName=mockaccount;AccountKey=mock-key;EndpointSuffix=core.windows.net" >> $GITHUB_ENV
+            echo "AZURE_STORAGE_CONTAINER_NAME=documents" >> $GITHUB_ENV
+          fi
 
       # Run the tests with the determined parameters
       - name: Run tests
@@ -217,3 +236,23 @@ jobs:
             tests/results/
             **/test-*.xml
           retention-days: 5
+          
+      # Clean up infrastructure if it was deployed for real tests
+      - name: Azure Login for Cleanup
+        if: ${{ always() && (inputs.test_type == 'real' || github.event.inputs.test_type == 'real') }}
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          
+      - name: Set up Terraform for Cleanup
+        if: ${{ always() && (inputs.test_type == 'real' || github.event.inputs.test_type == 'real') }}
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.5.7'
+          
+      - name: Clean up infrastructure
+        if: ${{ always() && (inputs.test_type == 'real' || github.event.inputs.test_type == 'real') }}
+        run: |
+          cd Konveyor-infra/environments/${{ inputs.environment || github.event.inputs.environment || 'test' }}
+          terraform init
+          terraform destroy -auto-approve
