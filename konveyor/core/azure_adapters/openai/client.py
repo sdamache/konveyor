@@ -1,6 +1,14 @@
 import logging
 import os
-from typing import Optional
+from typing import (
+    Any,  # Any type
+    Dict,  # Dictionary type
+    List,  # List type
+    Set,  # Set type
+    Tuple,  # Tuple type
+    Union,  # Union of types
+    Optional,  # Optional type (equivalent to Union[Type, None])
+)
 
 import requests
 from tenacity import (retry, retry_if_exception_type, stop_after_attempt,
