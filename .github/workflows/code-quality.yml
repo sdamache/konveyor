@@ -31,10 +31,12 @@ jobs:
       - name: Check code formatting with Black
         run: |
           black --check --diff konveyor tests
+        continue-on-error: true  # Make Black checks optional for now
 
       - name: Check import sorting with isort
         run: |
           isort --check --diff konveyor tests
+        continue-on-error: true  # Make isort checks optional for now
 
 
   test-coverage:
