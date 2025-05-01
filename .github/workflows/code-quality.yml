@@ -99,14 +99,7 @@ jobs:
           if [[ "${{ secrets.AZURE_CREDENTIALS }}" == "" ]]; then
             echo "::warning::AZURE_CREDENTIALS secret is missing. Creating a dummy credentials file for testing."
             # Create a dummy credentials file
-            cat > azure-credentials.json << EOL
-            {
-              "clientId": "dummy-client-id",
-              "clientSecret": "dummy-client-secret",
-              "subscriptionId": "dummy-subscription-id",
-              "tenantId": "dummy-tenant-id"
-            }
-            EOL
+            echo '{"clientId":"dummy-client-id","clientSecret":"dummy-client-secret","subscriptionId":"dummy-subscription-id","tenantId":"dummy-tenant-id"}' > azure-credentials.json
             # Set the AZURE_CREDENTIALS environment variable
             echo "AZURE_CREDENTIALS=$(cat azure-credentials.json)" >> $GITHUB_ENV
           fi
@@ -214,24 +207,22 @@ jobs:
       - name: Build Docker image for testing
         run: |
           # Create a .env file with all necessary environment variables
-          cat > .env << EOL
-          DJANGO_SETTINGS_MODULE=konveyor.settings.${{ github.event.inputs.environment || 'testing' }}
-          DJANGO_DEBUG=False
-          DJANGO_SECRET_KEY=django-insecure-test-key-for-ci
-          AZURE_SEARCH_ENDPOINT=${AZURE_SEARCH_ENDPOINT:-https://mock-search-endpoint.search.windows.net}
-          AZURE_COGNITIVE_SEARCH_ENDPOINT=${AZURE_COGNITIVE_SEARCH_ENDPOINT:-https://mock-search-endpoint.search.windows.net}
-          AZURE_SEARCH_API_KEY=${AZURE_SEARCH_API_KEY:-mock-search-api-key}
-          AZURE_SEARCH_INDEX_NAME=konveyor-documents
-          AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT:-https://mock-openai-endpoint.openai.azure.com}
-          AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY:-mock-openai-api-key}
-          AZURE_OPENAI_API_VERSION=2024-05-13
-          AZURE_OPENAI_CHAT_DEPLOYMENT=gpt-4o
-          AZURE_OPENAI_EMBEDDING_DEPLOYMENT=${AZURE_OPENAI_EMBEDDING_DEPLOYMENT:-text-embedding-ada-002}
-          AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT=${AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT:-https://mock-docint-endpoint.cognitiveservices.azure.com}
-          AZURE_DOCUMENT_INTELLIGENCE_API_KEY=${AZURE_DOCUMENT_INTELLIGENCE_API_KEY:-mock-docint-api-key}
-          AZURE_STORAGE_CONNECTION_STRING=${AZURE_STORAGE_CONNECTION_STRING:-DefaultEndpointsProtocol=https;AccountName=mockaccount;AccountKey=mock-key;EndpointSuffix=core.windows.net}
-          AZURE_STORAGE_CONTAINER_NAME=documents
-          EOL
+          echo "DJANGO_SETTINGS_MODULE=konveyor.settings.${{ github.event.inputs.environment || 'testing' }}" > .env
+          echo "DJANGO_DEBUG=False" >> .env
+          echo "DJANGO_SECRET_KEY=django-insecure-test-key-for-ci" >> .env
+          echo "AZURE_SEARCH_ENDPOINT=${AZURE_SEARCH_ENDPOINT:-https://mock-search-endpoint.search.windows.net}" >> .env
+          echo "AZURE_COGNITIVE_SEARCH_ENDPOINT=${AZURE_COGNITIVE_SEARCH_ENDPOINT:-https://mock-search-endpoint.search.windows.net}" >> .env
+          echo "AZURE_SEARCH_API_KEY=${AZURE_SEARCH_API_KEY:-mock-search-api-key}" >> .env
+          echo "AZURE_SEARCH_INDEX_NAME=konveyor-documents" >> .env
+          echo "AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT:-https://mock-openai-endpoint.openai.azure.com}" >> .env
+          echo "AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY:-mock-openai-api-key}" >> .env
+          echo "AZURE_OPENAI_API_VERSION=2024-05-13" >> .env
+          echo "AZURE_OPENAI_CHAT_DEPLOYMENT=gpt-4o" >> .env
+          echo "AZURE_OPENAI_EMBEDDING_DEPLOYMENT=${AZURE_OPENAI_EMBEDDING_DEPLOYMENT:-text-embedding-ada-002}" >> .env
+          echo "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT=${AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT:-https://mock-docint-endpoint.cognitiveservices.azure.com}" >> .env
+          echo "AZURE_DOCUMENT_INTELLIGENCE_API_KEY=${AZURE_DOCUMENT_INTELLIGENCE_API_KEY:-mock-docint-api-key}" >> .env
+          echo "AZURE_STORAGE_CONNECTION_STRING=${AZURE_STORAGE_CONNECTION_STRING:-DefaultEndpointsProtocol=https;AccountName=mockaccount;AccountKey=mock-key;EndpointSuffix=core.windows.net}" >> .env
+          echo "AZURE_STORAGE_CONTAINER_NAME=documents" >> .env
 
           # Build the Docker image with the environment file
           docker build --build-arg DJANGO_SETTINGS_MODULE=konveyor.settings.testing -t konveyor-test:latest .
