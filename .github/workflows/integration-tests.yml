@@ -209,7 +209,7 @@ jobs:
         run: |
           # Create a .env file with all necessary environment variables
           cat > .env << EOL
-          DJANGO_SETTINGS_MODULE=konveyor.settings.${{ steps.test-params.outputs.env }}
+          DJANGO_SETTINGS_MODULE=konveyor.settings.testing
           DJANGO_ENV=${{ steps.test-params.outputs.env }}
           DJANGO_DEBUG=False
           DJANGO_SECRET_KEY=django-insecure-test-key-for-ci
@@ -229,7 +229,7 @@ jobs:
           EOL
 
           # Build the Docker image with the environment file
-          docker build --build-arg DJANGO_SETTINGS_MODULE=konveyor.settings.${{ steps.test-params.outputs.env }} -t konveyor-test:latest .
+          docker build --build-arg DJANGO_SETTINGS_MODULE=konveyor.settings.testing -t konveyor-test:latest .
 
       - name: Run tests in Docker
         id: run-tests
@@ -240,8 +240,9 @@ jobs:
           docker run --rm \
             --env-file .env \
             -v $(pwd)/tests/results:/app/tests/results \
+            -v $(pwd)/tests/run_all_tests.py:/app/tests/run_all_tests.py \
             konveyor-test:latest \
-            python tests/run_all_tests.py ${{ steps.test-params.outputs.args }} -v
+            bash -c "cd /app && python tests/run_all_tests.py ${{ steps.test-params.outputs.args }} -v"
 
           # Store exit code
           echo "exit_code=$?" >> $GITHUB_OUTPUT
