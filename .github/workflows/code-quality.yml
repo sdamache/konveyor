@@ -25,6 +25,15 @@ on:
           - dev
           - test
           - prod
+      deploy_infrastructure:
+        description: 'Whether to deploy infrastructure'
+        required: false
+        default: 'auto'
+        type: choice
+        options:
+          - auto
+          - always
+          - never
   workflow_call:
     inputs:
       test_type:
@@ -113,13 +122,29 @@ jobs:
         continue-on-error: true
 
       - name: Set up Terraform
-        if: ${{ github.event.inputs.test_type == 'real' || github.event.inputs.environment == 'test' || github.event.inputs.environment == 'prod' }}
+        if: >-
+          ${{
+            github.event.inputs.deploy_infrastructure == 'always' ||
+            (github.event.inputs.deploy_infrastructure == 'auto' || github.event.inputs.deploy_infrastructure == '' || github.event.inputs.deploy_infrastructure == null) &&
+            (github.event.inputs.test_type == 'real' ||
+             github.event.inputs.environment == 'test' ||
+             github.event.inputs.environment == 'prod' ||
+             (github.event_name == 'pull_request' && github.base_ref == 'main'))
+          }}
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: '1.5.7'
 
       - name: Deploy Infrastructure
-        if: ${{ github.event.inputs.test_type == 'real' || github.event.inputs.environment == 'test' || github.event.inputs.environment == 'prod' }}
+        if: >-
+          ${{
+            github.event.inputs.deploy_infrastructure == 'always' ||
+            (github.event.inputs.deploy_infrastructure == 'auto' || github.event.inputs.deploy_infrastructure == '' || github.event.inputs.deploy_infrastructure == null) &&
+            (github.event.inputs.test_type == 'real' ||
+             github.event.inputs.environment == 'test' ||
+             github.event.inputs.environment == 'prod' ||
+             (github.event_name == 'pull_request' && github.base_ref == 'main'))
+          }}
         id: deploy-infra
         run: |
           # Check if Konveyor-infra directory exists
@@ -230,31 +255,27 @@ jobs:
       - name: Run tests with coverage in Docker
         run: |
           mkdir -p tests/results
+          mkdir -p coverage
           # Set proper permissions on the results directory
           chmod -R 777 tests/results
+          chmod -R 777 coverage
 
           # Run tests in Docker container with environment file
+          # Use a different approach to handle permissions
           docker run --rm \
             --env-file .env \
-            -v $(pwd)/tests/results:/app/tests/results \
+            -v $(pwd)/tests/results:/app/test-output \
+            -v $(pwd)/coverage:/app/coverage-output \
             konveyor-test:latest \
-            bash -c "cd /app && mkdir -p /app/tests/results && chmod -R 777 /app/tests/results && python -m pytest konveyor --cov=konveyor --cov-report=xml -v && cp coverage.xml /app/"
+            bash -c "cd /app && mkdir -p /app/tests/results && python -m pytest konveyor --cov=konveyor --cov-report=xml -v && cp -r /app/tests/results/* /app/test-output/ 2>/dev/null || true && cp coverage.xml /app/coverage-output/ 2>/dev/null || true"
 
-      - name: Copy coverage report from Docker
+      - name: Check coverage report
         run: |
-          mkdir -p coverage
-          # Get the container ID of the last run container
-          CONTAINER_ID=$(docker ps -lq)
-          if [ -z "$CONTAINER_ID" ]; then
-            echo "::warning::No container found. The test container may have exited."
+          # Check if coverage file exists
+          if [ ! -f "coverage/coverage.xml" ]; then
+            echo "::warning::Coverage file not found. Creating an empty file."
             # Create an empty coverage file to prevent the next step from failing
             echo '<?xml version="1.0" ?><coverage version="1.0"></coverage>' > coverage/coverage.xml
-          else
-            # Try to copy the coverage file from the container
-            if ! docker cp $CONTAINER_ID:/app/coverage.xml coverage/ 2>/dev/null; then
-              echo "::warning::Failed to copy coverage.xml from container. Creating an empty file."
-              echo '<?xml version="1.0" ?><coverage version="1.0"></coverage>' > coverage/coverage.xml
-            fi
           fi
 
       - name: Upload coverage to Codecov
