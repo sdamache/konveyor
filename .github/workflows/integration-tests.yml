@@ -100,12 +100,6 @@ jobs:
           python-version: '3.10'
           cache: 'pip'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r requirements/testing.txt
-
       # Determine test parameters
       - name: Determine test parameters
         id: test-params
@@ -204,11 +198,38 @@ jobs:
           fi
 
       # Run the tests with the determined parameters
-      - name: Run tests
+      - name: Build Docker image for testing
+        run: |
+          docker build -t konveyor-test:latest .
+          
+      - name: Run tests in Docker
         id: run-tests
         run: |
           mkdir -p tests/results
-          python tests/run_all_tests.py ${{ steps.test-params.outputs.args }} -v
+          
+          # Run tests in Docker container with environment variables
+          docker run --rm \
+            -e AZURE_SEARCH_ENDPOINT="$AZURE_SEARCH_ENDPOINT" \
+            -e AZURE_COGNITIVE_SEARCH_ENDPOINT="$AZURE_COGNITIVE_SEARCH_ENDPOINT" \
+            -e AZURE_SEARCH_API_KEY="$AZURE_SEARCH_API_KEY" \
+            -e AZURE_SEARCH_INDEX_NAME="konveyor-documents" \
+            -e AZURE_OPENAI_ENDPOINT="$AZURE_OPENAI_ENDPOINT" \
+            -e AZURE_OPENAI_API_KEY="$AZURE_OPENAI_API_KEY" \
+            -e AZURE_OPENAI_API_VERSION="2024-02-01-preview" \
+            -e AZURE_OPENAI_CHAT_DEPLOYMENT="gpt-4o" \
+            -e AZURE_OPENAI_EMBEDDING_DEPLOYMENT="$AZURE_OPENAI_EMBEDDING_DEPLOYMENT" \
+            -e AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT="$AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT" \
+            -e AZURE_DOCUMENT_INTELLIGENCE_API_KEY="$AZURE_DOCUMENT_INTELLIGENCE_API_KEY" \
+            -e AZURE_STORAGE_CONNECTION_STRING="$AZURE_STORAGE_CONNECTION_STRING" \
+            -e AZURE_STORAGE_CONTAINER_NAME="documents" \
+            -e DJANGO_SETTINGS_MODULE="konveyor.settings.${{ steps.test-params.outputs.env }}" \
+            -e DJANGO_ENV="${{ steps.test-params.outputs.env }}" \
+            -e DJANGO_DEBUG="False" \
+            -v $(pwd)/tests/results:/app/tests/results \
+            konveyor-test:latest \
+            python tests/run_all_tests.py ${{ steps.test-params.outputs.args }} -v
+          
+          # Store exit code
           echo "exit_code=$?" >> $GITHUB_OUTPUT
 
       # Set test result output
