@@ -18,12 +18,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Upgrade pip to the latest version
 RUN pip install --upgrade pip
 
-# Copy only the necessary requirements files for production
-COPY requirements/base.txt requirements/production.txt /app/requirements/
+# Copy all requirements files
+COPY requirements/*.txt /app/requirements/
 
 # Install Python dependencies into a wheelhouse for faster installation in the final stage
-# Use production.txt which includes base.txt
-RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements/production.txt
+# Install all requirements for testing and development
+RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements/testing.txt
 
 
 # Stage 2: Final - Build the final application image
@@ -32,7 +32,10 @@ FROM python:3.10-slim
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
-ENV DJANGO_SETTINGS_MODULE=konveyor.settings.production
+
+# Accept build argument for settings module with a default
+ARG DJANGO_SETTINGS_MODULE=konveyor.settings.testing
+ENV DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE}
 
 # Set working directory
 WORKDIR /app
@@ -44,8 +47,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy installed dependencies from the builder stage's wheelhouse
 COPY --from=builder /wheels /wheels
-# Copy the production requirements file again to ensure pip knows what was installed
-COPY --from=builder /app/requirements/production.txt .
+# Copy all requirements files
+COPY --from=builder /app/requirements/*.txt /app/requirements/
 # Install wheels from the wheelhouse
 RUN pip install --no-cache /wheels/*
 
@@ -59,9 +62,16 @@ COPY . /app/
 # Set ownership of the app directory to the non-root user
 RUN chown -R app:app /app
 
-# Collect static files using Django's collectstatic command
-# Run as root first to ensure permissions to write to STATIC_ROOT defined in settings
-RUN python manage.py collectstatic --noinput --settings=$DJANGO_SETTINGS_MODULE
+# Create logs directory to prevent FileNotFoundError during startup
+RUN mkdir -p /app/logs && chown -R app:app /app/logs
+
+# Create a script to run collectstatic at container startup
+RUN echo '#!/bin/bash\n\
+if [ "$SKIP_COLLECTSTATIC" != "true" ]; then\n\
+  python manage.py collectstatic --noinput --settings=$DJANGO_SETTINGS_MODULE || true\n\
+fi\n\
+exec "$@"' > /app/entrypoint.sh \
+    && chmod +x /app/entrypoint.sh
 
 # Switch to the non-root user
 USER app
@@ -69,9 +79,8 @@ USER app
 # Expose the port Gunicorn will run on (default is 8000)
 EXPOSE 8000
 
-# Copy startup script
-COPY startup.sh /app/startup.sh
+# Set the entrypoint to our script that handles collectstatic
+ENTRYPOINT ["/app/entrypoint.sh"]
 
-# Run the application using our startup script
-# This will remove asyncio package before starting Gunicorn
-CMD ["/app/startup.sh", "gunicorn", "--bind", "0.0.0.0:8000", "konveyor.wsgi:application"]
+# Default command runs gunicorn
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "konveyor.wsgi:application"]
