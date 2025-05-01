@@ -28,3 +28,7 @@ markdown>=3.5.0
 pymongo>=4.6.0
 redis>=5.0.0
 redis[hiredis]>=5.0.0
+
+# Slack Integration
+slack-sdk>=3.19.5
+slack-bolt>=1.16.1
