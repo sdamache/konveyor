@@ -86,20 +86,20 @@ jobs:
         with:
           python-version: '3.10'
           cache: 'pip'
-          
+
       # Deploy infrastructure for testing if real tests are needed
       - name: Azure Login
         if: ${{ github.event.inputs.test_type == 'real' || github.event.inputs.environment == 'test' || github.event.inputs.environment == 'prod' }}
-        uses: azure/login@v2
+        uses: azure/login@v2.1.0
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-          
+
       - name: Set up Terraform
         if: ${{ github.event.inputs.test_type == 'real' || github.event.inputs.environment == 'test' || github.event.inputs.environment == 'prod' }}
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: '1.5.7'
-          
+
       - name: Deploy Infrastructure
         if: ${{ github.event.inputs.test_type == 'real' || github.event.inputs.environment == 'test' || github.event.inputs.environment == 'prod' }}
         id: deploy-infra
@@ -109,7 +109,7 @@ jobs:
           terraform validate
           terraform plan -out=tfplan
           terraform apply -auto-approve tfplan
-          
+
           # Export environment variables for tests
           echo "AZURE_SEARCH_ENDPOINT=$(terraform output -raw cognitive_search_endpoint)" >> $GITHUB_ENV
           echo "AZURE_COGNITIVE_SEARCH_ENDPOINT=$(terraform output -raw cognitive_search_endpoint)" >> $GITHUB_ENV
@@ -123,30 +123,46 @@ jobs:
 
       - name: Build Docker image for testing
         run: |
-          docker build -t konveyor-test:latest .
-          
+          # Create a .env file with all necessary environment variables
+          cat > .env << EOL
+          DJANGO_SETTINGS_MODULE=konveyor.settings.${{ github.event.inputs.environment || 'testing' }}
+          DJANGO_DEBUG=False
+          DJANGO_SECRET_KEY=django-insecure-test-key-for-ci
+          AZURE_SEARCH_ENDPOINT=${AZURE_SEARCH_ENDPOINT:-https://mock-search-endpoint.search.windows.net}
+          AZURE_COGNITIVE_SEARCH_ENDPOINT=${AZURE_COGNITIVE_SEARCH_ENDPOINT:-https://mock-search-endpoint.search.windows.net}
+          AZURE_SEARCH_API_KEY=${AZURE_SEARCH_API_KEY:-mock-search-api-key}
+          AZURE_SEARCH_INDEX_NAME=konveyor-documents
+          AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT:-https://mock-openai-endpoint.openai.azure.com}
+          AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY:-mock-openai-api-key}
+          AZURE_OPENAI_API_VERSION=2024-05-13
+          AZURE_OPENAI_CHAT_DEPLOYMENT=gpt-4o
+          AZURE_OPENAI_EMBEDDING_DEPLOYMENT=${AZURE_OPENAI_EMBEDDING_DEPLOYMENT:-text-embedding-ada-002}
+          AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT=${AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT:-https://mock-docint-endpoint.cognitiveservices.azure.com}
+          AZURE_DOCUMENT_INTELLIGENCE_API_KEY=${AZURE_DOCUMENT_INTELLIGENCE_API_KEY:-mock-docint-api-key}
+          AZURE_STORAGE_CONNECTION_STRING=${AZURE_STORAGE_CONNECTION_STRING:-DefaultEndpointsProtocol=https;AccountName=mockaccount;AccountKey=mock-key;EndpointSuffix=core.windows.net}
+          AZURE_STORAGE_CONTAINER_NAME=documents
+          EOL
+
+          # Build the Docker image with the environment file
+          docker build --build-arg DJANGO_SETTINGS_MODULE=konveyor.settings.${{ github.event.inputs.environment || 'testing' }} -t konveyor-test:latest .
+
       - name: Run tests with coverage in Docker
         run: |
+          mkdir -p tests/results
+
+          # Run tests in Docker container with environment file
           docker run --rm \
-            -e AZURE_SEARCH_ENDPOINT="$AZURE_SEARCH_ENDPOINT" \
-            -e AZURE_SEARCH_API_KEY="$AZURE_SEARCH_API_KEY" \
-            -e AZURE_OPENAI_ENDPOINT="$AZURE_OPENAI_ENDPOINT" \
-            -e AZURE_OPENAI_API_KEY="$AZURE_OPENAI_API_KEY" \
-            -e AZURE_OPENAI_EMBEDDING_DEPLOYMENT="$AZURE_OPENAI_EMBEDDING_DEPLOYMENT" \
-            -e AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT="$AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT" \
-            -e AZURE_DOCUMENT_INTELLIGENCE_API_KEY="$AZURE_DOCUMENT_INTELLIGENCE_API_KEY" \
-            -e AZURE_STORAGE_CONNECTION_STRING="$AZURE_STORAGE_CONNECTION_STRING" \
+            --env-file .env \
             -v $(pwd)/tests/results:/app/tests/results \
             konveyor-test:latest \
-            bash -c "coverage run --source=konveyor manage.py test && coverage report && coverage xml"
-          
+            bash -c "python -m pytest --cov=konveyor --cov-report=xml -v && cp coverage.xml /app/"
+
       - name: Copy coverage report from Docker
         run: |
           mkdir -p coverage
-          docker run --rm -v $(pwd)/coverage:/output konveyor-test:latest cp coverage.xml /output/
+          docker cp $(docker ps -lq):/app/coverage.xml coverage/
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
           file: ./coverage/coverage.xml
-          fail_ci_if_error: false
