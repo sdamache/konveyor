@@ -44,15 +44,16 @@ output "storage_connection_string" {
   sensitive   = true
 }
 
-output "bot_service_endpoint" {
-  description = "Test Azure Bot Service endpoint"
-  value       = module.bot_service.endpoint
-}
-
-output "bot_service_slack_channel_id" {
-  description = "Test Azure Bot Service Slack Channel ID"
-  value       = module.bot_service.slack_channel_id
-}
+# Commented out as bot_service module is not currently deployed
+# # output "bot_service_endpoint" {
+#   description = "Test Azure Bot Service endpoint"
+#   # value       = module.bot_service.endpoint
+# }
+#
+# # output "bot_service_slack_channel_id" {
+#   description = "Test Azure Bot Service Slack Channel ID"
+#   # value       = module.bot_service.slack_channel_id
+# }
 
 # Optional: Add outputs for RAG module if/when uncommented
 # output "cosmos_connection_string" {
