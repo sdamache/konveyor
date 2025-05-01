@@ -144,7 +144,7 @@ jobs:
           EOL
 
           # Build the Docker image with the environment file
-          docker build --build-arg DJANGO_SETTINGS_MODULE=konveyor.settings.${{ github.event.inputs.environment || 'testing' }} -t konveyor-test:latest .
+          docker build --build-arg DJANGO_SETTINGS_MODULE=konveyor.settings.testing -t konveyor-test:latest .
 
       - name: Run tests with coverage in Docker
         run: |
@@ -155,7 +155,7 @@ jobs:
             --env-file .env \
             -v $(pwd)/tests/results:/app/tests/results \
             konveyor-test:latest \
-            bash -c "python -m pytest --cov=konveyor --cov-report=xml -v && cp coverage.xml /app/"
+            bash -c "cd /app && python -m pytest konveyor --cov=konveyor --cov-report=xml -v && cp coverage.xml /app/"
 
       - name: Copy coverage report from Docker
         run: |
