@@ -49,6 +49,9 @@ COPY --from=builder /app/requirements/production.txt .
 # Install wheels from the wheelhouse
 RUN pip install --no-cache /wheels/*
 
+# Explicitly install Redis with hiredis
+RUN pip install redis[hiredis]>=5.0.0
+
 # Create a non-root user and group for security
 RUN addgroup --system app && adduser --system --group app
 

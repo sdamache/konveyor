@@ -26,8 +26,28 @@ import datetime as dt
 from json import JSONEncoder
 
 import asyncio
-import redis.asyncio as redis
-from pymongo import MongoClient
+import logging
+
+# Set up logger
+logger = logging.getLogger(__name__)
+
+# Try to import Redis, but don't fail if it's not available
+try:
+    import redis.asyncio as redis
+    REDIS_AVAILABLE = True
+except ImportError:
+    REDIS_AVAILABLE = False
+    logger.warning("Redis package not available, some functionality will be limited")
+
+# Import MongoDB
+try:
+    from pymongo import MongoClient
+    from bson import ObjectId
+except ImportError:
+    logger.warning("MongoDB package not available, some functionality will be limited")
+    # Define a placeholder ObjectId class to avoid errors
+    class ObjectId:
+        pass
 
 class MongoJSONEncoder(JSONEncoder):
     """JSON encoder that can handle MongoDB ObjectId."""
@@ -163,8 +183,16 @@ class AzureStorageManager(ConversationInterface):
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Async context manager exit."""
-        await self.cosmos_client.close()
-        await self.redis_client.close()
+        # Close MongoDB client
+        if hasattr(self, 'mongo_client'):
+            self.mongo_client.close()
+
+        # Close Redis client if available
+        if hasattr(self, 'redis_client') and self.redis_client is not None:
+            try:
+                await self.redis_client.close()
+            except Exception as e:
+                logger.warning(f"Failed to close Redis client: {str(e)}")
 
     async def initialize(self):
         """Initialize the storage manager."""
@@ -202,19 +230,27 @@ class AzureStorageManager(ConversationInterface):
 
         # Redis setup
         if not redis_connection_str:
-            raise ValueError("Redis connection string is required")
-        self.redis_client = redis.from_url(
-            redis_connection_str,
-            ssl_cert_reqs=None  # Skip SSL verification for testing
-        )
-        self.message_ttl = timedelta(days=1)  # Keep active conversations for 1 day in Redis
+            logger.warning("Redis connection string is not provided, some functionality will be limited")
+            self.redis_client = None
+        elif not REDIS_AVAILABLE:
+            logger.warning("Redis package is not available, some functionality will be limited")
+            self.redis_client = None
+        else:
+            try:
+                self.redis_client = redis.from_url(
+                    redis_connection_str,
+                    ssl_cert_reqs=None  # Skip SSL verification for testing
+                )
+            except Exception as e:
+                logger.warning(f"Failed to connect to Redis: {str(e)}, some functionality will be limited")
+                self.redis_client = None
 
+        self.message_ttl = timedelta(days=1)  # Keep active conversations for 1 day in Redis
 
         # Initialize database and collections
         self.db = self.mongo_client.get_database("konveyor")
         self.messages = self.db.get_collection("messages")
         self.conversations = self.db.get_collection("conversations")
-
 
         # Create indexes in background
         self._init_task = asyncio.create_task(self._ensure_database_exists())
@@ -244,19 +280,20 @@ class AzureStorageManager(ConversationInterface):
             "type": message_type,
             "content": content,
             "metadata": metadata or {},
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(dt.timezone.utc).isoformat()
         }
-
 
         # Store in MongoDB
         self.messages.insert_one(message)
 
-
-        # Cache in Redis for active conversations
-        redis_key = f"conv:{conversation_id}:messages"
-        await self.redis_client.lpush(redis_key, json.dumps(message, cls=MongoJSONEncoder))
-        await self.redis_client.expire(redis_key, self.message_ttl)
-
+        # Cache in Redis for active conversations if available
+        if self.redis_client is not None:
+            try:
+                redis_key = f"conv:{conversation_id}:messages"
+                await self.redis_client.lpush(redis_key, json.dumps(message, cls=MongoJSONEncoder))
+                await self.redis_client.expire(redis_key, self.message_ttl)
+            except Exception as e:
+                logger.warning(f"Failed to cache message in Redis: {str(e)}")
 
         return message
 
@@ -276,18 +313,22 @@ class AzureStorageManager(ConversationInterface):
         Returns:
             List of message dictionaries
         """
-        # Try Redis first
-        redis_key = f"conv:{conversation_id}:messages"
-        cached = await self.redis_client.lrange(redis_key, skip, skip + limit - 1)
-        if cached:
-            messages = [json.loads(msg) for msg in cached]
+        # Try Redis first if available
+        if self.redis_client is not None:
+            try:
+                redis_key = f"conv:{conversation_id}:messages"
+                cached = await self.redis_client.lrange(redis_key, skip, skip + limit - 1)
+                if cached:
+                    messages = [json.loads(msg) for msg in cached]
 
-            # Remove metadata if not requested
-            if not include_metadata:
-                for message in messages:
-                    message.pop("metadata", None)
+                    # Remove metadata if not requested
+                    if not include_metadata:
+                        for message in messages:
+                            message.pop("metadata", None)
 
-            return messages
+                    return messages
+            except Exception as e:
+                logger.warning(f"Failed to get messages from Redis: {str(e)}")
 
         # Fallback to MongoDB
         messages = list(self.messages.find(
@@ -297,14 +338,17 @@ class AzureStorageManager(ConversationInterface):
             limit=limit
         ))
 
-        # Update cache if needed
-        if messages:
-            redis_key = f"conv:{conversation_id}:messages"
-            pipeline = self.redis_client.pipeline()
-            for msg in reversed(messages):  # Maintain chronological order
-                pipeline.lpush(redis_key, json.dumps(msg, cls=MongoJSONEncoder))
-            pipeline.expire(redis_key, self.message_ttl)
-            await pipeline.execute()
+        # Update cache if needed and Redis is available
+        if messages and self.redis_client is not None:
+            try:
+                redis_key = f"conv:{conversation_id}:messages"
+                pipeline = self.redis_client.pipeline()
+                for msg in reversed(messages):  # Maintain chronological order
+                    pipeline.lpush(redis_key, json.dumps(msg, cls=MongoJSONEncoder))
+                pipeline.expire(redis_key, self.message_ttl)
+                await pipeline.execute()
+            except Exception as e:
+                logger.warning(f"Failed to update Redis cache: {str(e)}")
 
         # Remove metadata if not requested
         if not include_metadata:
@@ -334,9 +378,13 @@ class AzureStorageManager(ConversationInterface):
         self.conversations.delete_one({"id": conversation_id})
         self.messages.delete_many({"conversation_id": conversation_id})
 
-        # Delete from Redis
-        redis_key = f"conv:{conversation_id}:messages"
-        await self.redis_client.delete(redis_key)
+        # Delete from Redis if available
+        if self.redis_client is not None:
+            try:
+                redis_key = f"conv:{conversation_id}:messages"
+                await self.redis_client.delete(redis_key)
+            except Exception as e:
+                logger.warning(f"Failed to delete conversation from Redis: {str(e)}")
 
         logger.debug(f"Deleted conversation: {conversation_id}")
         return True
