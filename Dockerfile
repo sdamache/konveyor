@@ -62,7 +62,7 @@ RUN chown -R app:app /app
 # Collect static files using Django's collectstatic command
 # Run as root first to ensure permissions to write to STATIC_ROOT defined in settings
 #RUN python manage.py collectstatic --noinput --settings=$DJANGO_SETTINGS_MODULE
-
+RUN mkdir -p /app/logs && chown -R app:app /app/logs
 # Switch to the non-root user
 USER app
 
