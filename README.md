@@ -1,21 +1,62 @@
-# Konveyor
+# Konveyor: AI-Powered Knowledge Transfer Agent
 
-Konveyor is a knowledge transfer (KT) agent designed to help new and existing employees quickly onboard and familiarize themselves with organizational policies, software, procedures, and other information.
+Konveyor is an AI-powered knowledge transfer agent designed to accelerate software engineer onboarding and facilitate knowledge sharing within organizations. It leverages Microsoft's Semantic Kernel framework and Azure services to provide intelligent, context-aware assistance through Slack.
 
-## Features
+## Problem Statement
 
-- Integration with Azure OpenAI for intelligent responses
-- Document processing and understanding
-- Code analysis and explanation
-- Teams bot integration for easy access
+Software engineer onboarding is a costly, inefficient process plagued by:
+- Scattered documentation and knowledge silos
+- Limited access to mentorship from senior engineers
+- Difficulty understanding complex, undocumented codebases
+- Overwhelming or unstructured onboarding experiences
+
+Organizations routinely lose over $30,000 per new engineer in lost productivity, mentor time, and delayed project contributions. Konveyor directly addresses these challenges with a specialized AI agent that understands organizational context.
+
+## Key Features
+
+### Documentation Navigator
+- Searches and retrieves relevant documentation with context awareness
+- Preprocesses queries to understand onboarding-related questions
+- Formats responses with proper source citations
+- Maintains conversation context for natural follow-up questions
+
+### Code Understanding
+- Parses and explains code snippets with language detection
+- Analyzes code structure and organizational patterns
+- Generates clear explanations with syntax highlighting
+- Connects code explanations to architectural context
+
+### Knowledge Gap Analyzer
+- Maps questions to a taxonomy of knowledge areas
+- Tracks user confidence across different domains
+- Identifies potential knowledge gaps
+- Suggests relevant resources for learning
+
+### Slack Integration
+- Seamless interaction through familiar chat interface
+- Thread support for organized conversations
+- Rich message formatting for code and technical content
+- Slash commands for specialized functionality
+
+## Architecture
+
+Konveyor is built on a modern, modular architecture:
+
+- **Microsoft Semantic Kernel** for AI orchestration and skill management
+- **Azure OpenAI** for advanced language understanding and generation
+- **Azure Cognitive Search** for semantic document retrieval
+- **Azure Key Vault** for secure credential management
+- **Slack Bot Framework** for user interaction
+
+The system follows an agent-based architecture with specialized skills that can be invoked based on user needs. A memory system maintains conversation context and tracks user knowledge.
 
 ## Getting Started
 
 ### Prerequisites
 
 - Python 3.10+
-- PostgreSQL (for production) or SQLite (for development)
-- Azure account with appropriate services (for production)
+- Azure account with appropriate services
+- Slack workspace with admin privileges
 
 ### Installation
 
@@ -49,68 +90,45 @@ Konveyor is a knowledge transfer (KT) agent designed to help new and existing em
 
 6. Start the development server
    ```bash
-   python3 manage.py runserver
+   python manage.py runserver
    ```
 
-## Project Structure
+## Configuration
 
-```
-konveyor/
-├── konveyor/                   # Django project root
-│   ├── apps/                   # Django applications
-│   │   ├── core/               # Core functionality
-│   │   ├── users/              # User management
-│   │   └── api/                # API endpoints
-│   ├── settings/               # Split settings
-│   │   ├── __init__.py
-│   │   ├── base.py             # Base settings
-│   │   ├── development.py      # Development settings
-│   │   ├── production.py       # Production settings
-│   │   └── testing.py          # Testing settings
-│   ├── urls.py
-│   ├── wsgi.py
-│   └── asgi.py
-├── static/                     # Static files
-├── templates/                  # HTML templates
-├── docs/                       # Documentation
-├── requirements/               # Split requirements
-│   ├── base.txt                # Base requirements
-│   ├── development.txt         # Development requirements
-│   ├── production.txt          # Production requirements
-│   └── testing.txt             # Testing requirements
-├── manage.py
-└── README.md
-```
+Konveyor requires the following environment variables:
 
-## API Endpoints
+- `AZURE_OPENAI_ENDPOINT`: Azure OpenAI endpoint URL
+- `AZURE_OPENAI_API_KEY`: API key for Azure OpenAI
+- `AZURE_OPENAI_CHAT_DEPLOYMENT`: Deployment name (default: `gpt-4-turbo`)
+- `AZURE_OPENAI_EMBEDDING_DEPLOYMENT`: Embedding model deployment
+- `AZURE_COGNITIVE_SEARCH_ENDPOINT`: Azure Cognitive Search endpoint
+- `AZURE_COGNITIVE_SEARCH_API_KEY`: API key for Azure Cognitive Search
+- `AZURE_COGNITIVE_SEARCH_INDEX_NAME`: Index name for document search
+- `SLACK_BOT_TOKEN`: Bot token for Slack integration
+- `SLACK_SIGNING_SECRET`: Signing secret for Slack integration
 
-- `/` - Index endpoint to verify the API is running
-- `/api/azure-openai-status/` - Status of Azure OpenAI integration
+## Deployment
 
-## TODOs for Future Improvements
+Konveyor is designed to be deployed on Azure App Service:
 
-### Core Infrastructure
-- [ ] Implement actual Azure OpenAI integration using Azure SDK
-- [ ] Create document ingestion and processing pipeline
-- [ ] Implement authentication and authorization using Azure AD
+1. Provision required Azure resources using Terraform
+2. Configure environment variables in Azure App Service
+3. Deploy the application using GitHub Actions CI/CD pipeline
 
-### Azure Integration
-- [ ] Configure Azure Database for PostgreSQL in production settings
-- [ ] Set up Azure App Service deployment
-- [ ] Implement Azure Key Vault for secure secrets management
-- [ ] Configure Azure Blob Storage for static files and uploads
-- [ ] Set up Azure Application Insights for monitoring
+## Documentation
 
-### Development & Operations
-- [ ] Implement containerization with Docker
-- [ ] Set up CI/CD pipeline with GitHub Actions
-- [ ] Create comprehensive test suite
-- [ ] Document API endpoints with Swagger/OpenAPI
+For more detailed information, see the following documentation:
 
-### User Interface
-- [ ] Implement Teams bot integration
-- [ ] Create admin interface for content management
+- [Architecture Overview](docs/architecture.md)
+- [User Guide](docs/user_guide.md)
+- [Semantic Kernel Setup](docs/semantic_kernel_setup.md)
+- [Slack Integration](docs/slack_slash_commands.md)
 
-## Environment Setup
-1. Copy `.env.example` to `.env`
-2. Update `.env` with your local values 
+## Future Enhancements
+
+- Persistent memory system using Azure Cognitive Search
+- Multi-tenant onboarding capabilities
+- Additional skills for specialized knowledge domains
+- Integration with Microsoft Teams
+- Analytics dashboard for knowledge gap visualization
+- Automated knowledge base updates

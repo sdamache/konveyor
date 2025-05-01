@@ -1,35 +1,42 @@
-# Konveyor Architecture (v2.0)
+# Konveyor Architecture (v3.0)
 
 ## Table of Contents
 
-- [Konveyor Architecture (v2.0)](#konveyor-architecture-v20)
+- [Konveyor Architecture (v3.0)](#konveyor-architecture-v30)
   - [Table of Contents](#table-of-contents)
   - [1. Overview](#1-overview)
   - [2. High-Level Architecture](#2-high-level-architecture)
   - [3. Module Descriptions](#3-module-descriptions)
-    - [3.1 konveyor/apps/documents {#konveyorappsdocuments}](#31-konveyorappsdocuments-konveyorappsdocuments)
-    - [3.2 konveyor/apps/search {#konveyorappssearch}](#32-konveyorappssearch-konveyorappssearch)
-    - [3.3 konveyor/apps/rag {#konveyorappsrag}](#33-konveyorappsrag-konveyorappsrag)
-    - [3.4 konveyor/apps/bot {#konveyorappsbot}](#34-konveyorappsbot-konveyorappsbot)
-    - [3.5 konveyor/core {#konveyorcore}](#35-konveyorcore-konveyorcore)
-    - [3.6 Konveyor-infra {#konveyor-infra}](#36-konveyor-infra-konveyor-infra)
-    - [3.7 tests {#tests}](#37-tests-tests)
-  - [4. Data Flow {#data-flow}](#4-data-flow-data-flow)
-  - [5. Deployment \& Infrastructure {#deployment--infrastructure}](#5-deployment--infrastructure-deployment--infrastructure)
-  - [6. Security {#security}](#6-security-security)
-  - [7. Future Enhancements {#future-enhancements}](#7-future-enhancements-future-enhancements)
+    - [3.1 konveyor/apps/documents](#31-konveyorappsdocuments)
+    - [3.2 konveyor/apps/search](#32-konveyorappssearch)
+    - [3.3 konveyor/apps/rag](#33-konveyorappsrag)
+    - [3.4 konveyor/apps/bot](#34-konveyorappsbot)
+    - [3.5 konveyor/core](#35-konveyorcore)
+    - [3.6 konveyor/skills](#36-konveyorskills)
+    - [3.7 Konveyor-infra](#37-konveyor-infra)
+    - [3.8 tests](#38-tests)
+  - [4. Semantic Kernel Integration](#4-semantic-kernel-integration)
+    - [4.1 Skill Architecture](#41-skill-architecture)
+    - [4.2 Memory System](#42-memory-system)
+    - [4.3 Agent Orchestration](#43-agent-orchestration)
+  - [5. Data Flow](#5-data-flow)
+  - [6. Deployment & Infrastructure](#6-deployment--infrastructure)
+  - [7. Security](#7-security)
+  - [8. Future Enhancements](#8-future-enhancements)
 
 ---
 
 ## 1. Overview
 
-Konveyor is an AI-driven knowledge discovery and onboarding platform built on Django and Azure. It aggregates documents, indexes them for vector search, and provides RAG (Retrieve–Augment–Generate) capabilities via Azure OpenAI.
+Konveyor is an AI-driven knowledge discovery and onboarding platform built on Microsoft Semantic Kernel and Azure. It aggregates documents, indexes them for vector search, and provides intelligent agent capabilities through specialized skills that facilitate knowledge transfer and onboarding.
 
 Key technologies:
-- Django REST Framework for APIs
+- Microsoft Semantic Kernel for AI orchestration
 - Azure OpenAI for embeddings & chat
 - Azure Cognitive Search for vector store
 - Azure Blob Storage for document storage
+- Azure Key Vault for secure credential management
+- Slack Bot Framework for user interaction
 - Infrastructure-as-Code (Terraform/ARM) for provisioning
 
 ---
@@ -38,57 +45,70 @@ Key technologies:
 
 ```mermaid
 graph TD
-  UI[User & Bots]
-  UI -->|HTTP/REST| API[Konveyor API]
-  subgraph Backend[Django]
-    API --> DocsApp((Documents App))
-    API --> SearchApp((Search App))
-    API --> RAGApp((RAG App))
-    API --> BotApp((Bot App))
-    subgraph Core[core]
-      DocumentsApp-->DocumentService
-      SearchApp-->SearchService
-      RAGApp-->RAGService
-      BotApp-->BotService
-      DocumentService-- Azure SDK --> AzureServices
-      SearchService-- Azure SDK --> AzureServices
-      RAGService-- OpenAI --> AzureServices
+    subgraph "Complete CI/CD Pipeline"
+        pipeline[complete-pipeline.yml] --> |calls| branch[commit-conventions.yml]
+        branch --> |if success/skipped| quality[code-quality.yml]
+        quality --> |if success/skipped| tests[integration-tests.yml]
+        tests --> |if tests pass| deploy[deploy-app.yml]
+        tests --> |if tests pass| infra[infra-test.yml]
     end
-  end
-  subgraph AzureServices[Azure]
-    CognitiveSearch[(Cognitive Search)]
-    BlobStorage[(Blob Storage)]
-    OpenAI[(Azure OpenAI)]
-    KeyVault[(Key Vault)]
-    PostgreSQL[(PostgreSQL)]
-  end
-  Core --> CognitiveSearch
-  Core --> BlobStorage
-  Core --> OpenAI
-  Core --> KeyVault
-  Core --> PostgreSQL
-  subgraph Infra[TFC/ARM]
-    AzureServices
-  end
+
+    subgraph "Independent Workflows"
+        branch_ind[commit-conventions.yml] --> |PR/Push| validate[Validate Branch Naming]
+
+        quality_ind[code-quality.yml] --> |PR/Push| lint[Lint Python Code]
+        quality_ind --> |PR/Push| coverage[Test Coverage]
+
+        tests_ind[integration-tests.yml] --> |PR/Push/Manual| run_tests[Run Tests]
+        tests_ind --> |workflow_dispatch| test_options[Test Options]
+        test_options --> run_tests
+
+        deploy_ind[deploy-app.yml] --> |Tag/Manual| build[Build Docker Image]
+        build --> push[Push to GHCR]
+        push --> deploy_app[Deploy to Azure App Service]
+
+        infra_ind[infra-test.yml] --> |Tag/Manual| plan[Terraform Plan]
+        plan --> apply[Terraform Apply]
+    end
+
+    subgraph "Triggers"
+        pr[Pull Request] --> branch_ind
+        pr --> quality_ind
+        pr --> tests_ind
+        pr --> pipeline
+
+        push_main[Push to main/dev] --> branch_ind
+        push_main --> quality_ind
+        push_main --> tests_ind
+        push_main --> pipeline
+
+        tag_version[Version Tag] --> deploy_ind
+        tag_infra[Infra Tag] --> infra_ind
+
+        manual[Manual Workflow Dispatch] --> pipeline
+        manual --> tests_ind
+        manual --> deploy_ind
+        manual --> infra_ind
+    end
 ```
 
 ---
 
 ## 3. Module Descriptions
 
-### 3.1 konveyor/apps/documents {#konveyorappsdocuments}
-Handles document ingestion, parsing (PDF, DOCX, Markdown, text), chunking, Blob upload, and indexing via Django adapter over core logic.
+### 3.1 konveyor/apps/documents
+Handles document ingestion, parsing (PDF, DOCX, Markdown, text), chunking, Blob upload, and indexing via adapter over core logic.
 
 **Structure**:
 ```text
 konveyor/apps/documents/
-├─ apps.py                 # Django app configuration
+├─ apps.py                 # App configuration
 ├─ config.py               # Document settings (extensions, chunk sizes)
 ├─ urls.py                 # HTTP routes (health check, upload_document)
 ├─ views.py                # Function-based views (`index`, `upload_document`)
 ├─ models.py               # `Document`, `DocumentChunk` models
 ├─ services/
-│  ├─ document_adapter.py  # `DjangoDocumentService` adapter to core
+│  ├─ document_adapter.py  # Document service adapter to core
 │  ├─ chunk_service.py     # Chunk processing helpers
 │  └─ document_service.py  # App-layer stub redirecting to core
 └─ tests/
@@ -98,18 +118,16 @@ konveyor/apps/documents/
 ```
 
 **Key Components**:
-- `upload_document` view: handles file uploads via `DjangoDocumentService.process_document`
-- `DjangoDocumentService`: delegates parsing, chunking, and storage to core `DocumentService`
+- `upload_document` view: handles file uploads via document processing
+- Document service: delegates parsing, chunking, and storage to core
 - `Document` & `DocumentChunk` models: store metadata and chunk content
 
-### 3.2 konveyor/apps/search {#konveyorappssearch}
-Manages semantic search and document indexing via REST API endpoints.
+### 3.2 konveyor/apps/search
+Manages semantic search and document indexing via API endpoints.
 
 **Structure**:
 ```text
 konveyor/apps/search/
-├─ admin.py                # Django admin configuration
-├─ apps.py                 # Django app configuration
 ├─ models.py               # `SearchDocument` model tracking indexing status
 ├─ urls.py                 # Endpoints (`api/query/`, `api/index-document/`, `api/reindex-all/`, `simple/`)
 ├─ views.py                # `QuerySearchView`, `SimpleSearchView`
@@ -122,12 +140,12 @@ konveyor/apps/search/
 ```
 
 **Key Components**:
-- `QuerySearchView` & `SimpleSearchView`: endpoints for semantic search
+- Search endpoints for semantic search
 - `IndexingService`: batch indexing of document chunks to Cognitive Search
 - `SearchService`: semantic and hybrid search logic via core service
-- `SearchDocument`: Django model recording index status and metadata
+- `SearchDocument`: model recording index status and metadata
 
-### 3.3 konveyor/apps/rag {#konveyorappsrag}
+### 3.3 konveyor/apps/rag
 Orchestrates RAG workflows using conversation management and core service.
 
 **Structure**:
@@ -143,7 +161,7 @@ konveyor/apps/rag/
 - `ConversationManager`: persists messages via `AzureStorageManager`
 - Core `RAGService`: retrieves context, formats prompts, and generates OpenAI chat responses
 
-### 3.4 konveyor/apps/bot {#konveyorappsbot}
+### 3.4 konveyor/apps/bot
 Handles Bot Framework and Slack integration for chat interactions.
 
 **Structure**:
@@ -162,10 +180,11 @@ konveyor/apps/bot/
 ```
 
 **Key Components**:
-- `ADAPTER` & `BOT` in `app.py`: configure BotFrameworkAdapter and bot handler
-- Slack initializer and service modules for multi-platform support
+- Bot Framework adapter and handler
+- Slack integration for message routing
+- Connection to agent orchestration layer
 
-### 3.5 konveyor/core {#konveyorcore}
+### 3.5 konveyor/core
 Contains shared utilities, Azure adapters, and core business logic.
 
 **Structure**:
@@ -185,18 +204,60 @@ konveyor/core/
 │  └─ storage.py       # `AzureStorageManager` for conversation history
 ├─ documents/
 │  └─ document_service.py # Core document parsing and processing
-├─ rag/
-│  ├─ context_service.py  # Document processing & context retrieval
-│  ├─ templates.py        # Prompt templates & RAGPromptManager
-│  └─ rag_service.py      # Core RAG orchestration logic
-└─ [no core/bot directory; bot logic resides in apps/bot]
+├─ generation/
+│  ├─ kernel.py           # Semantic Kernel initialization
+│  └─ memory.py           # Memory system configuration
+├─ chat/
+│  ├─ orchestration.py    # Agent orchestration layer
+│  └─ router.py           # Request routing to appropriate skills
+└─ kernel/
+   └─ config.py           # Semantic Kernel configuration
 ```
 
 **Key Classes**:
 - `AzureConfig`, `AzureClientManager`, `AzureService`
-- Core services: `DocumentService`, `SearchService`, `RAGService`, `ContextService`, `RAGPromptManager`
+- Core services: `DocumentService`, `SearchService`, `KernelService`
+- `AgentOrchestrator`: Routes requests to appropriate skills
 
-### 3.6 Konveyor-infra {#konveyor-infra}
+### 3.6 konveyor/skills
+Contains Semantic Kernel skills that provide specialized capabilities.
+
+**Structure**:
+```text
+konveyor/skills/
+├─ documentation_navigator/
+│  ├─ __init__.py
+│  ├─ skill.py              # DocumentationNavigatorSkill implementation
+│  ├─ query_preprocessor.py # Onboarding query preprocessing
+│  ├─ response_formatter.py # Slack-compatible markdown formatting
+│  └─ tests/
+│     └─ test_documentation_navigator.py
+├─ code_understanding/
+│  ├─ __init__.py
+│  ├─ skill.py              # CodeUnderstandingSkill implementation
+│  ├─ code_parser.py        # Language detection and structure analysis
+│  ├─ prompt_templates.py   # Templates for code explanation
+│  └─ tests/
+│     └─ test_code_understanding.py
+├─ knowledge_analyzer/
+│  ├─ __init__.py
+│  ├─ skill.py              # KnowledgeGapAnalyzerSkill implementation
+│  ├─ knowledge_taxonomy.yaml # Knowledge area taxonomy definition
+│  ├─ taxonomy_loader.py    # Loader for taxonomy data
+│  ├─ confidence_tracker.py # User confidence scoring
+│  └─ tests/
+│     └─ test_knowledge_analyzer.py
+└─ common/
+   ├─ __init__.py
+   └─ skill_base.py         # Base class for all skills
+```
+
+**Key Skills**:
+- `DocumentationNavigatorSkill`: Searches and retrieves documentation with context
+- `CodeUnderstandingSkill`: Parses and explains code snippets
+- `KnowledgeGapAnalyzerSkill`: Identifies knowledge gaps and suggests resources
+
+### 3.7 Konveyor-infra
 Infrastructure-as-Code for Azure resource provisioning.
 
 **Structure**:
@@ -219,60 +280,174 @@ Konveyor-infra/
 ```
 
 **Provisioned Resources**:
-- Azure App Service / Functions
+- Azure App Service
 - Cognitive Search
 - Blob Storage
-- PostgreSQL
 - Key Vault
+- Azure OpenAI
 
-### 3.7 tests {#tests}
+### 3.8 tests
 Describes the test suite structure covering unit tests, service-level integration tests, API endpoint tests, and end-to-end tests.
 
 **Structure**:
 ```text
 tests/
 ├─ core/
-│  └─ rag/
-│     ├─ test_context_service.py
-│     └─ test_rag_service.py
-├─ services/
-│  └─ rag/
-│     ├─ test_context_service.py
-│     ├─ test_rag_service.py
-│     └─ test_rag_api.py
+│  ├─ kernel/
+│  │  ├─ test_kernel_initialization.py
+│  │  └─ test_memory_system.py
+│  └─ chat/
+│     ├─ test_orchestration.py
+│     └─ test_router.py
+├─ skills/
+│  ├─ documentation_navigator/
+│  │  ├─ test_query_preprocessing.py
+│  │  └─ test_response_formatting.py
+│  ├─ code_understanding/
+│  │  ├─ test_code_parser.py
+│  │  └─ test_explanation_generation.py
+│  └─ knowledge_analyzer/
+│     ├─ test_taxonomy_loader.py
+│     └─ test_confidence_tracking.py
 └─ integration/
-   └─ test_rag_e2e.py
+   ├─ test_slack_integration.py
+   └─ test_end_to_end.py
 ```
 
 ---
 
-## 4. Data Flow {#data-flow}
-1. **Document Ingestion**: upload → parse chunks → Blob Storage → index in Cognitive Search
-2. **Query**: user query → SearchService → top-k chunks
-3. **RAG**: retrieved chunks + prompt → OpenAI chat → response
-4. **Bot**: external event → BotService → RAGService → reply
+## 4. Semantic Kernel Integration
+
+Konveyor leverages Microsoft's Semantic Kernel framework to create a modular, extensible AI agent system. This section details how Semantic Kernel is integrated into the architecture.
+
+### 4.1 Skill Architecture
+
+Semantic Kernel skills in Konveyor follow a consistent pattern:
+
+1. **Skill Definition**: Each skill is defined as a Python class that inherits from a common base class, implementing the Semantic Kernel skill interface.
+
+2. **Function Registration**: Skills register semantic functions that can be invoked by the kernel, with appropriate input/output schemas.
+
+3. **Prompt Engineering**: Skills use carefully crafted prompts that guide the AI in generating appropriate responses for specific tasks.
+
+4. **Context Management**: Skills maintain conversation context through the Semantic Kernel memory system.
+
+Example skill registration:
+
+```python
+class DocumentationNavigatorSkill(SkillBase):
+    def __init__(self, kernel, search_service):
+        super().__init__(kernel)
+        self.search_service = search_service
+
+        # Register semantic functions
+        self.kernel.register_semantic_function(
+            skill_name="DocumentationNavigator",
+            function_name="search_documentation",
+            description="Searches for relevant documentation based on user query",
+            prompt_template=SEARCH_PROMPT_TEMPLATE
+        )
+```
+
+### 4.2 Memory System
+
+Konveyor implements a memory system using Semantic Kernel's memory capabilities:
+
+1. **Volatile Memory**: In-memory storage for session-based data that maintains conversation context during interactions.
+
+2. **Conversation History**: Tracks previous interactions to provide context for follow-up questions.
+
+3. **Knowledge Tracking**: Records user confidence scores across different knowledge areas to identify gaps.
+
+The memory system is initialized during kernel setup:
+
+```python
+def initialize_memory(kernel):
+    # Configure volatile memory store
+    memory_store = VolatileMemoryStore()
+    embedding_generator = kernel.get_service("text-embedding-ada-002")
+
+    # Register memory store with the kernel
+    kernel.register_memory_store(memory_store=memory_store)
+    kernel.register_memory(memory=SemanticTextMemory(
+        storage=memory_store,
+        embeddings_generator=embedding_generator
+    ))
+```
+
+### 4.3 Agent Orchestration
+
+The agent orchestration layer routes requests to appropriate skills:
+
+1. **Request Analysis**: Analyzes incoming messages to determine intent and required skill.
+
+2. **Skill Selection**: Routes the request to the appropriate skill based on content analysis.
+
+3. **Response Handling**: Processes skill responses and formats them for the target platform (e.g., Slack).
+
+4. **Error Management**: Handles exceptions and provides graceful fallbacks.
+
+The orchestration flow:
+
+```mermaid
+sequenceDiagram
+    participant User as User (Slack)
+    participant Bot as Bot Framework
+    participant Orchestrator as Agent Orchestrator
+    participant Skill as Semantic Kernel Skill
+    participant Memory as Memory System
+    participant Azure as Azure Services
+
+    User->>Bot: Send message
+    Bot->>Orchestrator: Process message
+    Orchestrator->>Orchestrator: Analyze intent
+    Orchestrator->>Skill: Route to appropriate skill
+    Skill->>Memory: Retrieve context
+    Skill->>Azure: Call required services
+    Azure-->>Skill: Return results
+    Skill->>Memory: Update context
+    Skill-->>Orchestrator: Return response
+    Orchestrator-->>Bot: Format response
+    Bot-->>User: Send response
+```
 
 ---
 
-## 5. Deployment & Infrastructure {#deployment--infrastructure}
+## 5. Data Flow
+
+1. **Slack Interaction**: user message → Bot Framework → Agent Orchestrator → appropriate skill
+2. **Documentation Navigation**: query → DocumentationNavigatorSkill → SearchService → Cognitive Search → formatted response
+3. **Code Understanding**: code snippet → CodeUnderstandingSkill → language detection → structure analysis → explanation generation
+4. **Knowledge Gap Analysis**: question → KnowledgeGapAnalyzerSkill → taxonomy mapping → confidence scoring → gap identification → resource suggestion
+5. **Feedback Collection**: user reaction → feedback logging → continuous improvement
+
+---
+
+## 6. Deployment & Infrastructure
+
 - CI: GitHub Actions (lint, tests, build)
 - CD: Terraform apply → Azure resource provisioning
 - Backend deploy: Azure App Service Docker container
 - Bot deploy: Azure Functions
+- Monitoring: Application Insights for telemetry
 
 ---
 
-## 6. Security {#security}
-- HTTPS enforced
-- OAuth2 / JWT for API auth
+## 7. Security
+
+- HTTPS enforced for all communications
+- OAuth2 / JWT for API authentication
 - Secrets managed in Azure Key Vault
 - RBAC roles in Azure for resource access
+- Secure credential storage for bot tokens
 
 ---
 
-## 7. Future Enhancements {#future-enhancements}
-- Real-time updates via WebSockets or SignalR
-- Multi-tenant onboarding
-- UI/UX: React SPA
-- Additional document types (PPTX, CSV)
-- Analytics & usage dashboards
+## 8. Future Enhancements
+
+- Persistent memory system using Azure Cognitive Search
+- Multi-tenant onboarding capabilities
+- Additional skills for specialized knowledge domains
+- Integration with Microsoft Teams
+- Analytics dashboard for knowledge gap visualization
+- Automated knowledge base updates

@@ -28,6 +28,66 @@ Provides information about Konveyor, including version and capabilities.
 /info
 ```
 
+### `/konveyor-docs`
+Searches documentation using the Documentation Navigator skill.
+
+**Usage:**
+```
+/konveyor-docs [query]
+```
+
+**Examples:**
+```
+/konveyor-docs how to deploy to production
+/konveyor-docs authentication system
+/konveyor-docs environment setup
+```
+
+### `/konveyor-code`
+Analyzes and explains code snippets using the Code Understanding skill.
+
+**Usage:**
+```
+/konveyor-code [language]
+```
+After running this command, you'll be prompted to share a code snippet.
+
+**Examples:**
+```
+/konveyor-code python
+/konveyor-code javascript
+/konveyor-code java
+```
+
+### `/konveyor-analyze`
+Analyzes your knowledge gaps using the Knowledge Gap Analyzer skill.
+
+**Usage:**
+```
+/konveyor-analyze [topic]
+```
+
+**Examples:**
+```
+/konveyor-analyze microservices
+/konveyor-analyze authentication
+/konveyor-analyze deployment process
+```
+
+### `/konveyor-feedback`
+Provides feedback on the bot's responses to help improve its performance.
+
+**Usage:**
+```
+/konveyor-feedback [message_id] [rating] [comment]
+```
+
+**Examples:**
+```
+/konveyor-feedback 1234567890 positive "Very helpful explanation!"
+/konveyor-feedback 1234567890 negative "The explanation was too technical."
+```
+
 ### `/code`
 Shows examples of how to format code in Slack messages.
 
@@ -37,7 +97,7 @@ Shows examples of how to format code in Slack messages.
 ```
 
 ### `/profile`
-Displays your user profile information, including interaction history.
+Displays your user profile information, including interaction history and knowledge areas.
 
 **Usage:**
 ```
@@ -57,12 +117,16 @@ Views and sets your user preferences.
 
 # Set response format preference
 /preferences set response_format [concise|detailed|technical]
+
+# Set knowledge tracking preference
+/preferences set knowledge_tracking [enabled|disabled]
 ```
 
 **Examples:**
 ```
 /preferences set code_language python
 /preferences set response_format detailed
+/preferences set knowledge_tracking enabled
 ```
 
 ## Command Endpoint
@@ -89,7 +153,7 @@ To add a new slash command:
            "response_type": "ephemeral",  # or "in_channel" for public responses
            "text": "Command response"
        }
-   
+
    # Register the command
    register_command("new_command", handle_new_command, "Description of the new command")
    ```
