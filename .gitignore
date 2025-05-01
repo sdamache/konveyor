@@ -69,3 +69,7 @@ node_modules/
 # Task files
 tasks.json
 tasks/ 
+
+# Utility scripts
+fix_*.py
+tests/results/
