@@ -216,14 +216,35 @@ def run_test_file(test_file, verbose=False):
     # Determine how to run the test file
     if test_file.endswith(".py"):
         # Check if the file uses pytest
-        with open(test_file, "r") as f:
-            content = f.read()
-            uses_pytest = "import pytest" in content or "pytest" in content
+        try:
+            with open(test_file, "r") as f:
+                content = f.read()
+                uses_pytest = "import pytest" in content or "pytest" in content
+        except Exception as e:
+            logger.error(f"Error reading test file {test_file}: {e}")
+            uses_pytest = True  # Default to pytest if we can't read the file
 
-        # Ensure results directory exists
+        # Ensure results directory exists with proper permissions
         results_dir = Path(PROJECT_ROOT) / "tests" / "results"
-        results_dir.mkdir(exist_ok=True)
-        
+        try:
+            results_dir.mkdir(exist_ok=True, parents=True)
+            # Try to make the directory writable by all
+            try:
+                import os
+                os.chmod(results_dir, 0o777)
+            except Exception as chmod_err:
+                logger.warning(f"Could not set permissions on results directory: {chmod_err}")
+        except Exception as mkdir_err:
+            logger.error(f"Error creating results directory: {mkdir_err}")
+            # Try to use a fallback directory
+            results_dir = Path("/tmp") / "konveyor_test_results"
+            try:
+                results_dir.mkdir(exist_ok=True, parents=True)
+            except Exception as fallback_err:
+                logger.error(f"Error creating fallback results directory: {fallback_err}")
+                # Last resort: use current directory
+                results_dir = Path(".")
+
         # Generate a unique name for the XML file based on the test file name
         test_name = Path(test_file).stem
         xml_path = results_dir / f"test-{test_name}.xml"
@@ -236,47 +257,76 @@ def run_test_file(test_file, verbose=False):
             cmd = [sys.executable, "-m", "unittest", test_file]
             if verbose:
                 cmd.append("-v")
-                
+
         # Run the test
-    try:
-        logger.info(f"Running command: {' '.join(cmd)}")
-        result = subprocess.run(cmd, check=False, capture_output=True, text=True)
-        
-        # Always write stdout/stderr to log files for debugging
-        with open(results_dir / f"{test_name}-stdout.log", "w") as f:
-            f.write(result.stdout)
-        
-        with open(results_dir / f"{test_name}-stderr.log", "w") as f:
-            f.write(result.stderr)
-        
-        if result.returncode != 0:
-            logger.error(f"Test failed with exit code {result.returncode}")
-            logger.error(result.stderr)
+        try:
+            logger.info(f"Running command: {' '.join(cmd)}")
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+
+            # Always write stdout/stderr to log files for debugging
+            try:
+                with open(results_dir / f"{test_name}-stdout.log", "w") as f:
+                    f.write(result.stdout)
+
+                with open(results_dir / f"{test_name}-stderr.log", "w") as f:
+                    f.write(result.stderr)
+            except Exception as log_err:
+                logger.error(f"Error writing log files: {log_err}")
+                # Print to console as fallback
+                if verbose:
+                    logger.info(f"STDOUT: {result.stdout}")
+                    logger.error(f"STDERR: {result.stderr}")
+
+            if result.returncode != 0:
+                logger.error(f"Test failed with exit code {result.returncode}")
+                logger.error(result.stderr)
+                return False
+            else:
+                logger.info(f"Test passed: {test_file}")
+                if verbose:
+                    logger.info(result.stdout)
+                return True
+        except Exception as e:
+            logger.error(f"Error running test {test_file}: {e}")
+            # Create a failure XML file even if the test fails to run
+            try:
+                create_failure_xml(xml_path, test_file, str(e))
+            except Exception as xml_err:
+                logger.error(f"Error creating failure XML: {xml_err}")
             return False
-        else:
-            logger.info(f"Test passed: {test_file}")
-            if verbose:
-                logger.info(result.stdout)
-            return True
-    except Exception as e:
-        logger.error(f"Error running test {test_file}: {e}")
-        # Create a failure XML file even if the test fails to run
-        create_failure_xml(xml_path, test_file, str(e))
+    else:
+        logger.error(f"Unsupported test file format: {test_file}")
         return False
 
 def create_failure_xml(xml_path, test_file, error_message):
     """Create a failure XML file for tests that fail to run."""
     import xml.etree.ElementTree as ET
-    
+
     root = ET.Element("testsuites")
     testsuite = ET.SubElement(root, "testsuite", name=f"failed_{Path(test_file).stem}", tests="1", failures="1", errors="0")
     testcase = ET.SubElement(testsuite, "testcase", classname="TestRunnerFailure", name="test_execution_failure")
     failure = ET.SubElement(testcase, "failure", message="Test execution failed", type="RuntimeError")
     failure.text = error_message
-    
+
     tree = ET.ElementTree(root)
-    tree.write(str(xml_path))
-    logger.info(f"Created failure XML file at {xml_path}")
+
+    try:
+        # Try to write to the specified path
+        tree.write(str(xml_path))
+        logger.info(f"Created failure XML file at {xml_path}")
+    except Exception as e:
+        # If that fails, try writing to a fallback location
+        logger.error(f"Error writing failure XML to {xml_path}: {e}")
+        try:
+            fallback_path = Path("/tmp") / f"test-{Path(test_file).stem}.xml"
+            tree.write(str(fallback_path))
+            logger.info(f"Created failure XML file at fallback location: {fallback_path}")
+        except Exception as fallback_err:
+            logger.error(f"Error writing failure XML to fallback location: {fallback_err}")
+            # Last resort: print the XML to the log
+            from xml.dom import minidom
+            xml_str = minidom.parseString(ET.tostring(root)).toprettyxml(indent="  ")
+            logger.info(f"Failure XML content (could not write to file):\n{xml_str}")
 
 
 def run_tests(args):

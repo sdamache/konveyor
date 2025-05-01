@@ -62,8 +62,10 @@ COPY . /app/
 # Set ownership of the app directory to the non-root user
 RUN chown -R app:app /app
 
-# Create logs and static directories to prevent FileNotFoundError during startup
-RUN mkdir -p /app/logs /app/static /app/staticfiles && chown -R app:app /app/logs /app/static /app/staticfiles
+# Create logs, static, and test results directories to prevent FileNotFoundError during startup
+RUN mkdir -p /app/logs /app/static /app/staticfiles /app/tests/results && \
+    chown -R app:app /app/logs /app/static /app/staticfiles /app/tests/results && \
+    chmod -R 777 /app/tests/results
 
 # Create a script to run collectstatic at container startup
 RUN echo '#!/bin/bash\n\

@@ -101,11 +101,35 @@ jobs:
           cache: 'pip'
 
       # Azure Login for real tests
+      - name: Debug Azure Credentials
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Test type: ${{ inputs.test_type || github.event.inputs.test_type || 'not specified' }}"
+          echo "Has AZURE_CREDENTIALS secret: ${{ secrets.AZURE_CREDENTIALS != '' }}"
+
+          # Create a dummy Azure credentials file if the secret is missing
+          if [[ "${{ secrets.AZURE_CREDENTIALS }}" == "" ]]; then
+            echo "::warning::AZURE_CREDENTIALS secret is missing. Creating a dummy credentials file for testing."
+            # Create a dummy credentials file
+            cat > azure-credentials.json << EOL
+            {
+              "clientId": "dummy-client-id",
+              "clientSecret": "dummy-client-secret",
+              "subscriptionId": "dummy-subscription-id",
+              "tenantId": "dummy-tenant-id"
+            }
+            EOL
+            # Set the AZURE_CREDENTIALS environment variable
+            echo "AZURE_CREDENTIALS=$(cat azure-credentials.json)" >> $GITHUB_ENV
+          fi
+
       - name: Azure Login
-        if: ${{ inputs.test_type == 'real' || github.event.inputs.test_type == 'real' }}
+        # Always run Azure login for PR and push events, or when real tests are specified
+        if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || inputs.test_type == 'real' || github.event.inputs.test_type == 'real' || contains(github.event.inputs.test_type, 'both') }}
         uses: azure/login@v2.1.0
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          creds: ${{ secrets.AZURE_CREDENTIALS || env.AZURE_CREDENTIALS }}
+        continue-on-error: true
 
       # Determine test parameters
       - name: Determine test parameters
@@ -164,25 +188,49 @@ jobs:
             echo "Using real Azure services from environment: $ENV_SUFFIX"
 
             # Search service
-            echo "AZURE_SEARCH_ENDPOINT=${{ vars[format('AZURE_SEARCH_ENDPOINT_{0}', env.ENV_SUFFIX_UPPER)] }}" >> $GITHUB_ENV
-            echo "AZURE_COGNITIVE_SEARCH_ENDPOINT=${{ vars[format('AZURE_SEARCH_ENDPOINT_{0}', env.ENV_SUFFIX_UPPER)] }}" >> $GITHUB_ENV
-            echo "AZURE_SEARCH_API_KEY=${{ secrets[format('AZURE_SEARCH_API_KEY_{0}', env.ENV_SUFFIX_UPPER)] }}" >> $GITHUB_ENV
+            echo "AZURE_SEARCH_ENDPOINT=${{ vars[format('AZURE_SEARCH_ENDPOINT_{0}', env.ENV_SUFFIX_UPPER)] || vars.AZURE_SEARCH_ENDPOINT || secrets.AZURE_SEARCH_ENDPOINT }}" >> $GITHUB_ENV
+            echo "AZURE_COGNITIVE_SEARCH_ENDPOINT=${{ vars[format('AZURE_SEARCH_ENDPOINT_{0}', env.ENV_SUFFIX_UPPER)] || vars.AZURE_SEARCH_ENDPOINT || secrets.AZURE_SEARCH_ENDPOINT }}" >> $GITHUB_ENV
+            echo "AZURE_SEARCH_API_KEY=${{ secrets[format('AZURE_SEARCH_API_KEY_{0}', env.ENV_SUFFIX_UPPER)] || secrets.AZURE_SEARCH_API_KEY }}" >> $GITHUB_ENV
             echo "AZURE_SEARCH_INDEX_NAME=konveyor-documents" >> $GITHUB_ENV
 
             # OpenAI service
-            echo "AZURE_OPENAI_ENDPOINT=${{ vars[format('AZURE_OPENAI_ENDPOINT_{0}', env.ENV_SUFFIX_UPPER)] }}" >> $GITHUB_ENV
-            echo "AZURE_OPENAI_API_KEY=${{ secrets[format('AZURE_OPENAI_API_KEY_{0}', env.ENV_SUFFIX_UPPER)] }}" >> $GITHUB_ENV
+            echo "AZURE_OPENAI_ENDPOINT=${{ vars[format('AZURE_OPENAI_ENDPOINT_{0}', env.ENV_SUFFIX_UPPER)] || vars.AZURE_OPENAI_ENDPOINT || secrets.AZURE_OPENAI_ENDPOINT }}" >> $GITHUB_ENV
+            echo "AZURE_OPENAI_API_KEY=${{ secrets[format('AZURE_OPENAI_API_KEY_{0}', env.ENV_SUFFIX_UPPER)] || secrets.AZURE_OPENAI_API_KEY }}" >> $GITHUB_ENV
             echo "AZURE_OPENAI_API_VERSION=2024-02-01-preview" >> $GITHUB_ENV
             echo "AZURE_OPENAI_CHAT_DEPLOYMENT=gpt-4o" >> $GITHUB_ENV
-            echo "AZURE_OPENAI_EMBEDDING_DEPLOYMENT=${{ vars[format('AZURE_OPENAI_EMBEDDING_DEPLOYMENT_{0}', env.ENV_SUFFIX_UPPER)] }}" >> $GITHUB_ENV
+            echo "AZURE_OPENAI_EMBEDDING_DEPLOYMENT=${{ vars[format('AZURE_OPENAI_EMBEDDING_DEPLOYMENT_{0}', env.ENV_SUFFIX_UPPER)] || vars.AZURE_OPENAI_EMBEDDING_DEPLOYMENT || 'text-embedding-ada-002' }}" >> $GITHUB_ENV
 
             # Document Intelligence
-            echo "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT=${{ vars[format('AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT_{0}', env.ENV_SUFFIX_UPPER)] }}" >> $GITHUB_ENV
-            echo "AZURE_DOCUMENT_INTELLIGENCE_API_KEY=${{ secrets[format('AZURE_DOCUMENT_INTELLIGENCE_API_KEY_{0}', env.ENV_SUFFIX_UPPER)] }}" >> $GITHUB_ENV
+            echo "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT=${{ vars[format('AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT_{0}', env.ENV_SUFFIX_UPPER)] || vars.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT || secrets.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT }}" >> $GITHUB_ENV
+            echo "AZURE_DOCUMENT_INTELLIGENCE_API_KEY=${{ secrets[format('AZURE_DOCUMENT_INTELLIGENCE_API_KEY_{0}', env.ENV_SUFFIX_UPPER)] || secrets.AZURE_DOCUMENT_INTELLIGENCE_API_KEY }}" >> $GITHUB_ENV
 
             # Storage
-            echo "AZURE_STORAGE_CONNECTION_STRING=${{ secrets[format('AZURE_STORAGE_CONNECTION_STRING_{0}', env.ENV_SUFFIX_UPPER)] }}" >> $GITHUB_ENV
+            echo "AZURE_STORAGE_CONNECTION_STRING=${{ secrets[format('AZURE_STORAGE_CONNECTION_STRING_{0}', env.ENV_SUFFIX_UPPER)] || secrets.AZURE_STORAGE_CONNECTION_STRING }}" >> $GITHUB_ENV
             echo "AZURE_STORAGE_CONTAINER_NAME=documents" >> $GITHUB_ENV
+
+            # Print debug info (without exposing secrets)
+            echo "Azure Search Endpoint: ${AZURE_SEARCH_ENDPOINT:-Not set}"
+            echo "Azure OpenAI Endpoint: ${AZURE_OPENAI_ENDPOINT:-Not set}"
+            echo "Azure Document Intelligence Endpoint: ${AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT:-Not set}"
+            echo "Azure Storage Container: ${AZURE_STORAGE_CONTAINER_NAME:-Not set}"
+
+            # Check if any required variables are missing
+            if [ -z "${AZURE_SEARCH_ENDPOINT}" ] || [ -z "${AZURE_SEARCH_API_KEY}" ] || \
+               [ -z "${AZURE_OPENAI_ENDPOINT}" ] || [ -z "${AZURE_OPENAI_API_KEY}" ] || \
+               [ -z "${AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT}" ] || [ -z "${AZURE_DOCUMENT_INTELLIGENCE_API_KEY}" ] || \
+               [ -z "${AZURE_STORAGE_CONNECTION_STRING}" ]; then
+              echo "::warning::Some Azure credentials are missing. Tests requiring real services may fail."
+              # Fall back to mock values for any missing credentials
+              [ -z "${AZURE_SEARCH_ENDPOINT}" ] && echo "AZURE_SEARCH_ENDPOINT=https://mock-search-endpoint.search.windows.net" >> $GITHUB_ENV
+              [ -z "${AZURE_COGNITIVE_SEARCH_ENDPOINT}" ] && echo "AZURE_COGNITIVE_SEARCH_ENDPOINT=https://mock-search-endpoint.search.windows.net" >> $GITHUB_ENV
+              [ -z "${AZURE_SEARCH_API_KEY}" ] && echo "AZURE_SEARCH_API_KEY=mock-search-api-key" >> $GITHUB_ENV
+              [ -z "${AZURE_OPENAI_ENDPOINT}" ] && echo "AZURE_OPENAI_ENDPOINT=https://mock-openai-endpoint.openai.azure.com" >> $GITHUB_ENV
+              [ -z "${AZURE_OPENAI_API_KEY}" ] && echo "AZURE_OPENAI_API_KEY=mock-openai-api-key" >> $GITHUB_ENV
+              [ -z "${AZURE_OPENAI_EMBEDDING_DEPLOYMENT}" ] && echo "AZURE_OPENAI_EMBEDDING_DEPLOYMENT=text-embedding-ada-002" >> $GITHUB_ENV
+              [ -z "${AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT}" ] && echo "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT=https://mock-docint-endpoint.cognitiveservices.azure.com" >> $GITHUB_ENV
+              [ -z "${AZURE_DOCUMENT_INTELLIGENCE_API_KEY}" ] && echo "AZURE_DOCUMENT_INTELLIGENCE_API_KEY=mock-docint-api-key" >> $GITHUB_ENV
+              [ -z "${AZURE_STORAGE_CONNECTION_STRING}" ] && echo "AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=https;AccountName=mockaccount;AccountKey=mock-key;EndpointSuffix=core.windows.net" >> $GITHUB_ENV
+            fi
           else
             # For mock tests, use dummy values
             echo "Using mock Azure services"
@@ -235,6 +283,8 @@ jobs:
         id: run-tests
         run: |
           mkdir -p tests/results
+          # Set proper permissions on the results directory
+          chmod -R 777 tests/results
 
           # Run tests in Docker container with environment file
           docker run --rm \
@@ -242,7 +292,7 @@ jobs:
             -v $(pwd)/tests/results:/app/tests/results \
             -v $(pwd)/tests/run_all_tests.py:/app/tests/run_all_tests.py \
             konveyor-test:latest \
-            bash -c "cd /app && python tests/run_all_tests.py ${{ steps.test-params.outputs.args }} -v"
+            bash -c "cd /app && mkdir -p /app/tests/results && chmod -R 777 /app/tests/results && python tests/run_all_tests.py ${{ steps.test-params.outputs.args }} -v"
 
           # Store exit code
           echo "exit_code=$?" >> $GITHUB_OUTPUT
@@ -275,10 +325,11 @@ jobs:
 
       # Clean up infrastructure if it was deployed for real tests
       - name: Azure Login for Cleanup
-        if: ${{ always() && (inputs.test_type == 'real' || github.event.inputs.test_type == 'real') }}
+        if: ${{ always() && (github.event_name == 'push' || github.event_name == 'pull_request' || inputs.test_type == 'real' || github.event.inputs.test_type == 'real' || contains(github.event.inputs.test_type, 'both')) }}
         uses: azure/login@v2.1.0
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          creds: ${{ secrets.AZURE_CREDENTIALS || env.AZURE_CREDENTIALS }}
+        continue-on-error: true
 
       - name: Set up Terraform for Cleanup
         if: ${{ always() && (inputs.test_type == 'real' || github.event.inputs.test_type == 'real') }}
