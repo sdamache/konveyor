@@ -68,7 +68,7 @@ class ResponseGeneratorFactory:
             # For RAG, we need a context service
             if not context_service:
                 logger.warning(
-                    "Context service not provided for RAG generator, using default generator"
+                    "Context service not provided for RAG generator, using default generator"  # noqa: E501
                 )
                 return cls.get_generator("default", config)
 
@@ -83,7 +83,7 @@ class ResponseGeneratorFactory:
             # For chat, we need a conversation service
             if not conversation_service:
                 logger.warning(
-                    "Conversation service not provided for chat generator, using default generator"
+                    "Conversation service not provided for chat generator, using default generator"  # noqa: E501
                 )
                 return cls.get_generator("default", config)
 

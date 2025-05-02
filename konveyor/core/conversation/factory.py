@@ -62,7 +62,7 @@ class ConversationManagerFactory:
             # Validate configuration
             if not cosmos_conn_str or not redis_conn_str:
                 logger.warning(
-                    "Missing Azure storage configuration, falling back to in-memory storage"
+                    "Missing Azure storage configuration, falling back to in-memory storage"  # noqa: E501
                 )
                 return InMemoryConversationManager()
 

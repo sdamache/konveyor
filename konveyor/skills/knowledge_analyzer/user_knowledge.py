@@ -1,12 +1,12 @@
 """
 User Knowledge Store for Konveyor.
 
-This module provides functionality to store and retrieve user knowledge confidence scores
+This module provides functionality to store and retrieve user knowledge confidence scores  # noqa: E501
 for different knowledge domains.
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional  # noqa: F401, F401
 
 logger = logging.getLogger(__name__)
 

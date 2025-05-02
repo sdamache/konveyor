@@ -7,7 +7,7 @@ message formatting, and response generation.
 """
 
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional  # noqa: F401
 
 from konveyor.core.azure_utils.clients import AzureClientManager
 from konveyor.core.conversation.factory import ConversationManagerFactory
@@ -63,7 +63,7 @@ class RAGService:
     def _init_response_generator(self):
         """Initialize the response generator."""
         try:
-            # Configure the response generator with the conversation manager and context service
+            # Configure the response generator with the conversation manager and context service  # noqa: E501
             config = {
                 "conversation_service": self.conversation_manager,
                 "context_service": self.context_service,

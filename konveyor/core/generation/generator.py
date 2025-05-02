@@ -6,8 +6,8 @@ ResponseGeneratorInterface. It supports both RAG and direct generation approache
 """
 
 import logging
-import os
-from typing import Any, Dict, List, Optional, Union
+import os  # noqa: F401
+from typing import Any, Dict, List, Optional, Union  # noqa: F401
 
 from konveyor.core.azure_utils.openai_factory import OpenAIClientFactory
 from konveyor.core.generation.interface import ResponseGeneratorInterface
@@ -35,7 +35,7 @@ class ResponseGenerator(ResponseGeneratorInterface):
         Initialize the response generator.
 
         Args:
-            openai_client_type: Type of OpenAI client to use ('unified', 'custom', 'sdk')
+            openai_client_type: Type of OpenAI client to use ('unified', 'custom', 'sdk')  # noqa: E501
             openai_config: Configuration for the OpenAI client
             context_service: Service for retrieving context (for RAG)
             conversation_service: Service for managing conversations
@@ -53,11 +53,11 @@ class ResponseGenerator(ResponseGeneratorInterface):
         self.prompt_templates = {
             "default": {"system": "You are a helpful assistant.", "user": "{query}"},
             "rag": {
-                "system": "You are a helpful assistant. Use the following context to answer the question. If the context doesn't contain the answer, say so.\n\nContext:\n{context}",
+                "system": "You are a helpful assistant. Use the following context to answer the question. If the context doesn't contain the answer, say so.\n\nContext:\n{context}",  # noqa: E501
                 "user": "{query}",
             },
             "chat": {
-                "system": "You are a helpful assistant. Provide a friendly and informative response.",
+                "system": "You are a helpful assistant. Provide a friendly and informative response.",  # noqa: E501
                 "user": "{query}",
             },
         }

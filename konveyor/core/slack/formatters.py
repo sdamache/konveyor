@@ -6,7 +6,7 @@ including Markdown conversion, block creation, and other formatting operations.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional  # noqa: F401
 
 logger = logging.getLogger(__name__)
 

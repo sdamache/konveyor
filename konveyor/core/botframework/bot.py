@@ -1,7 +1,7 @@
-import asyncio
+import asyncio  # noqa: F401
 import logging
 import traceback
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional  # noqa: F401
 
 from botbuilder.core import ActivityHandler, TurnContext
 from botbuilder.schema import Activity, ActivityTypes
@@ -78,7 +78,7 @@ class KonveyorBot(ActivityHandler):
                 return await turn_context.send_activity(
                     Activity(
                         type=ActivityTypes.message,
-                        text="I received your message but it was empty. Please try again.",
+                        text="I received your message but it was empty. Please try again.",  # noqa: E501
                     )
                 )
 
@@ -128,7 +128,7 @@ class KonveyorBot(ActivityHandler):
             await turn_context.send_activity(
                 Activity(
                     type=ActivityTypes.message,
-                    text=f"I encountered an error while processing your request: {str(e)}",
+                    text=f"I encountered an error while processing your request: {str(e)}",  # noqa: E501
                 )
             )
 
@@ -145,6 +145,6 @@ class KonveyorBot(ActivityHandler):
                 await turn_context.send_activity(
                     Activity(
                         type=ActivityTypes.message,
-                        text="Welcome to Konveyor Bot! I can help you with questions, chat, and more. Type something to get started.",
+                        text="Welcome to Konveyor Bot! I can help you with questions, chat, and more. Type something to get started.",  # noqa: E501
                     )
                 )

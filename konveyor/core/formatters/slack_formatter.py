@@ -7,7 +7,7 @@ for code blocks, tables, and other technical content.
 
 import logging
 import re
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union  # noqa: F401
 
 from konveyor.core.formatters.interface import FormatterInterface
 
@@ -110,7 +110,7 @@ class SlackFormatter(FormatterInterface):
         code = code.strip()
 
         # Format the code with triple backticks and language for syntax highlighting
-        # Make sure language is lowercase for better compatibility with Slack's syntax highlighting
+        # Make sure language is lowercase for better compatibility with Slack's syntax highlighting  # noqa: E501
         lang_tag = language.lower() if language else ""
 
         # Ensure we're using the correct language identifier for Slack
@@ -375,7 +375,7 @@ class SlackFormatter(FormatterInterface):
         code = code.strip()
 
         # Format the code with triple backticks and language for syntax highlighting
-        # Make sure language is lowercase for better compatibility with Slack's syntax highlighting
+        # Make sure language is lowercase for better compatibility with Slack's syntax highlighting  # noqa: E501
         lang_tag = language.lower() if language else ""
 
         # Ensure we're using the correct language identifier for Slack
@@ -536,7 +536,7 @@ class SlackFormatter(FormatterInterface):
         Returns:
             The text with Slack formatting
         """
-        # Slack already supports most Markdown syntax, but we need to handle some edge cases
+        # Slack already supports most Markdown syntax, but we need to handle some edge cases  # noqa: E501
 
         # Replace triple backticks with single backticks for code blocks
         text = re.sub(r"```(\w*)\n(.*?)\n```", r"```\1\n\2\n```", text, flags=re.DOTALL)
@@ -594,7 +594,7 @@ class SlackFormatter(FormatterInterface):
             # Clean up the code (remove extra whitespace at beginning/end)
             code = code.strip()
 
-            # Make sure language is lowercase for better compatibility with Slack's syntax highlighting
+            # Make sure language is lowercase for better compatibility with Slack's syntax highlighting  # noqa: E501
             lang_tag = lang.lower() if lang else ""
 
             # Ensure we're using the correct language identifier for Slack

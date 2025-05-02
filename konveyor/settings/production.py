@@ -1,7 +1,7 @@
 import logging
 import os
 
-from .base import *
+from .base import *  # noqa: F403
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +36,7 @@ AZURE_OPENAI_ENDPOINT = os.environ.get(
 AZURE_OPENAI_API_KEY = os.environ.get("AZURE_OPENAI_API_KEY", "dummy-key")
 AZURE_STORAGE_CONNECTION_STRING = os.environ.get(
     "AZURE_STORAGE_CONNECTION_STRING",
-    "DefaultEndpointsProtocol=https;AccountName=example;AccountKey=example;EndpointSuffix=core.windows.net",
+    "DefaultEndpointsProtocol=https;AccountName=example;AccountKey=example;EndpointSuffix=core.windows.net",  # noqa: E501
 )
 AZURE_SEARCH_ENDPOINT = os.environ.get(
     "AZURE_SEARCH_ENDPOINT", "https://example.search.windows.net"
@@ -68,7 +68,7 @@ except Exception as e:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",  # noqa: F405
         }
     }
 

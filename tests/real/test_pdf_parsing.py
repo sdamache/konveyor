@@ -9,9 +9,9 @@ from dotenv import load_dotenv
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.insert(0, project_root)
 
-from azure.core.exceptions import HttpResponseError
+from azure.core.exceptions import HttpResponseError  # noqa: E402
 
-from konveyor.core.documents.document_service import DocumentService
+from konveyor.core.documents.document_service import DocumentService  # noqa: E402
 
 # Configure logging
 logging.basicConfig(
@@ -59,7 +59,7 @@ def test_pdf_parsing():
             file_obj.name = os.path.basename(pdf_file_path)  # Add filename for clarity
 
             logging.info(
-                f"Read {len(file_content)} bytes from {file_obj.name}. Calling parse_file..."
+                f"Read {len(file_content)} bytes from {file_obj.name}. Calling parse_file..."  # noqa: E501
             )
 
             # Call the parse_file method
@@ -77,7 +77,7 @@ def test_pdf_parsing():
         )  # Don't need full traceback here
         logging.error(f"Status Code: {hre.status_code}")
         logging.error(
-            f"Error Code: {hre.error.code if hasattr(hre, 'error') and hasattr(hre.error, 'code') else 'N/A'}"
+            f"Error Code: {hre.error.code if hasattr(hre, 'error') and hasattr(hre.error, 'code') else 'N/A'}"  # noqa: E501
         )
         logging.error(f"Message: {hre.message}")
         if hasattr(hre.error, "innererror") and hre.error.innererror:
@@ -88,7 +88,7 @@ def test_pdf_parsing():
                 f"Inner Error Message: {hre.error.innererror.get('message', 'N/A')}"
             )
 
-    except Exception as e:
+    except Exception as e:  # noqa: F841
         logging.error("--- PDF Parsing Failed (General Error) ---", exc_info=True)
 
 

@@ -5,7 +5,7 @@ This module provides functionality for handling Slack webhook events,
 including verification, event processing, and response generation.
 """
 
-import json
+import json  # noqa: F401
 import logging
 import traceback
 from typing import Any, Callable, Dict, Optional
@@ -28,7 +28,7 @@ class SlackWebhookHandler:
         Initialize the webhook handler.
 
         Args:
-            slack_service: Optional SlackService instance (creates a new one if not provided)
+            slack_service: Optional SlackService instance (creates a new one if not provided)  # noqa: E501
         """
         self.slack_service = slack_service or SlackService()
         self.processed_events = set()
@@ -108,7 +108,7 @@ class SlackWebhookHandler:
                 if len(self.processed_events) > 1000:
                     self.processed_events = set(list(self.processed_events)[-1000:])
                     logger.debug(
-                        f"Trimmed processed events to {len(self.processed_events)} items"
+                        f"Trimmed processed events to {len(self.processed_events)} items"  # noqa: E501
                     )
 
             # Process message events

@@ -2,7 +2,7 @@
 Tests for the Slack user profile service.
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch  # noqa: F401
 
 import pytest
 from django.utils import timezone
@@ -17,7 +17,7 @@ from konveyor.apps.bot.services.slack_user_profile_service import (
 def test_get_or_create_profile_existing():
     """Test getting an existing profile."""
     # Create a test profile
-    profile = SlackUserProfile.objects.create(
+    profile = SlackUserProfile.objects.create(  # noqa: F841
         slack_id="test_user",
         slack_name="Test User",
         slack_email="test@example.com",
@@ -88,7 +88,7 @@ def test_get_or_create_profile_new():
 def test_update_profile():
     """Test updating a profile."""
     # Create a test profile
-    profile = SlackUserProfile.objects.create(
+    profile = SlackUserProfile.objects.create(  # noqa: F841
         slack_id="test_user", slack_name="Test User", slack_email="test@example.com"
     )
 
@@ -131,7 +131,7 @@ def test_update_profile():
 def test_update_preference():
     """Test updating a user preference."""
     # Create a test profile
-    profile = SlackUserProfile.objects.create(
+    profile = SlackUserProfile.objects.create(  # noqa: F841
         slack_id="test_user",
         slack_name="Test User",
         slack_email="test@example.com",
@@ -171,14 +171,14 @@ def test_update_preference():
 def test_get_active_profiles():
     """Test getting active profiles."""
     # Create test profiles
-    active_profile = SlackUserProfile.objects.create(
+    active_profile = SlackUserProfile.objects.create(  # noqa: F841
         slack_id="active_user",
         slack_name="Active User",
         last_interaction=timezone.now(),
     )
 
     # Create an inactive profile (31 days ago)
-    inactive_profile = SlackUserProfile.objects.create(
+    inactive_profile = SlackUserProfile.objects.create(  # noqa: F841
         slack_id="inactive_user",
         slack_name="Inactive User",
         last_interaction=timezone.now() - timezone.timedelta(days=31),

@@ -1,5 +1,5 @@
 import os
-from pathlib import Path
+from pathlib import Path  # noqa: F401
 
 import pytest
 import pytest_asyncio
@@ -7,28 +7,28 @@ import pytest_asyncio
 # Set Django settings module before importing any Django code
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "konveyor.settings.development")
 
-import django
+import django  # noqa: E402
 
 # Import Django settings and setup
-from django.conf import settings
+from django.conf import settings  # noqa: E402, F401
 
 django.setup()
 
 # Import settings loader first
-from konveyor.settings.settings_loader import load_settings
+from konveyor.settings.settings_loader import load_settings  # noqa: E402
 
 # Load environment settings
 load_settings()
 
-from konveyor.apps.documents.services.document_adapter import (  # Updated import
+from konveyor.apps.documents.services.document_adapter import (  # Updated import  # noqa: E402, E501
     DjangoDocumentService,
 )
-from konveyor.apps.search.services.indexing_service import IndexingService
-from konveyor.apps.search.services.search_service import SearchService
-from konveyor.core.azure_utils.clients import AzureClientManager
+from konveyor.apps.search.services.indexing_service import IndexingService  # noqa: E402
+from konveyor.apps.search.services.search_service import SearchService  # noqa: E402
+from konveyor.core.azure_utils.clients import AzureClientManager  # noqa: E402
 
 # Now import the rest
-from konveyor.core.rag.rag_service import RAGService
+from konveyor.core.rag.rag_service import RAGService  # noqa: E402
 
 
 @pytest.mark.integration
@@ -53,9 +53,9 @@ class TestRAGIntegration:
 
         # Index test documents
         test_docs = {
-            "kubernetes_pods.md": "A Pod is the smallest deployable unit in Kubernetes. It represents a single instance of a running process in your cluster. A Pod can contain one or more containers that share storage and network resources. Pods are typically managed by higher-level controllers like Deployments.",
-            "kubernetes_deployments.md": "A Deployment in Kubernetes provides declarative updates for Pods and ReplicaSets. You describe a desired state in a Deployment, and the Deployment Controller changes the actual state to the desired state at a controlled rate. Deployments are perfect for stateless applications.",
-            "kubernetes_services.md": "A Kubernetes Service is an abstraction layer that defines a logical set of Pods and enables external traffic exposure, load balancing and service discovery for those Pods. Services enable loose coupling between dependent Pods and can span multiple deployments.",
+            "kubernetes_pods.md": "A Pod is the smallest deployable unit in Kubernetes. It represents a single instance of a running process in your cluster. A Pod can contain one or more containers that share storage and network resources. Pods are typically managed by higher-level controllers like Deployments.",  # noqa: E501
+            "kubernetes_deployments.md": "A Deployment in Kubernetes provides declarative updates for Pods and ReplicaSets. You describe a desired state in a Deployment, and the Deployment Controller changes the actual state to the desired state at a controlled rate. Deployments are perfect for stateless applications.",  # noqa: E501
+            "kubernetes_services.md": "A Kubernetes Service is an abstraction layer that defines a logical set of Pods and enables external traffic exposure, load balancing and service discovery for those Pods. Services enable loose coupling between dependent Pods and can span multiple deployments.",  # noqa: E501
         }
 
         # Process and index each document
@@ -70,7 +70,7 @@ class TestRAGIntegration:
             doc = self.document_service.process_document(
                 file_obj=file_obj,
                 filename=filename,
-                # The adapter now handles content_type detection and uses filename for title
+                # The adapter now handles content_type detection and uses filename for title  # noqa: E501
             )
 
             # Index document for search

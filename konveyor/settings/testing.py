@@ -1,8 +1,8 @@
-import os
+import os  # noqa: F401
 
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured  # noqa: F401
 
-from .base import *
+from .base import *  # noqa: F403
 
 DEBUG = False
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
@@ -11,7 +11,9 @@ ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": str(BASE_DIR / "db.sqlite3.test"),  # Convert Path to string
+        "NAME": str(
+            BASE_DIR / "db.sqlite3.test"  # noqa: F405
+        ),  # Convert Path to string  # noqa: E501
     }
 }
 
@@ -29,10 +31,10 @@ LOGGING = {
 
 # Set default values for Azure Search settings if not provided
 # This allows tests to run in CI environments without real Azure credentials
-if not AZURE_COGNITIVE_SEARCH_ENDPOINT:
+if not AZURE_COGNITIVE_SEARCH_ENDPOINT:  # noqa: F405
     AZURE_COGNITIVE_SEARCH_ENDPOINT = "https://mock-search-endpoint.search.windows.net"
 
-if not AZURE_SEARCH_API_KEY:
+if not AZURE_SEARCH_API_KEY:  # noqa: F405
     AZURE_SEARCH_API_KEY = "mock-search-api-key"
 
 

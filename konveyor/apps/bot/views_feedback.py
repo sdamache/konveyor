@@ -24,10 +24,10 @@ TODO: Feedback API Enhancements
   - Add user-specific feedback views
 """
 
-import json
+import json  # noqa: F401
 import logging
 
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required  # noqa: F401
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET

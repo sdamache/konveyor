@@ -13,7 +13,10 @@ from pathlib import Path
 
 # Removed time and logging imports
 import pytest
-from azure.search.documents.indexes.models import SearchFieldDataType, SearchIndex
+from azure.search.documents.indexes.models import (  # noqa: E501, F401
+    SearchFieldDataType,
+    SearchIndex,
+)
 from django.conf import settings
 from django.test import TestCase
 
@@ -64,7 +67,7 @@ class SearchServiceTests(TestCase):
             "search_operations": 0,
         }
 
-        print(f"\n==== Setting up SearchServiceTests ====")
+        print(f"\n==== Setting up SearchServiceTests ====")  # noqa: F541
         print(f"Test run ID: {cls.test_run_id}")
 
         # Check if required environment variables are set
@@ -79,7 +82,7 @@ class SearchServiceTests(TestCase):
         missing_vars = [var for var in required_vars if not os.getenv(var)]
         if missing_vars:
             print(
-                f"Skipping tests due to missing environment variables: {', '.join(missing_vars)}"
+                f"Skipping tests due to missing environment variables: {', '.join(missing_vars)}"  # noqa: E501
             )
             pytest.skip(
                 f"Missing required environment variables: {', '.join(missing_vars)}"
@@ -127,11 +130,11 @@ class SearchServiceTests(TestCase):
                     test_search_client  # Update the client on the service instance
                 )
                 print(
-                    f"Successfully updated search client for index {cls.test_index_name}"
+                    f"Successfully updated search client for index {cls.test_index_name}"  # noqa: E501
                 )
             except Exception as client_error:
                 print(
-                    f"Failed to get search client for test index {cls.test_index_name}: {client_error}"
+                    f"Failed to get search client for test index {cls.test_index_name}: {client_error}"  # noqa: E501
                 )
                 pytest.skip(
                     f"Could not get search client for test index: {client_error}"

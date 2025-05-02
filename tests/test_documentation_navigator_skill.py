@@ -5,12 +5,12 @@ This module contains tests for the DocumentationNavigatorSkill, including
 unit tests and integration tests with the SearchService.
 """
 
-import asyncio
+import asyncio  # noqa: F401
 
 # Mock the Django models and SearchService before importing DocumentationNavigatorSkill
 import sys
-from typing import Any, Dict, List
-from unittest.mock import AsyncMock, MagicMock, patch
+from typing import Any, Dict, List  # noqa: F401, F401, F401
+from unittest.mock import AsyncMock, MagicMock, patch  # noqa: F401, F401
 
 import pytest
 
@@ -154,7 +154,7 @@ sys.modules["konveyor.core.conversation.factory"].ConversationManagerFactory = (
 )
 
 # Now import DocumentationNavigatorSkill
-from konveyor.skills.documentation_navigator.DocumentationNavigatorSkill import (
+from konveyor.skills.documentation_navigator.DocumentationNavigatorSkill import (  # noqa: E402, E501
     DocumentationNavigatorSkill,
 )
 

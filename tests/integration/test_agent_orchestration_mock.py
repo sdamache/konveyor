@@ -1,14 +1,14 @@
 """
 Mock integration tests for Agent Orchestration Layer.
 
-These tests verify the end-to-end functionality of the Agent Orchestration Layer using mocked dependencies,
+These tests verify the end-to-end functionality of the Agent Orchestration Layer using mocked dependencies,  # noqa: E501
 including integration with the Bot Framework and Semantic Kernel skills.
 
-This file uses unittest.mock to mock the Semantic Kernel, Bot Framework, and their dependencies,
-allowing tests to run without requiring real Azure OpenAI credentials or a real bot deployment.
+This file uses unittest.mock to mock the Semantic Kernel, Bot Framework, and their dependencies,  # noqa: E501
+allowing tests to run without requiring real Azure OpenAI credentials or a real bot deployment.  # noqa: E501
 """
 
-import asyncio
+import asyncio  # noqa: F401
 import logging
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -22,8 +22,11 @@ from botbuilder.schema import (
 )
 
 from konveyor.apps.bot.bot import KonveyorBot
-from konveyor.core.agent import AgentOrchestratorSkill, SkillRegistry
-from konveyor.core.chat import ChatSkill
+from konveyor.core.agent import (  # noqa: E501, F401
+    AgentOrchestratorSkill,
+    SkillRegistry,
+)
+from konveyor.core.chat import ChatSkill  # noqa: F401
 
 # Configure logging for tests
 logging.basicConfig(
@@ -63,7 +66,7 @@ def mock_kernel():
     async def mock_invoke(function, **kwargs):
         # Return a mock response
         return {
-            "response": f"Mock response to: {kwargs.get('message', kwargs.get('question', 'No input'))}",
+            "response": f"Mock response to: {kwargs.get('message', kwargs.get('question', 'No input'))}",  # noqa: E501
             "history": "User: Test\nAssistant: Mock response",
             "success": True,
         }

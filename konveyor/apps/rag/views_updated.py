@@ -54,7 +54,7 @@ class ConversationViewSet(viewsets.ViewSet):
                 )
         except Exception as e:
             print(f"Failed to initialize conversation manager: {str(e)}")
-            # If we can't initialize the conversation manager, use the one from the RAG service
+            # If we can't initialize the conversation manager, use the one from the RAG service  # noqa: E501
             self.conversation_manager = self.rag_service.conversation_manager
 
     async def create(self, request):
@@ -163,7 +163,7 @@ class ConversationViewSet(viewsets.ViewSet):
             print(f"Error generating response: {e}")
 
             # Format error message if formatter is available
-            error_message = "I apologize, but I encountered an error while processing your request. Please try again."
+            error_message = "I apologize, but I encountered an error while processing your request. Please try again."  # noqa: E501
             formatted_error = None
 
             if self.formatter:

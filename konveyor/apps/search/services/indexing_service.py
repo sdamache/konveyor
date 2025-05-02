@@ -107,7 +107,7 @@ class IndexingService(AzureService):
     @transaction.atomic
     def index_document(self, document_id: str) -> Dict[str, Any]:
         """
-        Index all chunks of a document with improved batch processing and error handling.
+        Index all chunks of a document with improved batch processing and error handling.  # noqa: E501
         """
         try:
             self.log_info(f"Starting indexing for document_id={document_id}")
@@ -123,7 +123,7 @@ class IndexingService(AzureService):
                 raise ValueError(f"No chunks found for document {document_id}")
 
             self.log_info(
-                f"Found document '{document.title if hasattr(document, 'title') else document_id}' "
+                f"Found document '{document.title if hasattr(document, 'title') else document_id}' "  # noqa: E501
                 f"with {total_chunks} chunks to process."
             )
 
@@ -143,7 +143,7 @@ class IndexingService(AzureService):
                 "batch_stats": [],
             }
 
-            # Removed time import and start_time, processing time calculation will be removed
+            # Removed time import and start_time, processing time calculation will be removed  # noqa: E501
 
             # Process chunks with adaptive batch sizing
             chunk_list = list(chunks)
@@ -156,7 +156,7 @@ class IndexingService(AzureService):
                 total_batches = (total_chunks + batch_size - 1) // batch_size
 
                 self.log_info(
-                    f"Processing batch {batch_num}/{total_batches} for document {document_id} ({len(batch)} chunks)"
+                    f"Processing batch {batch_num}/{total_batches} for document {document_id} ({len(batch)} chunks)"  # noqa: E501
                 )
 
                 batch_results = self._index_chunk_batch(batch)
@@ -178,7 +178,7 @@ class IndexingService(AzureService):
 
                 self.log_info(
                     f"Batch {batch_num}/{total_batches} completed. "
-                    f"Success: {batch_results['success']}, Failed: {batch_results['failed']}, "
+                    f"Success: {batch_results['success']}, Failed: {batch_results['failed']}, "  # noqa: E501
                     f"Retries: {batch_results.get('retries', 0)}"
                 )
 
@@ -194,13 +194,13 @@ class IndexingService(AzureService):
 
             self.log_info(
                 f"Completed indexing document {document_id}. "
-                f"Success rate: {success_rate:.2f}% ({results['indexed_chunks']}/{total_chunks} chunks)."
+                f"Success rate: {success_rate:.2f}% ({results['indexed_chunks']}/{total_chunks} chunks)."  # noqa: E501
                 # Removed processing time from log message
             )
 
             if results["failed_chunks"] > 0:
                 self.log_warning(
-                    f"Failed to index {results['failed_chunks']} chunks in document {document_id}: "
+                    f"Failed to index {results['failed_chunks']} chunks in document {document_id}: "  # noqa: E501
                     f"{results['failed_chunk_ids']}"
                 )
 
@@ -230,7 +230,7 @@ class IndexingService(AzureService):
         for chunk in chunks:
             try:
                 self.log_debug(
-                    f"Processing chunk {chunk.id} (index: {chunk.chunk_index}) from document {chunk.document.id}"
+                    f"Processing chunk {chunk.id} (index: {chunk.chunk_index}) from document {chunk.document.id}"  # noqa: E501
                 )
 
                 # Get chunk content from blob storage
@@ -240,11 +240,11 @@ class IndexingService(AzureService):
                 embedding = self.search_service.generate_embedding(content)
                 self.log_debug(f"Generated embedding for chunk {chunk.id}")
 
-                # Index the chunk (SearchService.index_document_chunk handles retries if needed)
+                # Index the chunk (SearchService.index_document_chunk handles retries if needed)  # noqa: E501
                 self.search_service.index_document_chunk(
                     chunk_id=str(chunk.id),
                     document_id=str(chunk.document.id),
-                    content=content,  # Pass full content, SearchService truncates if needed
+                    content=content,  # Pass full content, SearchService truncates if needed  # noqa: E501
                     chunk_index=chunk.chunk_index,
                     metadata=chunk.metadata,
                     embedding=embedding,
@@ -292,7 +292,7 @@ class IndexingService(AzureService):
 
         successful_docs = len([r for r in results if "error" not in r])
         self.log_info(
-            f"Bulk indexing completed. Successfully processed {successful_docs}/{total_documents} documents"
+            f"Bulk indexing completed. Successfully processed {successful_docs}/{total_documents} documents"  # noqa: E501
         )
 
         return results

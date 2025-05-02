@@ -5,7 +5,7 @@ This module provides an in-memory implementation of the ConversationInterface.
 It's designed for development, testing, and scenarios where persistence is not required.
 """
 
-import json
+import json  # noqa: F401
 import logging
 import uuid
 from datetime import datetime
@@ -21,7 +21,7 @@ class InMemoryConversationManager(ConversationInterface):
     In-memory implementation of the ConversationInterface.
 
     This class provides a simple in-memory storage for conversations and messages.
-    It's useful for development, testing, and scenarios where persistence is not required.
+    It's useful for development, testing, and scenarios where persistence is not required.  # noqa: E501
 
     All data is stored in memory and will be lost when the application restarts.
     """

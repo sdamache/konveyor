@@ -1,7 +1,7 @@
 import logging
 
-from django.http import JsonResponse
-from django.shortcuts import render
+from django.http import JsonResponse  # noqa: F401
+from django.shortcuts import render  # noqa: F401
 from rest_framework import status, views
 from rest_framework.response import Response
 

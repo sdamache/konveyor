@@ -8,7 +8,7 @@ service registration needed for the kernel to function properly.
 
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional  # noqa: F401
 
 from semantic_kernel import Kernel
 from semantic_kernel.connectors.ai.open_ai.services.azure_chat_completion import (
@@ -46,14 +46,14 @@ def create_kernel(use_embeddings: bool = False, validate: bool = True) -> Kernel
         except Exception as e:
             logger.warning(f"Failed to validate OpenAI configuration: {str(e)}")
             logger.warning(
-                "Continuing without validation - this may cause issues if Azure OpenAI services are required"
+                "Continuing without validation - this may cause issues if Azure OpenAI services are required"  # noqa: E501
             )
 
     # Get Azure OpenAI configuration
     endpoint = config.get_endpoint("OPENAI")
     key_or_secret_name = config.get_key("OPENAI")
 
-    # Attempt to fetch API key from Key Vault; fallback to environment value if unavailable
+    # Attempt to fetch API key from Key Vault; fallback to environment value if unavailable  # noqa: E501
     try:
         kv_client = AzureClientManager(config).get_key_vault_client()
         secret = kv_client.get_secret(key_or_secret_name)
@@ -61,7 +61,7 @@ def create_kernel(use_embeddings: bool = False, validate: bool = True) -> Kernel
         logger.info("Successfully retrieved OpenAI API key from Key Vault")
     except Exception as e:
         logger.warning(
-            f"Failed to retrieve key from Key Vault, using environment variable: {str(e)}"
+            f"Failed to retrieve key from Key Vault, using environment variable: {str(e)}"  # noqa: E501
         )
         api_key = key_or_secret_name
 
@@ -107,7 +107,7 @@ def create_kernel(use_embeddings: bool = False, validate: bool = True) -> Kernel
             )
             kernel.add_service(embedding_service)
             logger.debug(
-                f"Added Azure OpenAI embedding service with deployment: {embedding_deployment}"
+                f"Added Azure OpenAI embedding service with deployment: {embedding_deployment}"  # noqa: E501
             )
         except Exception as e:
             logger.warning(f"Failed to add embedding service: {str(e)}")

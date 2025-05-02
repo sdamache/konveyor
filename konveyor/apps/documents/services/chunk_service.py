@@ -69,7 +69,7 @@ class ChunkService(AzureService):
         self.max_chunk_size = max_chunk_size
         self.max_batch_size = max_batch_size
         self.log_success(
-            f"Initialized with max_chunk_size={max_chunk_size}, max_batch_size={max_batch_size}"
+            f"Initialized with max_chunk_size={max_chunk_size}, max_batch_size={max_batch_size}"  # noqa: E501
         )
 
     def calculate_batch_size(self, chunks: List[DocumentChunk]) -> int:
@@ -102,7 +102,7 @@ class ChunkService(AzureService):
             )
 
         self.log_debug(
-            f"Calculated optimal batch size: {optimal_size} for avg chunk size: {avg_size:.0f}"
+            f"Calculated optimal batch size: {optimal_size} for avg chunk size: {avg_size:.0f}"  # noqa: E501
         )
         return optimal_size
 
@@ -172,14 +172,14 @@ class ChunkService(AzureService):
             # Validate content size
             if len(chunk.content) > self.max_chunk_size:
                 self.log_warning(
-                    f"Chunk {chunk.id} exceeds max size: {len(chunk.content)} > {self.max_chunk_size}"
+                    f"Chunk {chunk.id} exceeds max size: {len(chunk.content)} > {self.max_chunk_size}"  # noqa: E501
                 )
                 return False
 
             # Validate metadata
             if not isinstance(chunk.metadata, dict):
                 self.log_warning(
-                    f"Chunk {chunk.id} has invalid metadata type: {type(chunk.metadata)}"
+                    f"Chunk {chunk.id} has invalid metadata type: {type(chunk.metadata)}"  # noqa: E501
                 )
                 return False
 

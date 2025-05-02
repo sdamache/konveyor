@@ -15,8 +15,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-from konveyor.apps.search.services.search_service import SearchService
-from konveyor.core.azure_adapters.openai.client import AzureOpenAIClient
+from konveyor.apps.search.services.search_service import SearchService  # noqa: E402
+from konveyor.core.azure_adapters.openai.client import AzureOpenAIClient  # noqa: E402
 
 
 def test_search_service_embedding():
@@ -30,7 +30,7 @@ def test_search_service_embedding():
     test_texts = [
         "This is a short test text.",
         "Azure OpenAI provides powerful embedding models for various NLP tasks.",
-        "This is a longer text that tests the embedding model's ability to handle more content.",
+        "This is a longer text that tests the embedding model's ability to handle more content.",  # noqa: E501
     ]
 
     # Generate embeddings for each test text
@@ -47,7 +47,7 @@ def test_search_service_embedding():
             )
             logger.info(f"First 5 values: {embedding[:5]}")
             print(
-                f"Text {i+1}: Successfully generated embedding with {len(embedding)} dimensions"
+                f"Text {i+1}: Successfully generated embedding with {len(embedding)} dimensions"  # noqa: E501
             )
         except Exception as e:
             logger.error(f"Failed to generate embedding for text {i+1}: {str(e)}")
@@ -76,7 +76,7 @@ def test_custom_client():
         )
         logger.info(f"First 5 values: {embedding[:5]}")
         print(
-            f"Custom client: Successfully generated embedding with {len(embedding)} dimensions"
+            f"Custom client: Successfully generated embedding with {len(embedding)} dimensions"  # noqa: E501
         )
     except Exception as e:
         logger.error(f"Custom client failed to generate embedding: {str(e)}")

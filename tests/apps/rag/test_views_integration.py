@@ -5,11 +5,11 @@ This module contains integration tests for the updated RAG views,
 verifying that they work correctly with the new core components.
 """
 
-import json
+import json  # noqa: F401
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from django.test import RequestFactory
+from django.test import RequestFactory  # noqa: F401
 from rest_framework.response import Response
 from rest_framework.test import APIRequestFactory
 
@@ -30,7 +30,7 @@ async def test_conversation_viewset():
         ) as MockClientManager,
         patch("konveyor.apps.rag.views_updated.RAGService") as MockRAGService,
         patch(
-            "konveyor.core.conversation.factory.ConversationManagerFactory.create_manager"
+            "konveyor.core.conversation.factory.ConversationManagerFactory.create_manager"  # noqa: E501
         ) as mock_create_manager,
         patch(
             "konveyor.core.formatters.factory.FormatterFactory.get_formatter"

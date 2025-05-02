@@ -7,7 +7,7 @@ which have been moved to konveyor.core.kernel.
 
 import logging
 
-from konveyor.core.kernel import create_kernel, get_kernel_settings
+from konveyor.core.kernel import create_kernel, get_kernel_settings  # noqa: F401, F401
 
 # Configure logging
 logger = logging.getLogger(__name__)

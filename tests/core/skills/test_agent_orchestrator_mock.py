@@ -1,15 +1,15 @@
 """
 Mock tests for Agent Orchestrator Skill.
 
-These tests verify the functionality of the Agent Orchestrator Skill using mocked dependencies,
+These tests verify the functionality of the Agent Orchestrator Skill using mocked dependencies,  # noqa: E501
 including request routing, skill selection, and error handling.
 
 This file uses unittest.mock to mock the Semantic Kernel and its dependencies,
 allowing tests to run without requiring real Azure OpenAI credentials.
 """
 
-import logging
-from unittest.mock import AsyncMock, MagicMock, patch
+import logging  # noqa: F401
+from unittest.mock import AsyncMock, MagicMock, patch  # noqa: F401
 
 import pytest
 from semantic_kernel import Kernel
@@ -33,7 +33,7 @@ def mock_kernel():
             elif function.name == "chat":
                 return {
                     "response": f"Chat response to: {kwargs.get('message', '')}",
-                    "history": f"User: {kwargs.get('message', '')}\nAssistant: Chat response",
+                    "history": f"User: {kwargs.get('message', '')}\nAssistant: Chat response",  # noqa: E501
                 }
             elif function.name == "greet":
                 return f"Hello, {kwargs.get('name', 'there')}!"

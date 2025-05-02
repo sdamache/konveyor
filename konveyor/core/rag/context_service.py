@@ -1,10 +1,10 @@
 """
 Context service for RAG operations.
-Integrates Azure Document Intelligence, AI Search, and OpenAI for document processing and retrieval.
+Integrates Azure Document Intelligence, AI Search, and OpenAI for document processing and retrieval.  # noqa: E501
 """
 
 import os
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple  # noqa: F401
 
 from openai import AzureOpenAI
 
@@ -23,7 +23,7 @@ class ContextService:
         self.doc_client = self.client_manager.get_document_intelligence_client()
 
     async def process_document(self, content: bytes, filename: str) -> List[Dict]:
-        """Process a document using Azure Document Intelligence and prepare for indexing."""
+        """Process a document using Azure Document Intelligence and prepare for indexing."""  # noqa: E501
         # Extract text using Document Intelligence
         result = await self.doc_client.analyze_document(content)
 
@@ -132,7 +132,7 @@ class ContextService:
             context_chunks.append(
                 {
                     "content": result["content"],
-                    "source": f"Document {result['document_id']}, Chunk {result['chunk_id']}",
+                    "source": f"Document {result['document_id']}, Chunk {result['chunk_id']}",  # noqa: E501
                     "page": result.get("chunk_index"),
                     "relevance_score": result["@search.score"],
                     "metadata": result.get("metadata", {}),

@@ -4,7 +4,7 @@ Unit tests for the feedback service.
 
 import unittest
 from enum import Enum
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch  # noqa: F401
 
 
 # Mock the FeedbackType enum to avoid Django dependencies

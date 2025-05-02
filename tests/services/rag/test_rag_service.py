@@ -22,7 +22,7 @@ async def test_generate_response_kubernetes_concepts(rag_service):
     # Mock context retrieval
     rag_service.context_service.retrieve_context.return_value = [
         {
-            "content": "A Pod is the smallest deployable unit in Kubernetes that can be created and managed.",
+            "content": "A Pod is the smallest deployable unit in Kubernetes that can be created and managed.",  # noqa: E501
             "source": "kubernetes/docs/concepts/workloads/pods/pod-overview.md",
             "score": 0.95,
         }
@@ -52,7 +52,7 @@ async def test_generate_response_linux_kernel(rag_service):
     """Test response generation for Linux kernel questions"""
     rag_service.context_service.retrieve_context.return_value = [
         {
-            "content": "System calls are the fundamental interface between applications and the Linux kernel.",
+            "content": "System calls are the fundamental interface between applications and the Linux kernel.",  # noqa: E501
             "source": "linux/Documentation/admin-guide/syscalls.rst",
             "score": 0.92,
         }
@@ -77,7 +77,7 @@ async def test_generate_response_with_code_examples(rag_service):
     """Test response generation with code examples"""
     rag_service.context_service.retrieve_context.return_value = [
         {
-            "content": "```yaml\napiVersion: v1\nkind: Pod\nmetadata:\n  name: example\nspec:\n  containers:\n  - name: web\n    image: nginx\n```",
+            "content": "```yaml\napiVersion: v1\nkind: Pod\nmetadata:\n  name: example\nspec:\n  containers:\n  - name: web\n    image: nginx\n```",  # noqa: E501
             "source": "kubernetes/docs/concepts/workloads/pods/pod-yaml.md",
             "score": 0.90,
         }
@@ -87,7 +87,7 @@ async def test_generate_response_with_code_examples(rag_service):
         choices=[
             AsyncMock(
                 message=AsyncMock(
-                    content="Here's an example of a Pod YAML:\n```yaml\napiVersion: v1..."
+                    content="Here's an example of a Pod YAML:\n```yaml\napiVersion: v1..."  # noqa: E501
                 )
             )
         ]
@@ -121,7 +121,7 @@ async def test_generate_response_with_multiple_sources(rag_service):
         choices=[
             AsyncMock(
                 message=AsyncMock(
-                    content="Kubernetes containers use Linux namespaces for isolation..."
+                    content="Kubernetes containers use Linux namespaces for isolation..."  # noqa: E501
                 )
             )
         ]

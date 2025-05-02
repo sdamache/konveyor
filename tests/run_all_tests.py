@@ -159,7 +159,7 @@ def setup_environment(env):
 
         django.setup()
         logger.info(
-            f"Django set up with settings module: {os.environ['DJANGO_SETTINGS_MODULE']}"
+            f"Django set up with settings module: {os.environ['DJANGO_SETTINGS_MODULE']}"  # noqa: E501
         )
     except Exception as e:
         logger.error(f"Failed to set up Django: {e}")
@@ -376,7 +376,7 @@ def run_tests(args):
 
     if requires_real and not args.real and not args.mock:
         logger.warning(
-            f"Category '{args.category}' requires real services. Use --real to run these tests."
+            f"Category '{args.category}' requires real services. Use --real to run these tests."  # noqa: E501
         )
         logger.warning(
             "Defaulting to mock mode, but tests may fail if they require real services."

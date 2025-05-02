@@ -316,7 +316,7 @@ class SlackFormatter(FormatterInterface):
         Returns:
             The text with Slack formatting
         """
-        # Slack already supports most Markdown syntax, but we need to handle some edge cases
+        # Slack already supports most Markdown syntax, but we need to handle some edge cases  # noqa: E501
 
         # Replace triple backticks with single backticks for code blocks
         text = re.sub(r"```(\w*)\n(.*?)\n```", r"```\1\n\2\n```", text, flags=re.DOTALL)

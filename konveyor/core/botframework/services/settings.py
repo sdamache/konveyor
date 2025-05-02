@@ -23,7 +23,7 @@ class BotSettingsService(AzureService):
                 "SLACK_CLIENT_ID",
                 "SLACK_CLIENT_SECRET",
                 "SLACK_SIGNING_SECRET",
-                "AZURE_RESOURCE_GROUP",  # Assuming this will be needed, based on other services
+                "AZURE_RESOURCE_GROUP",  # Assuming this will be needed, based on other services  # noqa: E501
                 "AZURE_BOT_SERVICE_NAME",  # Assuming this will be needed
             ],
         )
@@ -31,8 +31,8 @@ class BotSettingsService(AzureService):
             name="Konveyor Bot",
             description="AI assistant for documentation and code understanding",
             max_response_length=4000,
-            default_welcome_message="Hello! I'm Konveyor Bot. I can help you find information in documentation and understand code.",
-            error_message="I'm sorry, I encountered an error. Please try again or contact support.",
+            default_welcome_message="Hello! I'm Konveyor Bot. I can help you find information in documentation and understand code.",  # noqa: E501
+            error_message="I'm sorry, I encountered an error. Please try again or contact support.",  # noqa: E501
             resource_group=self.config.get_setting(
                 "AZURE_RESOURCE_GROUP", default="konveyor-rg"
             ),  # Use config, provide default

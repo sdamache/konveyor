@@ -1,4 +1,4 @@
-import os
+import os  # noqa: F401
 import traceback
 
 import pytest
@@ -20,7 +20,7 @@ config = AzureConfig()
 async def test_create_kernel_services_real():
     """
     Robust integration test for Semantic Kernel with Azure OpenAI.
-    Prints and checks all relevant config, catches and logs exceptions, and asserts on config presence.
+    Prints and checks all relevant config, catches and logs exceptions, and asserts on config presence.  # noqa: E501
     """
     endpoint = config.get_endpoint("OPENAI")
     api_key = config.get_key("OPENAI")
@@ -28,7 +28,7 @@ async def test_create_kernel_services_real():
     api_version = config.get_setting("AZURE_OPENAI_API_VERSION")
 
     # Mask API key for logging
-    masked_api_key = (
+    masked_api_key = (  # noqa: F841
         api_key[:4] + "..." + api_key[-4:]
         if api_key and len(api_key) > 8
         else "(not set)"

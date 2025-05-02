@@ -1,5 +1,5 @@
 import pytest
-from aiohttp import web
+from aiohttp import web  # noqa: F401
 
 from konveyor.apps.bot.app import ADAPTER, APP, messages
 

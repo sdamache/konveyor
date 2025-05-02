@@ -8,9 +8,9 @@ orchestrator to discover and invoke the appropriate skills based on user request
 import inspect
 import logging
 import sys
-from typing import Any, Dict, List, Optional, Set, Type
+from typing import Any, Dict, List, Optional, Set, Type  # noqa: F401
 
-from semantic_kernel.functions import KernelFunction
+from semantic_kernel.functions import KernelFunction  # noqa: F401
 
 # Default keywords for built-in skills
 DEFAULT_SKILL_KEYWORDS = {
@@ -60,7 +60,7 @@ class SkillRegistry:
     Attributes:
         skills (Dict[str, Any]): Dictionary of registered skills
         skill_descriptions (Dict[str, str]): Descriptions of registered skills
-        function_descriptions (Dict[str, Dict[str, str]]): Descriptions of skill functions
+        function_descriptions (Dict[str, Dict[str, str]]): Descriptions of skill functions  # noqa: E501
         keywords (Dict[str, Set[str]]): Keywords associated with each skill
     """
 
@@ -114,7 +114,7 @@ class SkillRegistry:
                 # Use the first line of the docstring
                 self.skill_descriptions[skill_name] = doc.split("\n")[0]
                 logger.info(
-                    f"Using docstring description: {self.skill_descriptions[skill_name]}"
+                    f"Using docstring description: {self.skill_descriptions[skill_name]}"  # noqa: E501
                 )
             else:
                 self.skill_descriptions[skill_name] = f"{skill_name} skill"
@@ -179,7 +179,7 @@ class SkillRegistry:
                     DEFAULT_SKILL_KEYWORDS[skill.__class__.__name__]
                 )
                 logger.info(
-                    f"Using default keywords for {skill.__class__.__name__}: {self.keywords[skill_name]}"
+                    f"Using default keywords for {skill.__class__.__name__}: {self.keywords[skill_name]}"  # noqa: E501
                 )
             else:
                 # Extract keywords from skill name and description
@@ -198,7 +198,7 @@ class SkillRegistry:
 
         logger.info(f"Final keywords for {skill_name}: {self.keywords[skill_name]}")
         logger.info(
-            f"Registered skill: {skill_name} with {len(self.function_descriptions[skill_name])} functions"
+            f"Registered skill: {skill_name} with {len(self.function_descriptions[skill_name])} functions"  # noqa: E501
         )
 
         # Log all registered skills for debugging

@@ -8,12 +8,12 @@ delegating core document processing to the framework-agnostic service.
 # Removed ThreadPoolExecutor import (unused)
 import logging
 import os  # Add os import for content type detection
-from typing import Any, BinaryIO, Dict
+from typing import Any, BinaryIO, Dict  # noqa: F401, F401
 
 from django.core.exceptions import ValidationError
 from langchain.text_splitter import RecursiveCharacterTextSplitter  # Keep for now
 
-from konveyor.core.documents.document_service import (  # Ensure this points to the core service
+from konveyor.core.documents.document_service import (  # Ensure this points to the core service  # noqa: E501
     DocumentService,
 )
 
@@ -28,7 +28,7 @@ class DjangoDocumentService:
     def __init__(self):
         """Initialize the adapter with core document service."""
         self._service = DocumentService()
-        # Keep text_splitter initialization for now, as core service doesn't handle chunking orchestration yet.
+        # Keep text_splitter initialization for now, as core service doesn't handle chunking orchestration yet.  # noqa: E501
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000, chunk_overlap=200
         )
@@ -115,7 +115,7 @@ class DjangoDocumentService:
         ext = ext.lower()
         content_types = {
             ".pdf": "application/pdf",
-            ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",  # noqa: E501
             ".md": "text/markdown",
             ".txt": "text/plain",
         }

@@ -41,7 +41,7 @@ def load_settings():
         ),
         "AZURE_COSMOS_CONNECTION_STRING": os.environ.get(
             "AZURE_COSMOS_CONNECTION_STRING",
-            "AccountEndpoint=https://konveyor-cosmos-test.mongo.cosmos.azure.com:10255/;AccountKey=your_key_here",
+            "AccountEndpoint=https://konveyor-cosmos-test.mongo.cosmos.azure.com:10255/;AccountKey=your_key_here",  # noqa: E501
         ),
         "AZURE_REDIS_CONNECTION_STRING": os.environ.get(
             "AZURE_REDIS_CONNECTION_STRING", "redis://localhost:6379/0"

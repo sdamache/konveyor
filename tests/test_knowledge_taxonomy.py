@@ -2,10 +2,10 @@
 Unit tests for the Knowledge Taxonomy Loader.
 """
 
-import os
-from pathlib import Path
+import os  # noqa: F401
+from pathlib import Path  # noqa: F401
 
-import pytest
+import pytest  # noqa: F401
 
 from konveyor.skills.knowledge_analyzer.taxonomy import KnowledgeTaxonomyLoader
 

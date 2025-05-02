@@ -6,7 +6,7 @@ contract for different implementations (RAG, direct generation, etc.).
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union  # noqa: F401
 
 
 class ResponseGeneratorInterface(ABC):

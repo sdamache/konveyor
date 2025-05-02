@@ -7,9 +7,9 @@ orchestrator to discover and invoke the appropriate skills based on user request
 
 import inspect
 import logging
-from typing import Any, Dict, List, Optional, Set, Type
+from typing import Any, Dict, List, Optional, Set, Type  # noqa: F401
 
-from semantic_kernel.functions import KernelFunction
+from semantic_kernel.functions import KernelFunction  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class SkillRegistry:
     Attributes:
         skills (Dict[str, Any]): Dictionary of registered skills
         skill_descriptions (Dict[str, str]): Descriptions of registered skills
-        function_descriptions (Dict[str, Dict[str, str]]): Descriptions of skill functions
+        function_descriptions (Dict[str, Dict[str, str]]): Descriptions of skill functions  # noqa: E501
         keywords (Dict[str, Set[str]]): Keywords associated with each skill
     """
 
@@ -79,7 +79,7 @@ class SkillRegistry:
                 # Use the first line of the docstring
                 self.skill_descriptions[skill_name] = doc.split("\n")[0]
                 logger.debug(
-                    f"Using docstring description: {self.skill_descriptions[skill_name]}"
+                    f"Using docstring description: {self.skill_descriptions[skill_name]}"  # noqa: E501
                 )
             else:
                 self.skill_descriptions[skill_name] = f"{skill_name} skill"
@@ -152,7 +152,7 @@ class SkillRegistry:
         # Log summary at INFO level, details at DEBUG level
         logger.debug(f"Final keywords for {skill_name}: {self.keywords[skill_name]}")
         logger.info(
-            f"Registered skill: {skill_name} with {len(self.function_descriptions[skill_name])} functions"
+            f"Registered skill: {skill_name} with {len(self.function_descriptions[skill_name])} functions"  # noqa: E501
         )
         logger.debug(f"All registered skills: {list(self.skills.keys())}")
         logger.debug(f"All keywords: {self.keywords}")

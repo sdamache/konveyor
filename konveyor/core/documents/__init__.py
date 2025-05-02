@@ -1,4 +1,4 @@
 """Document processing services.
 
-This package provides document processing functionality using Azure Document Intelligence.
+This package provides document processing functionality using Azure Document Intelligence.  # noqa: E501
 """

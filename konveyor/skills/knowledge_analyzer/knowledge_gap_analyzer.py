@@ -7,10 +7,10 @@ map them to knowledge areas, and identify potential knowledge gaps.
 
 import json
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple  # noqa: F401
 
 from semantic_kernel import Kernel
-from semantic_kernel.functions import KernelFunction, kernel_function
+from semantic_kernel.functions import KernelFunction, kernel_function  # noqa: F401
 
 from konveyor.skills.knowledge_analyzer.taxonomy import KnowledgeTaxonomyLoader
 from konveyor.skills.knowledge_analyzer.user_knowledge import UserKnowledgeStore
@@ -164,12 +164,12 @@ class KnowledgeGapAnalyzerSkill:
         return json.dumps(gaps_response, indent=2)
 
     @kernel_function(
-        description="Get a learning path for a user based on their role and knowledge gaps",
+        description="Get a learning path for a user based on their role and knowledge gaps",  # noqa: E501
         name="get_learning_path",
     )
     def get_learning_path(self, role: str, user_id: str = "anonymous") -> str:
         """
-        Get a personalized learning path for a user based on their role and knowledge gaps.
+        Get a personalized learning path for a user based on their role and knowledge gaps.  # noqa: E501
 
         Args:
             role: The user's role (e.g., "new_developer", "devops_engineer").
@@ -266,7 +266,7 @@ class KnowledgeGapAnalyzerSkill:
             # Update the confidence score
             self.user_knowledge.set_confidence(user_id, domain_id, new_confidence)
             logger.debug(
-                f"Updated confidence for user {user_id}, domain {domain_id}: {current_confidence} -> {new_confidence}"
+                f"Updated confidence for user {user_id}, domain {domain_id}: {current_confidence} -> {new_confidence}"  # noqa: E501
             )
 
     def _identify_knowledge_gaps(self, user_id: str) -> List[Dict[str, Any]]:

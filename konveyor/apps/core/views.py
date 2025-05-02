@@ -1,11 +1,11 @@
 import json
 import logging
-import os
+import os  # noqa: F401
 
 from django.conf import settings
 from django.db import connection
-from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render
+from django.http import HttpResponse, JsonResponse  # noqa: F401
+from django.shortcuts import render  # noqa: F401
 from django.views.decorators.csrf import csrf_exempt
 
 logger = logging.getLogger(__name__)

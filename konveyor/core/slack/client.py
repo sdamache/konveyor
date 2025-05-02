@@ -73,7 +73,7 @@ def retry_on_slack_error(
                         if retry_after:
                             delay = float(retry_after)
                             logger.warning(
-                                f"Rate limited by Slack. Waiting {delay}s as specified by Retry-After header"
+                                f"Rate limited by Slack. Waiting {delay}s as specified by Retry-After header"  # noqa: E501
                             )
 
                     if retry < max_retries:
@@ -81,13 +81,13 @@ def retry_on_slack_error(
                         jitter = random.uniform(0, 0.1 * delay)
                         sleep_time = min(delay + jitter, max_delay)
                         logger.warning(
-                            f"Slack API error: {str(e)}. Retrying in {sleep_time:.2f}s..."
+                            f"Slack API error: {str(e)}. Retrying in {sleep_time:.2f}s..."  # noqa: E501
                         )
                         time.sleep(sleep_time)
                         delay = min(delay * backoff_factor, max_delay)
                     else:
                         logger.error(
-                            f"Max retries ({max_retries}) exceeded for {func.__name__}: {str(e)}"
+                            f"Max retries ({max_retries}) exceeded for {func.__name__}: {str(e)}"  # noqa: E501
                         )
                 except Exception as e:
                     logger.error(f"Unexpected error in {func.__name__}: {str(e)}")
@@ -233,7 +233,7 @@ class SlackService:
             conversations_open = self.client.conversations_open(users=[user_id])
             if not conversations_open["ok"]:
                 logger.error(
-                    f"Failed to open DM channel: {conversations_open.get('error', 'Unknown error')}"
+                    f"Failed to open DM channel: {conversations_open.get('error', 'Unknown error')}"  # noqa: E501
                 )
                 return None
 
@@ -331,13 +331,13 @@ class SlackService:
 
             if not response["ok"]:
                 logger.error(
-                    f"Failed to get conversation history: {response.get('error', 'Unknown error')}"
+                    f"Failed to get conversation history: {response.get('error', 'Unknown error')}"  # noqa: E501
                 )
                 return None
 
             messages = response.get("messages", [])
             logger.info(
-                f"Retrieved {len(messages)} messages from {'thread' if thread_ts else 'channel'} {channel}"
+                f"Retrieved {len(messages)} messages from {'thread' if thread_ts else 'channel'} {channel}"  # noqa: E501
             )
             return messages
 
@@ -359,7 +359,7 @@ class SlackService:
             request_body: The raw request body
             signature: The X-Slack-Signature header
             timestamp: The X-Slack-Request-Timestamp header
-            signing_secret: Optional signing secret (defaults to settings.SLACK_SIGNING_SECRET)
+            signing_secret: Optional signing secret (defaults to settings.SLACK_SIGNING_SECRET)  # noqa: E501
 
         Returns:
             True if the request is valid, False otherwise
@@ -381,7 +381,7 @@ class SlackService:
         base_string = f"v0:{timestamp}:{request_body.decode('utf-8')}"
 
         # Create a signature using the Slack signing secret
-        my_signature = f"v0={hmac.new(signing_secret.encode(), base_string.encode(), hashlib.sha256).hexdigest()}"
+        my_signature = f"v0={hmac.new(signing_secret.encode(), base_string.encode(), hashlib.sha256).hexdigest()}"  # noqa: E501
 
         # Compare the signatures
         result = hmac.compare_digest(my_signature, signature)

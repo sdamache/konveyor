@@ -8,7 +8,7 @@ including retrieving, creating, and updating user profiles.
 import logging
 from typing import Any, Dict, List, Optional
 
-from django.conf import settings
+from django.conf import settings  # noqa: F401
 from django.db import transaction
 from django.utils import timezone
 
@@ -147,7 +147,7 @@ class SlackUserProfileService:
                 profile.save()
 
             logger.info(
-                f"Updated {preference_name} preference for user {slack_id} to {preference_value}"
+                f"Updated {preference_name} preference for user {slack_id} to {preference_value}"  # noqa: E501
             )
             return profile
         except SlackUserProfile.DoesNotExist:
@@ -192,7 +192,7 @@ class SlackUserProfileService:
 
             if not response.get("ok", False):
                 logger.error(
-                    f"Error getting user info from Slack: {response.get('error', 'Unknown error')}"
+                    f"Error getting user info from Slack: {response.get('error', 'Unknown error')}"  # noqa: E501
                 )
                 return {}
 

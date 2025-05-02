@@ -175,7 +175,7 @@ class BotFeedback(TimeStampedModel):
         unique_together = [["slack_message_ts", "slack_user_id", "reaction"]]
 
     def __str__(self):
-        return f"{self.get_feedback_type_display()} from {self.slack_user_id} on message {self.slack_message_ts}"
+        return f"{self.get_feedback_type_display()} from {self.slack_user_id} on message {self.slack_message_ts}"  # noqa: E501
 
     @classmethod
     def record_feedback(

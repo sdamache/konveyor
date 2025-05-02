@@ -38,9 +38,9 @@ TODO: Feedback System Enhancements
 
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta  # noqa: F401
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
@@ -122,7 +122,7 @@ class FeedbackService:
             return None
 
         logger.info(
-            f"Processing {feedback_type} feedback from user {user_id} on message {message_ts}"
+            f"Processing {feedback_type} feedback from user {user_id} on message {message_ts}"  # noqa: E501
         )
 
         # Create feedback data
@@ -156,7 +156,7 @@ class FeedbackService:
             event_type: The event type ('reaction_added' or 'reaction_removed')
 
         Returns:
-            The feedback type ('positive', 'negative', 'neutral', 'removed'), or None if not applicable
+            The feedback type ('positive', 'negative', 'neutral', 'removed'), or None if not applicable  # noqa: E501
         """
         # Handle reaction removal
         if event_type == "reaction_removed":

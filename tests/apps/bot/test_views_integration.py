@@ -6,7 +6,7 @@ verifying that they work correctly with the new core components.
 """
 
 import json
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch  # noqa: F401, F401
 
 import pytest
 from django.http import HttpResponse, JsonResponse
@@ -165,7 +165,7 @@ def test_process_message():
         patch("konveyor.apps.bot.views_updated.orchestrator") as mock_orchestrator,
         patch(
             "konveyor.apps.bot.views_updated.conversation_manager"
-        ) as mock_conversation_manager,
+        ) as mock_conversation_manager,  # noqa: F841
         patch("konveyor.apps.bot.views_updated.asyncio.run") as mock_asyncio_run,
     ):
 

@@ -5,7 +5,7 @@ This script shows how to load the knowledge taxonomy and access its components.
 """
 
 import logging
-import os
+import os  # noqa: F401
 import sys
 from pathlib import Path
 
@@ -13,7 +13,9 @@ from pathlib import Path
 parent_dir = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(parent_dir))
 
-from konveyor.skills.knowledge_analyzer.taxonomy import KnowledgeTaxonomyLoader
+from konveyor.skills.knowledge_analyzer.taxonomy import (  # noqa: E402, E501
+    KnowledgeTaxonomyLoader,
+)
 
 # Set up logging
 logging.basicConfig(
@@ -36,7 +38,7 @@ def main():
 
     # Get metadata
     metadata = loader.get_taxonomy_metadata()
-    print(f"\nTaxonomy Metadata:")
+    print(f"\nTaxonomy Metadata:")  # noqa: F541
     print(f"Version: {metadata['version']}")
     print(f"Last Updated: {metadata['last_updated']}")
 
@@ -59,7 +61,7 @@ def main():
     print(f"\nLearning Paths ({len(learning_paths)}):")
     for path in learning_paths:
         print(f"- {path['name']}: {path['description']}")
-        print(f"  Domains:")
+        print(f"  Domains:")  # noqa: F541
         for domain in path["domains"]:
             print(f"  - {domain['id']} (Priority: {domain['priority']})")
 

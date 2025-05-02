@@ -5,9 +5,9 @@ Test runner for the app modernization tests.
 This script runs all the tests for the app modernization components.
 """
 
-import asyncio
+import asyncio  # noqa: F401
 import logging
-import os
+import os  # noqa: F401
 import sys
 from pathlib import Path
 

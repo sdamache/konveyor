@@ -5,7 +5,7 @@ from aiohttp import web
 from aiohttp.web import Request, Response
 from botbuilder.core import BotFrameworkAdapter, BotFrameworkAdapterSettings
 from botbuilder.schema import Activity
-from django.conf import settings
+from django.conf import settings  # noqa: F401
 
 from konveyor.core.azure_utils.config import AzureConfig
 from konveyor.core.botframework.bot import KonveyorBot

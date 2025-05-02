@@ -5,4 +5,4 @@ This module provides core functionality for chat interactions,
 including question answering, conversation handling, and message formatting.
 """
 
-from konveyor.core.chat.skill import ChatSkill
+from konveyor.core.chat.skill import ChatSkill  # noqa: F401

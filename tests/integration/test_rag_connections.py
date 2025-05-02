@@ -45,7 +45,7 @@ def test_cosmos_connection():
         result = db.conversations.insert_one(test_doc)
         print("✓ Successfully inserted test conversation")
 
-        found = db.conversations.find_one({"_id": result.inserted_id})
+        found = db.conversations.find_one({"_id": result.inserted_id})  # noqa: F841
         print("✓ Successfully retrieved test conversation")
 
         db.conversations.delete_one({"_id": result.inserted_id})

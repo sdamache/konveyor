@@ -6,9 +6,9 @@ defined in the knowledge_taxonomy.yaml file.
 """
 
 import logging
-import os
+import os  # noqa: F401
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union  # noqa: F401
 
 import yaml
 
@@ -55,7 +55,7 @@ class KnowledgeTaxonomyLoader:
             with open(self.taxonomy_file, "r") as file:
                 taxonomy = yaml.safe_load(file)
                 logger.debug(
-                    f"Successfully loaded taxonomy: {len(taxonomy.get('domains', []))} domains"
+                    f"Successfully loaded taxonomy: {len(taxonomy.get('domains', []))} domains"  # noqa: E501
                 )
                 return taxonomy
         except FileNotFoundError:

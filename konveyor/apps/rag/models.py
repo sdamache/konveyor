@@ -2,7 +2,7 @@
 Models for the RAG Django app using Azure storage.
 """
 
-from datetime import datetime
+from datetime import datetime  # noqa: F401
 from typing import Dict, List, Optional
 
 from django.conf import settings

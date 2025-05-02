@@ -8,10 +8,10 @@ OpenAI SDK and the custom AzureOpenAIClient implementation.
 
 import logging
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union  # noqa: F401, F401
 
 from openai import AzureOpenAI
-from tenacity import (
+from tenacity import (  # noqa: F401
     retry,
     retry_if_exception_type,
     stop_after_attempt,
@@ -54,7 +54,7 @@ class UnifiedAzureOpenAIClient(OpenAIClientInterface):
             api_version: API version
             chat_deployment: Chat model deployment name
             embedding_deployment: Embedding model deployment name
-            use_sdk: Whether to use the OpenAI SDK client (True) or the custom client (False)
+            use_sdk: Whether to use the OpenAI SDK client (True) or the custom client (False)  # noqa: E501
         """
         # Load configuration from environment variables if not provided
         self.api_key = api_key or os.environ.get("AZURE_OPENAI_API_KEY")

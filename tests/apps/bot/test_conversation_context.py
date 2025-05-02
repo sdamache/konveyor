@@ -6,7 +6,7 @@ import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse  # noqa: F401
 from django.test import RequestFactory
 
 from konveyor.apps.bot.views import process_message, slack_webhook
@@ -82,7 +82,7 @@ def test_conversation_context_management():
 
         # Verify conversation manager methods were called
         mock_conversation_manager.get_user_conversations.assert_called_once()
-        mock_conversation_manager.add_message.assert_called()  # Called twice (user + assistant)
+        mock_conversation_manager.add_message.assert_called()  # Called twice (user + assistant)  # noqa: E501
         mock_conversation_manager.get_conversation_context.assert_called_once()
 
         # Verify orchestrator was called with conversation history
@@ -127,11 +127,11 @@ def test_process_message_with_context():
         }
 
         # Call process_message
-        result = process_message("Hello, world!", "test_user", "test_channel")
+        _ = process_message("Hello, world!", "test_user", "test_channel")  # noqa: E501
 
         # Verify conversation manager methods were called
         mock_conversation_manager.get_user_conversations.assert_called_once()
-        mock_conversation_manager.add_message.assert_called()  # Called twice (user + assistant)
+        mock_conversation_manager.add_message.assert_called()  # Called twice (user + assistant)  # noqa: E501
         mock_conversation_manager.get_conversation_context.assert_called_once()
 
         # Verify orchestrator was called with conversation history

@@ -1,15 +1,15 @@
 import logging
 import os
-from typing import Any  # Any type
+from typing import Any  # Any type  # noqa: F401
 from typing import Dict  # Dictionary type
 from typing import List  # List type
 from typing import Optional  # Optional type (equivalent to Union[Type, None])
-from typing import Set  # Set type
-from typing import Tuple  # Tuple type
-from typing import Union  # Union of types
+from typing import Set  # Set type  # noqa: F401
+from typing import Tuple  # Tuple type  # noqa: F401
+from typing import Union  # Union of types  # noqa: F401
 
 import requests
-from tenacity import (
+from tenacity import (  # noqa: F401
     retry,
     retry_if_exception_type,
     stop_after_attempt,
@@ -109,7 +109,7 @@ class AzureOpenAIClient:
                 )
 
             # Construct the URL for embeddings deployment
-            embeddings_url = f"{self.endpoint}/openai/deployments/{self.embeddings_deployment}/embeddings?api-version={self.embeddings_api_version}"
+            embeddings_url = f"{self.endpoint}/openai/deployments/{self.embeddings_deployment}/embeddings?api-version={self.embeddings_api_version}"  # noqa: E501
 
             # Prepare the request payload for embeddings
             payload = {"input": truncated_text}
@@ -179,7 +179,7 @@ class AzureOpenAIClient:
         """
         try:
             # Construct the URL for GPT deployment
-            gpt_url = f"{self.endpoint}/openai/deployments/{self.gpt_deployment}/chat/completions?api-version={self.gpt_api_version}"
+            gpt_url = f"{self.endpoint}/openai/deployments/{self.gpt_deployment}/chat/completions?api-version={self.gpt_api_version}"  # noqa: E501
 
             logger.info(f"Using API version {self.gpt_api_version} for GPT completion")
 

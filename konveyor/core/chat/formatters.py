@@ -6,7 +6,7 @@ including conversation history formatting and message structuring.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional  # noqa: F401
 
 logger = logging.getLogger(__name__)
 

@@ -6,7 +6,7 @@ verifying that it works correctly with the new core components.
 """
 
 import asyncio
-from typing import Any, Dict, List
+from typing import Any, Dict, List  # noqa: F401, F401, F401
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -42,7 +42,7 @@ async def test_rag_service_integration():
     # Create the RAG service with mocked dependencies
     with (
         patch(
-            "konveyor.core.conversation.factory.ConversationManagerFactory.create_manager"
+            "konveyor.core.conversation.factory.ConversationManagerFactory.create_manager"  # noqa: E501
         ) as mock_create_manager,
         patch(
             "konveyor.core.formatters.factory.FormatterFactory.get_formatter"

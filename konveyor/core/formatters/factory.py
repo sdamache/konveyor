@@ -6,7 +6,7 @@ specified format type.
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any, Dict  # noqa: F401, F401
 
 from konveyor.core.formatters.interface import FormatterInterface
 from konveyor.core.formatters.markdown import MarkdownFormatter

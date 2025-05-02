@@ -151,7 +151,7 @@ class RealSearchService:
 
                 # Log the formatted result
                 logger.debug(
-                    f"Formatted result {i+1}: id={result_id}, document_id={document_id}, score={score}"
+                    f"Formatted result {i+1}: id={result_id}, document_id={document_id}, score={score}"  # noqa: E501
                 )
                 logger.debug(f"Content: {content[:100]}...")
 
@@ -162,7 +162,7 @@ class RealSearchService:
             # Log a summary of the results
             for i, result in enumerate(formatted_results):
                 logger.info(
-                    f"Result {i+1}: id={result['id']}, document_id={result['document_id']}, score={result['@search.score']}"
+                    f"Result {i+1}: id={result['id']}, document_id={result['document_id']}, score={result['@search.score']}"  # noqa: E501
                 )
                 logger.info(f"Title: {result['metadata']['title']}")
                 logger.info(f"Content preview: {result['content'][:100]}...")
@@ -199,7 +199,7 @@ async def test_documentation_navigator():
 
         # Import the DocumentationNavigatorSkill
         logger.info("Importing DocumentationNavigatorSkill")
-        from konveyor.skills.documentation_navigator.DocumentationNavigatorSkill import (
+        from konveyor.skills.documentation_navigator.DocumentationNavigatorSkill import (  # noqa: E501
             DocumentationNavigatorSkill,
         )
 
@@ -373,7 +373,7 @@ async def test_documentation_navigator():
         logger.info(f"Received Slack format with {len(slack_format['blocks'])} blocks")
         logger.info(f"Text: {slack_format['text'][:150]}...")
         logger.info(
-            f"First block type: {slack_format['blocks'][0]['type'] if slack_format['blocks'] else 'N/A'}"
+            f"First block type: {slack_format['blocks'][0]['type'] if slack_format['blocks'] else 'N/A'}"  # noqa: E501
         )
 
         logger.info("\n" + "=" * 50)

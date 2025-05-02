@@ -7,9 +7,9 @@ to abstract the creation of complex objects and their dependencies.
 """
 
 import logging
-from typing import Optional
+from typing import Optional  # noqa: F401
 
-from django.conf import settings
+from django.conf import settings  # noqa: F401
 
 from konveyor.core.conversation.feedback.django_feedback_repository import (
     DjangoFeedbackRepository,

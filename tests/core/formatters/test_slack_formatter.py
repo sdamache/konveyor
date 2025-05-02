@@ -2,7 +2,7 @@
 Tests for the Slack formatter.
 """
 
-import pytest
+import pytest  # noqa: F401
 
 from konveyor.core.formatters.slack_formatter import SlackFormatter
 
@@ -28,7 +28,7 @@ def test_format_message_with_code_block():
     formatter = SlackFormatter()
 
     # Format a message with a code block
-    message = "Here's some code:\n```python\ndef hello():\n    return 'Hello, world!'\n```\nThat's all!"
+    message = "Here's some code:\n```python\ndef hello():\n    return 'Hello, world!'\n```\nThat's all!"  # noqa: E501
     result = formatter.format_message(message)
 
     # Verify the result

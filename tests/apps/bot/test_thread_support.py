@@ -3,10 +3,10 @@ Tests for thread support in the Slack webhook handler.
 """
 
 import json
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch  # noqa: F401
 
 import pytest
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse  # noqa: F401
 from django.test import RequestFactory
 
 from konveyor.apps.bot.views import process_message, slack_webhook

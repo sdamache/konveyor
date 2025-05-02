@@ -10,7 +10,7 @@ import ssl
 import sys
 from pathlib import Path
 
-import certifi
+import certifi  # noqa: F401
 import django
 
 # Fix SSL certificate issues on macOS
@@ -24,8 +24,8 @@ sys.path.insert(0, str(BASE_DIR))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "konveyor.settings.development")
 django.setup()
 
-from konveyor.apps.bot.services.slack_service import SlackService
-from konveyor.core.chat import ChatSkill
+from konveyor.apps.bot.services.slack_service import SlackService  # noqa: E402
+from konveyor.core.chat import ChatSkill  # noqa: E402
 
 
 def test_slack_service():
@@ -51,10 +51,10 @@ def test_slack_service():
             print(f"Using user email from command-line argument: {user_email}")
         else:
             print(
-                "No user email provided. Will try to send a message to the bot's own DM."
+                "No user email provided. Will try to send a message to the bot's own DM."  # noqa: E501
             )
             print(
-                "This is useful for testing if the bot can receive and process messages."
+                "This is useful for testing if the bot can receive and process messages."  # noqa: E501
             )
 
             # Get the bot's own user ID
@@ -64,7 +64,7 @@ def test_slack_service():
                     bot_user_id = auth_test["user_id"]
                     print(f"Bot user ID: {bot_user_id}")
 
-                    # Open a DM channel with the bot itself (this won't actually work for sending,
+                    # Open a DM channel with the bot itself (this won't actually work for sending,  # noqa: E501
                     # but it's a good test of the API connection)
                     conversations_open = slack.client.conversations_open(
                         users=[bot_user_id]
@@ -77,7 +77,7 @@ def test_slack_service():
                         print(f"Sending test message to bot's DM channel: {channel_id}")
                         response = slack.send_message(
                             channel=channel_id,
-                            text="Hello from Konveyor! This is a test message from the Slack integration.",
+                            text="Hello from Konveyor! This is a test message from the Slack integration.",  # noqa: E501
                         )
                         return response is not None
             except Exception as e:
@@ -93,19 +93,19 @@ def test_slack_service():
         if not user:
             print(f"Could not find user with email: {user_email}")
             print(
-                "Please make sure the email address is correct and belongs to a user in your Slack workspace."
+                "Please make sure the email address is correct and belongs to a user in your Slack workspace."  # noqa: E501
             )
             print(
-                "If you're using a placeholder email like 'your-email@example.com', replace it with a real email."
+                "If you're using a placeholder email like 'your-email@example.com', replace it with a real email."  # noqa: E501
             )
             return False
     except Exception as e:
         print(f"Error looking up user by email: {str(e)}")
         print(
-            "Please make sure you have the 'users:read.email' scope enabled in your Slack app."
+            "Please make sure you have the 'users:read.email' scope enabled in your Slack app."  # noqa: E501
         )
         print(
-            "You may need to reinstall your app to the workspace after adding this scope."
+            "You may need to reinstall your app to the workspace after adding this scope."  # noqa: E501
         )
         return False
 
@@ -118,7 +118,7 @@ def test_slack_service():
         conversations_open = slack.client.conversations_open(users=[user_id])
         if not conversations_open["ok"]:
             print(
-                f"Failed to open DM channel: {conversations_open.get('error', 'Unknown error')}"
+                f"Failed to open DM channel: {conversations_open.get('error', 'Unknown error')}"  # noqa: E501
             )
             return False
 
@@ -129,7 +129,7 @@ def test_slack_service():
         print(f"Sending test message to user's DM channel: {channel_id}")
         response = slack.send_message(
             channel=channel_id,
-            text="Hello from Konveyor! This is a test message from the Slack integration.",
+            text="Hello from Konveyor! This is a test message from the Slack integration.",  # noqa: E501
         )
 
         # Test rich message formatting
