@@ -25,7 +25,7 @@ class ResponseGeneratorInterface(ABC):
         context: Optional[str] = None,
         conversation_id: Optional[str] = None,
         use_rag: bool = False,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, Any]:
         """
         Generate a response for the given query.
@@ -51,7 +51,7 @@ class ResponseGeneratorInterface(ABC):
         query: str,
         conversation_id: Optional[str] = None,
         max_context_chunks: int = 3,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, Any]:
         """
         Generate a response using RAG (Retrieval-Augmented Generation).
@@ -76,7 +76,7 @@ class ResponseGeneratorInterface(ABC):
         query: str,
         context: Optional[str] = None,
         conversation_id: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, Any]:
         """
         Generate a response directly without RAG.

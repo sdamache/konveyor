@@ -12,8 +12,7 @@ import pytest
 from django.http import HttpResponse, JsonResponse
 from django.test import RequestFactory
 
-from konveyor.apps.bot.views_updated import (process_message, root_handler,
-                                             slack_webhook)
+from konveyor.apps.bot.views_updated import process_message, root_handler, slack_webhook
 
 
 # Test the root_handler
@@ -68,11 +67,12 @@ def test_slack_webhook():
     factory = RequestFactory()
 
     # Mock the SlackService
-    with patch(
-        "konveyor.apps.bot.views_updated.slack_service"
-    ) as mock_slack_service, patch(
-        "konveyor.apps.bot.views_updated.process_message"
-    ) as mock_process_message:
+    with (
+        patch("konveyor.apps.bot.views_updated.slack_service") as mock_slack_service,
+        patch(
+            "konveyor.apps.bot.views_updated.process_message"
+        ) as mock_process_message,
+    ):
 
         # Set up the mocks
         mock_slack_service.verify_request.return_value = True
@@ -161,13 +161,13 @@ def test_slack_webhook():
 def test_process_message():
     """Test the process_message function."""
     # Mock the orchestrator
-    with patch(
-        "konveyor.apps.bot.views_updated.orchestrator"
-    ) as mock_orchestrator, patch(
-        "konveyor.apps.bot.views_updated.conversation_manager"
-    ) as mock_conversation_manager, patch(
-        "konveyor.apps.bot.views_updated.asyncio.run"
-    ) as mock_asyncio_run:
+    with (
+        patch("konveyor.apps.bot.views_updated.orchestrator") as mock_orchestrator,
+        patch(
+            "konveyor.apps.bot.views_updated.conversation_manager"
+        ) as mock_conversation_manager,
+        patch("konveyor.apps.bot.views_updated.asyncio.run") as mock_asyncio_run,
+    ):
 
         # Set up the mocks
         mock_orchestrator.process_request_sync.return_value = {

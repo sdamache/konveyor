@@ -24,7 +24,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from konveyor.apps.bot.services.slack_service import SlackService
-from konveyor.apps.bot.services.slack_user_profile_service import SlackUserProfileService
+from konveyor.apps.bot.services.slack_user_profile_service import (
+    SlackUserProfileService,
+)
 from konveyor.apps.bot.slash_commands import get_command_handler
 from konveyor.core.agent import AgentOrchestratorSkill, SkillRegistry
 from konveyor.core.chat import ChatSkill

@@ -19,6 +19,7 @@ import pytest
 os.environ["DJANGO_SETTINGS_MODULE"] = "konveyor.settings.integration_test"
 
 from konveyor.skills.documentation_navigator import DocumentationNavigatorSkill
+
 # Import the DocumentationNavigatorSkill
 from konveyor.skills.setup import create_kernel
 

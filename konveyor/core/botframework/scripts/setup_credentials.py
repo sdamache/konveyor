@@ -1,5 +1,4 @@
-from konveyor.core.botframework.services.credentials import \
-    SecureCredentialService
+from konveyor.core.botframework.services.credentials import SecureCredentialService
 
 # Removed os and dotenv imports
 

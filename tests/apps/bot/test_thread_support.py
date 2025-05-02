@@ -19,9 +19,10 @@ def test_thread_support():
     factory = RequestFactory()
 
     # Mock the SlackService
-    with patch("konveyor.apps.bot.views.slack_service") as mock_slack_service, patch(
-        "konveyor.apps.bot.views.process_message"
-    ) as mock_process_message:
+    with (
+        patch("konveyor.apps.bot.views.slack_service") as mock_slack_service,
+        patch("konveyor.apps.bot.views.process_message") as mock_process_message,
+    ):
 
         # Set up the mocks
         mock_slack_service.verify_request.return_value = True

@@ -40,15 +40,20 @@ async def test_rag_service_integration():
     mock_context_service.format_context.return_value = "Test context"
 
     # Create the RAG service with mocked dependencies
-    with patch(
-        "konveyor.core.conversation.factory.ConversationManagerFactory.create_manager"
-    ) as mock_create_manager, patch(
-        "konveyor.core.formatters.factory.FormatterFactory.get_formatter"
-    ) as mock_get_formatter, patch(
-        "konveyor.core.generation.factory.ResponseGeneratorFactory.get_generator"
-    ) as mock_get_generator, patch(
-        "konveyor.core.rag.rag_service_updated.ContextService",
-        return_value=mock_context_service,
+    with (
+        patch(
+            "konveyor.core.conversation.factory.ConversationManagerFactory.create_manager"
+        ) as mock_create_manager,
+        patch(
+            "konveyor.core.formatters.factory.FormatterFactory.get_formatter"
+        ) as mock_get_formatter,
+        patch(
+            "konveyor.core.generation.factory.ResponseGeneratorFactory.get_generator"
+        ) as mock_get_generator,
+        patch(
+            "konveyor.core.rag.rag_service_updated.ContextService",
+            return_value=mock_context_service,
+        ),
     ):
 
         # Create mock conversation manager

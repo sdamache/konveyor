@@ -19,6 +19,7 @@ from semantic_kernel.functions import kernel_function
 
 from konveyor.apps.search.services.search_service import SearchService
 from konveyor.core.conversation.factory import ConversationManagerFactory
+
 # Removed: from konveyor.core.conversation.interface import ConversationInterface
 
 # Configure logging
@@ -69,8 +70,9 @@ class DocumentationNavigatorSkill:
 
             # Fallback to in-memory conversation manager
             try:
-                from konveyor.core.conversation.memory import \
-                    InMemoryConversationManager
+                from konveyor.core.conversation.memory import (
+                    InMemoryConversationManager,
+                )
 
                 self.conversation_manager = lambda: InMemoryConversationManager()
                 logger.info("Initialized fallback in-memory conversation manager")

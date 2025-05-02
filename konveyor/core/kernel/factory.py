@@ -11,10 +11,12 @@ import os
 from typing import Any, Dict, Optional
 
 from semantic_kernel import Kernel
-from semantic_kernel.connectors.ai.open_ai.services.azure_chat_completion import \
-    AzureChatCompletion
-from semantic_kernel.connectors.ai.open_ai.services.azure_text_embedding import \
-    AzureTextEmbedding
+from semantic_kernel.connectors.ai.open_ai.services.azure_chat_completion import (
+    AzureChatCompletion,
+)
+from semantic_kernel.connectors.ai.open_ai.services.azure_text_embedding import (
+    AzureTextEmbedding,
+)
 from semantic_kernel.memory.volatile_memory_store import VolatileMemoryStore
 
 from konveyor.core.azure_utils.clients import AzureClientManager

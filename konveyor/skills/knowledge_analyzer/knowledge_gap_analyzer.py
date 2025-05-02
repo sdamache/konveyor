@@ -13,8 +13,7 @@ from semantic_kernel import Kernel
 from semantic_kernel.functions import KernelFunction, kernel_function
 
 from konveyor.skills.knowledge_analyzer.taxonomy import KnowledgeTaxonomyLoader
-from konveyor.skills.knowledge_analyzer.user_knowledge import \
-    UserKnowledgeStore
+from konveyor.skills.knowledge_analyzer.user_knowledge import UserKnowledgeStore
 
 logger = logging.getLogger(__name__)
 

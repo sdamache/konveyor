@@ -19,9 +19,10 @@ def test_error_handling_specific_errors():
     factory = RequestFactory()
 
     # Mock the SlackService
-    with patch("konveyor.apps.bot.views.slack_service") as mock_slack_service, patch(
-        "konveyor.apps.bot.views.orchestrator"
-    ) as mock_orchestrator:
+    with (
+        patch("konveyor.apps.bot.views.slack_service") as mock_slack_service,
+        patch("konveyor.apps.bot.views.orchestrator") as mock_orchestrator,
+    ):
 
         # Set up the mocks
         mock_slack_service.verify_request.return_value = True
@@ -76,9 +77,10 @@ def test_error_handling_slack_api_errors():
     factory = RequestFactory()
 
     # Mock the SlackService
-    with patch("konveyor.apps.bot.views.slack_service") as mock_slack_service, patch(
-        "konveyor.apps.bot.views.orchestrator"
-    ) as mock_orchestrator:
+    with (
+        patch("konveyor.apps.bot.views.slack_service") as mock_slack_service,
+        patch("konveyor.apps.bot.views.orchestrator") as mock_orchestrator,
+    ):
 
         # Set up the mocks
         mock_slack_service.verify_request.return_value = True
@@ -135,9 +137,10 @@ def test_error_handling_graceful_recovery():
     factory = RequestFactory()
 
     # Mock the SlackService
-    with patch("konveyor.apps.bot.views.slack_service") as mock_slack_service, patch(
-        "konveyor.apps.bot.views.orchestrator"
-    ) as mock_orchestrator:
+    with (
+        patch("konveyor.apps.bot.views.slack_service") as mock_slack_service,
+        patch("konveyor.apps.bot.views.orchestrator") as mock_orchestrator,
+    ):
 
         # Set up the mocks
         mock_slack_service.verify_request.return_value = True

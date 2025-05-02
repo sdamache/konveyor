@@ -6,6 +6,7 @@ unit tests and integration tests with the SearchService.
 """
 
 import asyncio
+
 # Mock the Django models and SearchService before importing DocumentationNavigatorSkill
 import sys
 from typing import Any, Dict, List
@@ -153,8 +154,9 @@ sys.modules["konveyor.core.conversation.factory"].ConversationManagerFactory = (
 )
 
 # Now import DocumentationNavigatorSkill
-from konveyor.skills.documentation_navigator.DocumentationNavigatorSkill import \
-    DocumentationNavigatorSkill
+from konveyor.skills.documentation_navigator.DocumentationNavigatorSkill import (
+    DocumentationNavigatorSkill,
+)
 
 
 # Mock the Semantic Kernel

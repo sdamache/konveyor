@@ -11,11 +11,16 @@ import os
 from typing import Any, Dict, List, Optional, Union
 
 from openai import AzureOpenAI
-from tenacity import (retry, retry_if_exception_type, stop_after_attempt,
-                      wait_exponential)
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
-from konveyor.core.azure_adapters.openai.client import \
-    AzureOpenAIClient as CustomAzureOpenAIClient
+from konveyor.core.azure_adapters.openai.client import (
+    AzureOpenAIClient as CustomAzureOpenAIClient,
+)
 from konveyor.core.azure_utils.openai_interface import OpenAIClientInterface
 
 logger = logging.getLogger(__name__)

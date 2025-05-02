@@ -82,8 +82,7 @@ class ChatSkill:
         """Initialize the conversation manager synchronously."""
         try:
             # Use a simple in-memory conversation manager for synchronous initialization
-            from konveyor.core.conversation.memory import \
-                InMemoryConversationManager
+            from konveyor.core.conversation.memory import InMemoryConversationManager
 
             self.conversation_manager = InMemoryConversationManager()
             logger.info("Initialized in-memory conversation manager synchronously")
@@ -209,8 +208,11 @@ class ChatSkill:
                 # https://learn.microsoft.com/en-us/semantic-kernel/concepts/ai-services/chat-completion/?tabs=csharp-AzureOpenAI%2Cpython-AzureOpenAI%2Cjava-AzureOpenAI&pivots=programming-language-python
 
                 # Convert our messages to the proper format
-                from semantic_kernel.contents import (AuthorRole, ChatHistory,
-                                                      ChatMessageContent)
+                from semantic_kernel.contents import (
+                    AuthorRole,
+                    ChatHistory,
+                    ChatMessageContent,
+                )
 
                 # Create a ChatHistory object
                 chat_history = ChatHistory()
@@ -233,7 +235,7 @@ class ChatSkill:
                 settings = chat_service.get_prompt_execution_settings_class()()
 
                 # Use asyncio to run the async method in a synchronous context
-# Removed: import asyncio
+                # Removed: import asyncio
 
                 async def get_completion():
                     result = await chat_service.get_chat_message_content(

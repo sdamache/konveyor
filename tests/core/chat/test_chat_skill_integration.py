@@ -22,13 +22,17 @@ async def test_chat_skill_integration():
     mock_kernel = MagicMock()
 
     # Create a ChatSkill with the mock kernel
-    with patch(
-        "konveyor.core.conversation.factory.ConversationManagerFactory.create_manager"
-    ) as mock_create_manager, patch(
-        "konveyor.core.formatters.factory.FormatterFactory.get_formatter"
-    ) as mock_get_formatter, patch(
-        "konveyor.core.generation.factory.ResponseGeneratorFactory.get_generator"
-    ) as mock_get_generator:
+    with (
+        patch(
+            "konveyor.core.conversation.factory.ConversationManagerFactory.create_manager"
+        ) as mock_create_manager,
+        patch(
+            "konveyor.core.formatters.factory.FormatterFactory.get_formatter"
+        ) as mock_get_formatter,
+        patch(
+            "konveyor.core.generation.factory.ResponseGeneratorFactory.get_generator"
+        ) as mock_get_generator,
+    ):
 
         # Create mock conversation manager
         mock_conversation_manager = AsyncMock()

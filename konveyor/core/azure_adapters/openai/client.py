@@ -1,18 +1,20 @@
 import logging
 import os
-from typing import (
-    Any,  # Any type
-    Dict,  # Dictionary type
-    List,  # List type
-    Set,  # Set type
-    Tuple,  # Tuple type
-    Union,  # Union of types
-    Optional,  # Optional type (equivalent to Union[Type, None])
-)
+from typing import Any  # Any type
+from typing import Dict  # Dictionary type
+from typing import List  # List type
+from typing import Optional  # Optional type (equivalent to Union[Type, None])
+from typing import Set  # Set type
+from typing import Tuple  # Tuple type
+from typing import Union  # Union of types
 
 import requests
-from tenacity import (retry, retry_if_exception_type, stop_after_attempt,
-                      wait_exponential)
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 # Set up logging
 logger = logging.getLogger(__name__)

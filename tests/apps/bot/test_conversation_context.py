@@ -34,9 +34,13 @@ def test_conversation_context_management():
     )
 
     # Mock the SlackService and conversation manager
-    with patch("konveyor.apps.bot.views.slack_service") as mock_slack_service, patch(
-        "konveyor.apps.bot.views.conversation_manager", mock_conversation_manager
-    ), patch("konveyor.apps.bot.views.orchestrator") as mock_orchestrator:
+    with (
+        patch("konveyor.apps.bot.views.slack_service") as mock_slack_service,
+        patch(
+            "konveyor.apps.bot.views.conversation_manager", mock_conversation_manager
+        ),
+        patch("konveyor.apps.bot.views.orchestrator") as mock_orchestrator,
+    ):
 
         # Set up the mocks
         mock_slack_service.verify_request.return_value = True
@@ -107,8 +111,11 @@ def test_process_message_with_context():
     )
 
     # Mock the orchestrator and conversation manager
-    with patch("konveyor.apps.bot.views.orchestrator") as mock_orchestrator, patch(
-        "konveyor.apps.bot.views.conversation_manager", mock_conversation_manager
+    with (
+        patch("konveyor.apps.bot.views.orchestrator") as mock_orchestrator,
+        patch(
+            "konveyor.apps.bot.views.conversation_manager", mock_conversation_manager
+        ),
     ):
 
         # Set up the mock

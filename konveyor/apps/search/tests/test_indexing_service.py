@@ -9,20 +9,25 @@ import unittest
 import uuid
 from datetime import datetime
 from io import BytesIO
-# Removed logging and dotenv imports
-# Removed: from unittest.mock import Mock, patch
 
 import pytest
+
 # Removed: from django.conf import settings
 from django.test import TestCase
 
 from konveyor.apps.documents.models import Document, DocumentChunk
 from konveyor.apps.search.services.indexing_service import IndexingService
+
 # Removed: from konveyor.apps.search.services.search_service import SearchService
 # Import Azure client manager
 from konveyor.core.azure_utils.clients import AzureClientManager
+
 # Removed: from konveyor.core.azure_utils.config import AzureConfig
 from konveyor.core.documents.document_service import DocumentService
+
+# Removed logging and dotenv imports
+# Removed: from unittest.mock import Mock, patch
+
 
 # Load environment variables
 # Removed load_dotenv() call
@@ -549,8 +554,7 @@ class TestIndexingService(TestCase):
                 )
 
                 # Create a document record manually
-                from konveyor.apps.documents.models import (Document,
-                                                            DocumentChunk)
+                from konveyor.apps.documents.models import Document, DocumentChunk
 
                 document = Document.objects.create(
                     title=f"Test {filename}",

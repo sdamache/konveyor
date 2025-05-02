@@ -8,8 +8,9 @@ import pytest
 from django.utils import timezone
 
 from konveyor.apps.bot.models import SlackUserProfile
-from konveyor.apps.bot.services.slack_user_profile_service import \
-    SlackUserProfileService
+from konveyor.apps.bot.services.slack_user_profile_service import (
+    SlackUserProfileService,
+)
 
 
 @pytest.mark.django_db

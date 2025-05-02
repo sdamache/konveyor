@@ -10,15 +10,17 @@ from django.http import JsonResponse
 from django.test import RequestFactory
 from django.utils import timezone
 
-from konveyor.apps.bot.slash_commands import (get_all_commands,
-                                              get_command_handler,
-                                              handle_code_command,
-                                              handle_help_command,
-                                              handle_info_command,
-                                              handle_preferences_command,
-                                              handle_profile_command,
-                                              handle_status_command,
-                                              register_command)
+from konveyor.apps.bot.slash_commands import (
+    get_all_commands,
+    get_command_handler,
+    handle_code_command,
+    handle_help_command,
+    handle_info_command,
+    handle_preferences_command,
+    handle_profile_command,
+    handle_status_command,
+    register_command,
+)
 from konveyor.apps.bot.views import slack_slash_command
 
 
@@ -249,9 +251,12 @@ def test_slash_command_endpoint():
     factory = RequestFactory()
 
     # Mock the SlackService
-    with patch("konveyor.apps.bot.views.slack_service") as mock_slack_service, patch(
-        "konveyor.apps.bot.views.get_command_handler"
-    ) as mock_get_command_handler:
+    with (
+        patch("konveyor.apps.bot.views.slack_service") as mock_slack_service,
+        patch(
+            "konveyor.apps.bot.views.get_command_handler"
+        ) as mock_get_command_handler,
+    ):
 
         # Set up the mocks
         mock_slack_service.verify_request.return_value = True
@@ -304,9 +309,12 @@ def test_slash_command_unknown_command():
     factory = RequestFactory()
 
     # Mock the SlackService
-    with patch("konveyor.apps.bot.views.slack_service") as mock_slack_service, patch(
-        "konveyor.apps.bot.views.get_command_handler"
-    ) as mock_get_command_handler:
+    with (
+        patch("konveyor.apps.bot.views.slack_service") as mock_slack_service,
+        patch(
+            "konveyor.apps.bot.views.get_command_handler"
+        ) as mock_get_command_handler,
+    ):
 
         # Set up the mocks
         mock_slack_service.verify_request.return_value = True

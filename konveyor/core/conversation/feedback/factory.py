@@ -11,8 +11,9 @@ from typing import Optional
 
 from django.conf import settings
 
-from konveyor.core.conversation.feedback.django_feedback_repository import \
-    DjangoFeedbackRepository
+from konveyor.core.conversation.feedback.django_feedback_repository import (
+    DjangoFeedbackRepository,
+)
 from konveyor.core.conversation.feedback.service import FeedbackService
 
 logger = logging.getLogger(__name__)

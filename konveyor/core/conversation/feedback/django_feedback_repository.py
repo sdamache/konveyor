@@ -39,7 +39,9 @@ from django.utils import timezone
 from konveyor.apps.bot.models import BotFeedback
 from konveyor.core.conversation.factory import ConversationManagerFactory
 from konveyor.core.conversation.feedback.models import (
-    FeedbackStorageProvider, FeedbackType)
+    FeedbackStorageProvider,
+    FeedbackType,
+)
 
 logger = logging.getLogger(__name__)
 

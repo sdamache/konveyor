@@ -199,8 +199,9 @@ async def test_documentation_navigator():
 
         # Import the DocumentationNavigatorSkill
         logger.info("Importing DocumentationNavigatorSkill")
-        from konveyor.skills.documentation_navigator.DocumentationNavigatorSkill import \
-            DocumentationNavigatorSkill
+        from konveyor.skills.documentation_navigator.DocumentationNavigatorSkill import (
+            DocumentationNavigatorSkill,
+        )
 
         # Create the DocumentationNavigatorSkill directly without a kernel
         logger.info("Creating DocumentationNavigatorSkill instance")

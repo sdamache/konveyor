@@ -24,15 +24,18 @@ async def test_conversation_viewset():
     factory = APIRequestFactory()
 
     # Mock the AzureClientManager and RAGService
-    with patch(
-        "konveyor.apps.rag.views_updated.AzureClientManager"
-    ) as MockClientManager, patch(
-        "konveyor.apps.rag.views_updated.RAGService"
-    ) as MockRAGService, patch(
-        "konveyor.core.conversation.factory.ConversationManagerFactory.create_manager"
-    ) as mock_create_manager, patch(
-        "konveyor.core.formatters.factory.FormatterFactory.get_formatter"
-    ) as mock_get_formatter:
+    with (
+        patch(
+            "konveyor.apps.rag.views_updated.AzureClientManager"
+        ) as MockClientManager,
+        patch("konveyor.apps.rag.views_updated.RAGService") as MockRAGService,
+        patch(
+            "konveyor.core.conversation.factory.ConversationManagerFactory.create_manager"
+        ) as mock_create_manager,
+        patch(
+            "konveyor.core.formatters.factory.FormatterFactory.get_formatter"
+        ) as mock_get_formatter,
+    ):
 
         # Create mock client manager
         mock_client_manager = MagicMock()

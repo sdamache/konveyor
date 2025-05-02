@@ -14,8 +14,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from botbuilder.core import TurnContext
-from botbuilder.schema import (Activity, ActivityTypes, ChannelAccount,
-                               ConversationAccount)
+from botbuilder.schema import (
+    Activity,
+    ActivityTypes,
+    ChannelAccount,
+    ConversationAccount,
+)
 
 from konveyor.apps.bot.bot import KonveyorBot
 from konveyor.core.agent import AgentOrchestratorSkill, SkillRegistry

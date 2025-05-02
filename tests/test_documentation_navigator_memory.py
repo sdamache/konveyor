@@ -10,11 +10,15 @@ including creating conversations, adding messages, and handling follow-up questi
 import sys
 import uuid
 from datetime import datetime
+
 # Removed: from typing import Any, Dict, List, Optional
 from unittest.mock import MagicMock, patch
 
 import pytest
-from konveyor.skills.documentation_navigator.DocumentationNavigatorSkill import DocumentationNavigatorSkill
+
+from konveyor.skills.documentation_navigator.DocumentationNavigatorSkill import (
+    DocumentationNavigatorSkill,
+)
 
 sys.modules["konveyor.apps.documents.models"] = MagicMock()
 sys.modules["konveyor.apps.search.services.search_service"] = MagicMock()

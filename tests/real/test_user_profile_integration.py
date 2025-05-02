@@ -32,11 +32,15 @@ logger = logging.getLogger(__name__)
 
 from konveyor.apps.bot.models import SlackUserProfile
 from konveyor.apps.bot.services.slack_service import SlackService
+
 # Import after Django setup
-from konveyor.apps.bot.services.slack_user_profile_service import \
-    SlackUserProfileService
-from konveyor.apps.bot.slash_commands import (handle_preferences_command,
-                                              handle_profile_command)
+from konveyor.apps.bot.services.slack_user_profile_service import (
+    SlackUserProfileService,
+)
+from konveyor.apps.bot.slash_commands import (
+    handle_preferences_command,
+    handle_profile_command,
+)
 
 
 def test_slack_user_profile_service():

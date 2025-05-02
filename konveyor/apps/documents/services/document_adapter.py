@@ -11,11 +11,11 @@ import os  # Add os import for content type detection
 from typing import Any, BinaryIO, Dict
 
 from django.core.exceptions import ValidationError
-from langchain.text_splitter import \
-    RecursiveCharacterTextSplitter  # Keep for now
+from langchain.text_splitter import RecursiveCharacterTextSplitter  # Keep for now
 
-from konveyor.core.documents.document_service import \
-    DocumentService  # Ensure this points to the core service
+from konveyor.core.documents.document_service import (  # Ensure this points to the core service
+    DocumentService,
+)
 
 from ..models import Document, DocumentChunk
 

@@ -15,8 +15,9 @@ from pathlib import Path
 parent_dir = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(parent_dir))
 
-from konveyor.skills.knowledge_analyzer.knowledge_gap_analyzer import \
-    KnowledgeGapAnalyzerSkill
+from konveyor.skills.knowledge_analyzer.knowledge_gap_analyzer import (
+    KnowledgeGapAnalyzerSkill,
+)
 from konveyor.skills.knowledge_analyzer.taxonomy import KnowledgeTaxonomyLoader
 
 # Set up logging

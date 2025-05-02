@@ -21,23 +21,36 @@ import json
 from typing import Any, Dict, List, Optional, Tuple
 
 # Removed django.conf settings
-from azure.core.exceptions import \
-    AzureError  # Keep for potential specific error handling
+from azure.core.exceptions import (  # Keep for potential specific error handling
+    AzureError,
+)
+
 # Removed tenacity, azure.core.credentials, azure.search.documents.SearchClient
 # Keep SearchIndexClient for index management if needed by create_search_index
 # Removed: from azure.search.documents.indexes import SearchIndexClient
 from azure.search.documents.indexes.models import (
-    HnswAlgorithmConfiguration, SearchableField, SearchField,
-    SearchFieldDataType, SearchIndex, SimpleField, VectorSearch,
-    VectorSearchAlgorithmConfiguration, VectorSearchAlgorithmKind,
-    VectorSearchAlgorithmMetric, VectorSearchProfile)
-from openai import \
-    AzureOpenAI  # Keep for type hinting if needed, though client comes from manager
+    HnswAlgorithmConfiguration,
+    SearchableField,
+    SearchField,
+    SearchFieldDataType,
+    SearchIndex,
+    SimpleField,
+    VectorSearch,
+    VectorSearchAlgorithmConfiguration,
+    VectorSearchAlgorithmKind,
+    VectorSearchAlgorithmMetric,
+    VectorSearchProfile,
+)
+from openai import (  # Keep for type hinting if needed, though client comes from manager
+    AzureOpenAI,
+)
 
 from konveyor.apps.documents.models import DocumentChunk
-from konveyor.core.azure_utils.mixins import (AzureClientMixin,
-                                              AzureServiceConfig,
-                                              ServiceLoggingMixin)
+from konveyor.core.azure_utils.mixins import (
+    AzureClientMixin,
+    AzureServiceConfig,
+    ServiceLoggingMixin,
+)
 from konveyor.core.azure_utils.retry import azure_retry
 from konveyor.core.azure_utils.service import AzureService
 from konveyor.core.documents.document_service import DocumentService
