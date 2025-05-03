@@ -10,6 +10,13 @@ exclude = [
     "dist",
     "migrations",
     "backups",
+    "backups/**",
+    ".cursor",
+    ".cursor/**",
+    ".devcontainer",
+    ".devcontainer/**",
+    "**/*.md",
+    ".windsurfrules",
 ]
 
 [tool.ruff.lint]
