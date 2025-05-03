@@ -142,7 +142,7 @@ class ChunkService(AzureService):
         for i in range(0, total_chunks, actual_batch_size):
             batch = chunks[i : i + actual_batch_size]
             self.log_debug(
-                f"Processing batch {i//actual_batch_size + 1} with {len(batch)} chunks"
+                f"Processing batch {i // actual_batch_size + 1} with {len(batch)} chunks"
             )
             yield batch
 

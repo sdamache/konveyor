@@ -36,7 +36,7 @@ def test_search_service_embedding():
     # Generate embeddings for each test text
     for i, text in enumerate(test_texts):
         try:
-            logger.info(f"Generating embedding for text {i+1} ({len(text)} chars)")
+            logger.info(f"Generating embedding for text {i + 1} ({len(text)} chars)")
 
             # Generate the embedding
             embedding = search_service.generate_embedding(text)
@@ -47,11 +47,11 @@ def test_search_service_embedding():
             )
             logger.info(f"First 5 values: {embedding[:5]}")
             print(
-                f"Text {i+1}: Successfully generated embedding with {len(embedding)} dimensions"  # noqa: E501
+                f"Text {i + 1}: Successfully generated embedding with {len(embedding)} dimensions"  # noqa: E501
             )
         except Exception as e:
-            logger.error(f"Failed to generate embedding for text {i+1}: {str(e)}")
-            print(f"Text {i+1}: Failed to generate embedding: {str(e)}")
+            logger.error(f"Failed to generate embedding for text {i + 1}: {str(e)}")
+            print(f"Text {i + 1}: Failed to generate embedding: {str(e)}")
 
 
 def test_custom_client():
