@@ -23,7 +23,7 @@ class ServiceLoggingMixin:
         logger.info(f"Initializing {service_name}...")
 
     def log_azure_credentials(
-        self, service: str, endpoint: Optional[str], key: Optional[str]
+        self, service: str, endpoint: str | None, key: str | None
     ) -> None:
         """Log Azure service credentials status."""
         logger.info(f"{service} Endpoint: {endpoint if endpoint else 'Not set'}")
@@ -33,7 +33,7 @@ class ServiceLoggingMixin:
         """Log a success message."""
         logger.info(message)
 
-    def log_error(self, message: str, error: Optional[Exception] = None) -> None:
+    def log_error(self, message: str, error: Exception | None = None) -> None:
         """Log an error message with optional exception."""
         if error:
             logger.error(f"{message}: {str(error)}")

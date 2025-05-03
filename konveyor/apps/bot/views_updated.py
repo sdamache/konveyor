@@ -358,7 +358,7 @@ def slack_webhook(request):
     return HttpResponse(status=200)
 
 
-def process_message(text: str, user_id: str, channel_id: str) -> Dict[str, Any]:
+def process_message(text: str, user_id: str, channel_id: str) -> dict[str, Any]:
     """
     Process a message using the Agent Orchestration Layer.
 

@@ -124,7 +124,7 @@ def create_kernel(use_embeddings: bool = False, validate: bool = True) -> Kernel
     return kernel
 
 
-def get_kernel_settings() -> Dict[str, Any]:
+def get_kernel_settings() -> dict[str, Any]:
     """
     Get the current Semantic Kernel settings from environment variables.
     Useful for diagnostics and testing.

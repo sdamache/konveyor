@@ -65,27 +65,22 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 black isort pre-commit
+          pip install ruff mypy pre-commit
 
       - name: Run pre-commit hooks
         run: |
           pre-commit run --all-files
         continue-on-error: false  # Make pre-commit checks required
 
-      - name: Check code formatting with Black
+      - name: Check code with Ruff (linting)
         run: |
-          black --check konveyor tests
-        continue-on-error: false  # Make Black checks required
+          ruff check konveyor tests
+        continue-on-error: false  # Make Ruff checks required
 
-      - name: Check import sorting with isort
+      - name: Check code with Ruff (formatting)
         run: |
-          isort --check konveyor tests
-        continue-on-error: false  # Make isort checks required
-
-      - name: Check code with flake8
-        run: |
-          flake8 konveyor tests
-        continue-on-error: false  # Make flake8 checks required
+          ruff format --check konveyor tests
+        continue-on-error: false  # Make Ruff format checks required
 
 
   test-coverage:

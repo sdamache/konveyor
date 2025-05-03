@@ -60,7 +60,7 @@ def test_root_handler():
 
 
 # Test the slack_webhook function
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_slack_webhook():
     """Test the slack_webhook function."""
     # Create a request factory
@@ -73,7 +73,6 @@ def test_slack_webhook():
             "konveyor.apps.bot.views_updated.process_message"
         ) as mock_process_message,
     ):
-
         # Set up the mocks
         mock_slack_service.verify_request.return_value = True
         mock_slack_service.send_direct_message.return_value = {"ok": True}
@@ -168,7 +167,6 @@ def test_process_message():
         ) as mock_conversation_manager,  # noqa: F841
         patch("konveyor.apps.bot.views_updated.asyncio.run") as mock_asyncio_run,
     ):
-
         # Set up the mocks
         mock_orchestrator.process_request_sync.return_value = {
             "response": "Test response",

@@ -6,7 +6,7 @@ including retrieving, creating, and updating user profiles.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from django.conf import settings  # noqa: F401
 from django.db import transaction
@@ -27,7 +27,7 @@ class SlackUserProfileService:
     Slack user profiles, as well as managing user preferences.
     """
 
-    def __init__(self, slack_service: Optional[SlackService] = None):
+    def __init__(self, slack_service: SlackService | None = None):
         """
         Initialize the Slack user profile service.
 
@@ -80,7 +80,7 @@ class SlackUserProfileService:
             logger.info(f"Created new profile for user {slack_id}")
             return profile
 
-    def update_profile(self, slack_id: str) -> Optional[SlackUserProfile]:
+    def update_profile(self, slack_id: str) -> SlackUserProfile | None:
         """
         Update a Slack user profile with the latest information from Slack.
 
@@ -118,7 +118,7 @@ class SlackUserProfileService:
 
     def update_preference(
         self, slack_id: str, preference_name: str, preference_value: str
-    ) -> Optional[SlackUserProfile]:
+    ) -> SlackUserProfile | None:
         """
         Update a user preference.
 
@@ -154,7 +154,7 @@ class SlackUserProfileService:
             logger.warning(f"Profile not found for user {slack_id}")
             return None
 
-    def get_all_profiles(self) -> List[SlackUserProfile]:
+    def get_all_profiles(self) -> list[SlackUserProfile]:
         """
         Get all Slack user profiles.
 
@@ -163,7 +163,7 @@ class SlackUserProfileService:
         """
         return SlackUserProfile.objects.all()
 
-    def get_active_profiles(self, days: int = 30) -> List[SlackUserProfile]:
+    def get_active_profiles(self, days: int = 30) -> list[SlackUserProfile]:
         """
         Get active Slack user profiles.
 
@@ -176,7 +176,7 @@ class SlackUserProfileService:
         cutoff_date = timezone.now() - timezone.timedelta(days=days)
         return SlackUserProfile.objects.filter(last_interaction__gte=cutoff_date)
 
-    def _get_user_info(self, slack_id: str) -> Dict[str, Any]:
+    def _get_user_info(self, slack_id: str) -> dict[str, Any]:
         """
         Get user information from Slack API.
 

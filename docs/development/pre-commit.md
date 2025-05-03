@@ -24,9 +24,7 @@ The following hooks are configured:
 - **end-of-file-fixer**: Ensures files end with a newline
 - **check-yaml**: Validates YAML files
 - **debug-statements**: Checks for debugger imports and py37+ `breakpoint()` calls
-- **isort**: Sorts imports according to the Black profile
-- **black**: Formats Python code
-- **flake8**: Lints Python code
+- **ruff**: Lints and formats Python code (replaces Black, isort, and Flake8)
 - **mypy**: Performs static type checking
 
 ## Running Hooks Manually
@@ -40,7 +38,7 @@ pre-commit run --all-files
 Or run a specific hook:
 
 ```bash
-pre-commit run black --all-files
+pre-commit run ruff --all-files
 ```
 
 ## CI/CD Integration
@@ -49,6 +47,47 @@ These hooks are also run as part of the CI/CD pipeline to ensure all code meets 
 
 ## Configuration
 
-- Black configuration is in `pyproject.toml`
-- isort configuration is in `pyproject.toml`
-- flake8 configuration is in `.flake8`
+All configuration is in `pyproject.toml`:
+
+- Ruff linting and formatting configuration
+- mypy type checking configuration
+
+## About Ruff
+
+[Ruff](https://github.com/astral-sh/ruff) is an extremely fast Python linter and formatter, written in Rust. It replaces multiple tools (Black, isort, Flake8) with a single, unified tool that:
+
+- Formats code (like Black)
+- Sorts imports (like isort)
+- Lints code (like Flake8)
+
+Ruff is significantly faster than the tools it replaces and provides a consistent configuration experience.
+
+### Using Ruff Directly
+
+You can use Ruff directly from the command line:
+
+```bash
+# Check code for issues
+ruff check konveyor/
+
+# Fix issues automatically
+ruff check --fix konveyor/
+
+# Format code
+ruff format konveyor/
+```
+
+### Ignoring Issues
+
+To ignore a specific issue on a line, add a `# noqa: CODE` comment:
+
+```python
+# Ignore F401 (unused import) on this line
+import os  # noqa: F401
+```
+
+You can also use the `add_noqa.py` script to automatically add noqa comments to all remaining issues:
+
+```bash
+python add_noqa.py
+```

@@ -45,7 +45,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-@pytest.fixture
+@pytest.fixture()
 def real_kernel():
     """Create a real Kernel with Azure OpenAI for testing."""
     try:
@@ -56,19 +56,19 @@ def real_kernel():
         pytest.skip(f"Failed to create kernel: {str(e)}")
 
 
-@pytest.fixture
+@pytest.fixture()
 def registry():
     """Create a SkillRegistry for testing."""
     return SkillRegistry()
 
 
-@pytest.fixture
+@pytest.fixture()
 def chat_skill():
     """Create a ChatSkill for testing."""
     return ChatSkill()
 
 
-@pytest.fixture
+@pytest.fixture()
 def orchestrator(real_kernel, registry, chat_skill):
     """Create an AgentOrchestratorSkill for testing."""
     orchestrator = AgentOrchestratorSkill(real_kernel, registry)
@@ -81,7 +81,7 @@ def orchestrator(real_kernel, registry, chat_skill):
     return orchestrator
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_process_request_with_chat(orchestrator):
     """Test processing a chat request with real Azure OpenAI."""
     # Process a chat request
@@ -100,7 +100,7 @@ async def test_process_request_with_chat(orchestrator):
     assert "success" in result
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_process_request_with_question(orchestrator):
     """Test processing a question request with real Azure OpenAI."""
     # Process a question request
@@ -120,7 +120,7 @@ async def test_process_request_with_question(orchestrator):
     assert "success" in result
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_process_request_with_empty_request(orchestrator):
     """Test processing an empty request with real Azure OpenAI."""
     # Process an empty request

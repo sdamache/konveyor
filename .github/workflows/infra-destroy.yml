@@ -37,7 +37,7 @@ jobs:
     needs: approval
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment }}
-    
+
     defaults:
       run:
         working-directory: Konveyor-infra/environments/${{ github.event.inputs.environment }}
@@ -67,7 +67,7 @@ jobs:
         with:
           script: |
             const environment = '${{ github.event.inputs.environment }}'.toUpperCase();
-            
+
             // Delete environment variables
             const variablesToDelete = [
               `AZURE_SEARCH_ENDPOINT_${environment}`,
@@ -77,7 +77,7 @@ jobs:
               `APP_SERVICE_NAME_${environment}`,
               `APP_SERVICE_HOSTNAME_${environment}`
             ];
-            
+
             for (const name of variablesToDelete) {
               try {
                 await github.rest.actions.deleteRepoVariable({
@@ -90,6 +90,6 @@ jobs:
                 console.log(`Error deleting variable ${name}: ${error.message}`);
               }
             }
-            
+
             // Note: We can't delete secrets via API, but we can update them to empty values
             // This would require a PAT with appropriate permissions

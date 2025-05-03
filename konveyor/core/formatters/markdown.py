@@ -6,7 +6,7 @@ It handles formatting messages in Markdown format for general use.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from konveyor.core.formatters.interface import FormatterInterface
 
@@ -22,7 +22,7 @@ class MarkdownFormatter(FormatterInterface):
     platform-specific formatters.
     """
 
-    def format_message(self, text: str, **kwargs) -> Dict[str, Any]:
+    def format_message(self, text: str, **kwargs) -> dict[str, Any]:
         """
         Format a message in Markdown.
 
@@ -41,7 +41,7 @@ class MarkdownFormatter(FormatterInterface):
 
         return {"text": formatted_text, "format": "markdown"}
 
-    def format_error(self, error: str, **kwargs) -> Dict[str, Any]:
+    def format_error(self, error: str, **kwargs) -> dict[str, Any]:
         """
         Format an error message in Markdown.
 
@@ -56,7 +56,7 @@ class MarkdownFormatter(FormatterInterface):
 
         return {"text": formatted_text, "format": "markdown", "is_error": True}
 
-    def format_list(self, items: List[str], **kwargs) -> Dict[str, Any]:
+    def format_list(self, items: list[str], **kwargs) -> dict[str, Any]:
         """
         Format a list in Markdown.
 
@@ -84,8 +84,8 @@ class MarkdownFormatter(FormatterInterface):
         return {"text": formatted_text, "format": "markdown"}
 
     def format_code(
-        self, code: str, language: Optional[str] = None, **kwargs
-    ) -> Dict[str, Any]:
+        self, code: str, language: str | None = None, **kwargs
+    ) -> dict[str, Any]:
         """
         Format code in Markdown.
 
@@ -108,8 +108,8 @@ class MarkdownFormatter(FormatterInterface):
         return {"text": formatted_text, "format": "markdown", "language": language}
 
     def format_table(
-        self, headers: List[str], rows: List[List[Any]], **kwargs
-    ) -> Dict[str, Any]:
+        self, headers: list[str], rows: list[list[Any]], **kwargs
+    ) -> dict[str, Any]:
         """
         Format a table in Markdown.
 
@@ -140,8 +140,8 @@ class MarkdownFormatter(FormatterInterface):
         return {"text": formatted_text, "format": "markdown"}
 
     def format_rich_message(
-        self, blocks: List[Dict[str, Any]], **kwargs
-    ) -> Dict[str, Any]:
+        self, blocks: list[dict[str, Any]], **kwargs
+    ) -> dict[str, Any]:
         """
         Format a rich message in Markdown.
 
@@ -178,7 +178,7 @@ class MarkdownFormatter(FormatterInterface):
 
         return {"text": formatted_text, "format": "markdown"}
 
-    def parse_markdown(self, markdown: str, **kwargs) -> Dict[str, Any]:
+    def parse_markdown(self, markdown: str, **kwargs) -> dict[str, Any]:
         """
         Parse Markdown and return it as is.
 

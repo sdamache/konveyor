@@ -7,7 +7,7 @@ specified client type and configuration.
 
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any
 
 from konveyor.core.azure_adapters.openai.client import (
     AzureOpenAIClient as CustomAzureOpenAIClient,
@@ -31,7 +31,7 @@ class OpenAIClientFactory:
 
     @classmethod
     def get_client(
-        cls, client_type: str = "unified", config: Optional[Dict[str, Any]] = None
+        cls, client_type: str = "unified", config: dict[str, Any] | None = None
     ) -> OpenAIClientInterface:
         """
         Get an Azure OpenAI client.

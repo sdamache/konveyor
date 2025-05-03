@@ -56,7 +56,7 @@ class KonveyorBot(ActivityHandler):
             logger.info("Registered ChatSkill with orchestrator")
 
             # Initialize conversation state
-            self.conversations: Dict[str, Dict[str, Any]] = {}
+            self.conversations: dict[str, dict[str, Any]] = {}
             logger.info("Initialized conversation state")
 
         except Exception as e:

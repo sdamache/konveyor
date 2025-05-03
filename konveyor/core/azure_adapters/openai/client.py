@@ -1,12 +1,11 @@
 import logging
 import os
-from typing import Any  # Any type  # noqa: F401
-from typing import Dict  # Dictionary type
-from typing import List  # List type
-from typing import Optional  # Optional type (equivalent to Union[Type, None])
-from typing import Set  # Set type  # noqa: F401
-from typing import Tuple  # Tuple type  # noqa: F401
-from typing import Union  # Union of types  # noqa: F401
+from typing import (
+    Any,  # Any type  # noqa: F401
+    Set,  # Set type  # noqa: F401
+    Tuple,  # Tuple type  # noqa: F401
+    Union,  # Union of types  # noqa: F401
+)
 
 import requests
 from tenacity import (  # noqa: F401
@@ -29,12 +28,12 @@ class AzureOpenAIClient:
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        endpoint: Optional[str] = None,
-        embeddings_api_version: Optional[str] = None,
-        gpt_api_version: Optional[str] = None,
-        gpt_deployment: Optional[str] = None,
-        embeddings_deployment: Optional[str] = None,
+        api_key: str | None = None,
+        endpoint: str | None = None,
+        embeddings_api_version: str | None = None,
+        gpt_api_version: str | None = None,
+        gpt_deployment: str | None = None,
+        embeddings_deployment: str | None = None,
     ):
         """Initialize the Azure OpenAI client.
 
@@ -88,7 +87,7 @@ class AzureOpenAIClient:
         wait=wait_exponential(multiplier=1, min=4, max=10),
         reraise=True,
     )
-    def generate_embedding(self, text: str) -> List[float]:
+    def generate_embedding(self, text: str) -> list[float]:
         """Generate an embedding for the given text.
 
         Args:
@@ -163,7 +162,7 @@ class AzureOpenAIClient:
         reraise=True,
     )
     def generate_completion(
-        self, messages: List[Dict[str, str]], max_tokens: int = 1000
+        self, messages: list[dict[str, str]], max_tokens: int = 1000
     ) -> str:
         """Generate a chat completion response.
 

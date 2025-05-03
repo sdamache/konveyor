@@ -71,7 +71,7 @@ class MockConversationManager:
 
 
 # Test the ResponseGenerator
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_response_generator():
     """Test the ResponseGenerator."""
     # Create mock dependencies

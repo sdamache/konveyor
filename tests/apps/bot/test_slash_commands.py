@@ -149,7 +149,7 @@ def test_code_command():
     assert len(context_blocks) >= 1
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_preferences_command():
     """Test the preferences command handler."""
     # Mock the SlackUserProfileService
@@ -203,7 +203,7 @@ def test_preferences_command():
         )
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_profile_command():
     """Test the profile command handler."""
     # Mock the SlackUserProfileService
@@ -244,7 +244,7 @@ def test_profile_command():
         mock_service.get_or_create_profile.assert_called_once_with("test_user")
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_slash_command_endpoint():
     """Test the slash command endpoint."""
     # Create a request factory
@@ -257,7 +257,6 @@ def test_slash_command_endpoint():
             "konveyor.apps.bot.views.get_command_handler"
         ) as mock_get_command_handler,
     ):
-
         # Set up the mocks
         mock_slack_service.verify_request.return_value = True
 
@@ -302,7 +301,7 @@ def test_slash_command_endpoint():
         )
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_slash_command_unknown_command():
     """Test the slash command endpoint with an unknown command."""
     # Create a request factory
@@ -315,7 +314,6 @@ def test_slash_command_unknown_command():
             "konveyor.apps.bot.views.get_command_handler"
         ) as mock_get_command_handler,
     ):
-
         # Set up the mocks
         mock_slack_service.verify_request.return_value = True
 

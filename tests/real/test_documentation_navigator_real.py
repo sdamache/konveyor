@@ -189,9 +189,9 @@ async def test_documentation_navigator():
             "Setting up RealSearchService to connect to actual Azure Cognitive Search"
         )
         sys.modules["konveyor.apps.search.services.search_service"] = MagicMock()
-        sys.modules["konveyor.apps.search.services.search_service"].SearchService = (
-            RealSearchService
-        )
+        sys.modules[
+            "konveyor.apps.search.services.search_service"
+        ].SearchService = RealSearchService
 
         # No need to mock the ConversationManagerFactory
         # The DocumentationNavigatorSkill will use the real one

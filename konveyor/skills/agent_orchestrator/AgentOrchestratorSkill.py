@@ -8,7 +8,7 @@ skills and tools. It handles request analysis, skill selection, and response for
 import logging
 import sys
 import traceback
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from semantic_kernel import Kernel
 from semantic_kernel.functions import kernel_function
@@ -41,7 +41,7 @@ class AgentOrchestratorSkill:
     def __init__(
         self,
         kernel: Kernel,
-        registry: Optional[SkillRegistry] = None,
+        registry: SkillRegistry | None = None,
         default_skill_name: str = "ChatSkill",
     ):
         """
@@ -64,8 +64,8 @@ class AgentOrchestratorSkill:
         name="process_request",
     )
     async def process_request(
-        self, request: str, context: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        self, request: str, context: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         Process a user request and route it to the appropriate skill.
 
@@ -151,8 +151,8 @@ class AgentOrchestratorSkill:
             )
 
     def process_request_sync(
-        self, request: str, context: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        self, request: str, context: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         Synchronous wrapper for process_request.
 
@@ -217,7 +217,7 @@ class AgentOrchestratorSkill:
 
     async def _determine_skill_and_function(
         self, request: str
-    ) -> Tuple[Optional[str], Optional[str]]:
+    ) -> tuple[str | None, str | None]:
         """
         Determine the appropriate skill and function for a request.
 
@@ -312,7 +312,7 @@ class AgentOrchestratorSkill:
         elif any(g in request_lower for g in ["hello", "hi ", "hey", "greetings"]):
             # Check if the skill has a greet function, otherwise use chat
             skill = self.registry.get_skill(skill_name)
-            if skill and hasattr(skill, "greet") and callable(getattr(skill, "greet")):
+            if skill and hasattr(skill, "greet") and callable(skill.greet):
                 function_name = "greet"
                 matching_patterns = [
                     g
@@ -350,7 +350,7 @@ class AgentOrchestratorSkill:
         skill_name: str,
         function_name: str,
         request: str,
-        context: Dict[str, Any],
+        context: dict[str, Any],
     ) -> Any:
         """
         Invoke a skill function.
@@ -543,8 +543,8 @@ class AgentOrchestratorSkill:
         skill_name: str,
         function_name: str,
         success: bool,
-        error: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        error: str | None = None,
+    ) -> dict[str, Any]:
         """
         Create a standardized response dictionary.
 
@@ -627,9 +627,9 @@ class AgentOrchestratorSkill:
     def register_skill(
         self,
         skill: Any,
-        skill_name: Optional[str] = None,
-        description: Optional[str] = None,
-        keywords: Optional[List[str]] = None,
+        skill_name: str | None = None,
+        description: str | None = None,
+        keywords: list[str] | None = None,
     ) -> str:
         """
         Register a skill with the orchestrator.

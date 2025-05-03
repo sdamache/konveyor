@@ -31,7 +31,7 @@ TODO: Repository Enhancements
 import asyncio
 import logging
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 from django.db.models import Count, Q
 from django.utils import timezone
@@ -79,7 +79,7 @@ class DjangoFeedbackRepository(FeedbackStorageProvider):
             logger.error(f"Error initializing conversation manager: {str(e)}")
             self.conversation_manager = None
 
-    def store_feedback(self, feedback_data: Dict[str, Any]) -> Dict[str, Any]:
+    def store_feedback(self, feedback_data: dict[str, Any]) -> dict[str, Any]:
         """
         Store feedback data using Django models and conversation storage.
 
@@ -219,7 +219,7 @@ class DjangoFeedbackRepository(FeedbackStorageProvider):
             ),
         }
 
-    def update_feedback_content(self, update_data: Dict[str, Any]) -> bool:
+    def update_feedback_content(self, update_data: dict[str, Any]) -> bool:
         """
         Update the content of feedback entries in both Django and conversation storage.
 
@@ -347,9 +347,11 @@ class DjangoFeedbackRepository(FeedbackStorageProvider):
                                 existing_metadata[feedback_key] = metadata_update
 
                             # Save the updated metadata
-                            await self.conversation_manager.update_conversation_metadata(  # noqa: E501
-                                conversation_id=conversation_id,
-                                metadata=existing_metadata,
+                            await (
+                                self.conversation_manager.update_conversation_metadata(  # noqa: E501
+                                    conversation_id=conversation_id,
+                                    metadata=existing_metadata,
+                                )
                             )
                             logger.debug(
                                 f"Updated feedback metadata in conversation {conversation_id}"  # noqa: E501
@@ -374,7 +376,7 @@ class DjangoFeedbackRepository(FeedbackStorageProvider):
 
         return success
 
-    def get_feedback_stats(self, days: int = 30) -> Dict[str, Any]:
+    def get_feedback_stats(self, days: int = 30) -> dict[str, Any]:
         """
         Get feedback statistics for the specified time period.
 
@@ -534,7 +536,7 @@ class DjangoFeedbackRepository(FeedbackStorageProvider):
 
         return stats
 
-    def get_feedback_by_skill(self, days: int = 30) -> List[Dict[str, Any]]:
+    def get_feedback_by_skill(self, days: int = 30) -> list[dict[str, Any]]:
         """
         Get feedback statistics grouped by skill.
 
@@ -715,7 +717,7 @@ class DjangoFeedbackRepository(FeedbackStorageProvider):
 
         return result
 
-    def get_feedback_data(self, days: int = 30) -> List[Dict[str, Any]]:
+    def get_feedback_data(self, days: int = 30) -> list[dict[str, Any]]:
         """
         Get raw feedback data for the specified time period.
 

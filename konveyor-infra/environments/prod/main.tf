@@ -80,7 +80,7 @@ module "app_service" {
   docker_registry_username = var.docker_registry_username
   docker_registry_password = var.GHCR_PAT
   tags                    = var.tags
-  
+
   app_settings = merge(
     {
       WEBSITES_ENABLE_APP_SERVICE_STORAGE = false

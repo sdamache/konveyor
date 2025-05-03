@@ -77,11 +77,11 @@ class RAGService:
     async def generate_response(
         self,
         query: str,
-        conversation_id: Optional[str] = None,
+        conversation_id: str | None = None,
         template_type: str = "knowledge",
         max_context_chunks: int = 3,
         temperature: float = 0.7,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Generate a response using RAG pipeline.
 

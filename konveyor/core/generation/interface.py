@@ -22,11 +22,11 @@ class ResponseGeneratorInterface(ABC):
     async def generate_response(
         self,
         query: str,
-        context: Optional[str] = None,
-        conversation_id: Optional[str] = None,
+        context: str | None = None,
+        conversation_id: str | None = None,
         use_rag: bool = False,
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Generate a response for the given query.
 
@@ -43,16 +43,15 @@ class ResponseGeneratorInterface(ABC):
         Returns:
             Dictionary containing the response and metadata
         """
-        pass
 
     @abstractmethod
     async def generate_with_rag(
         self,
         query: str,
-        conversation_id: Optional[str] = None,
+        conversation_id: str | None = None,
         max_context_chunks: int = 3,
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Generate a response using RAG (Retrieval-Augmented Generation).
 
@@ -68,16 +67,15 @@ class ResponseGeneratorInterface(ABC):
         Returns:
             Dictionary containing the response and metadata
         """
-        pass
 
     @abstractmethod
     async def generate_direct(
         self,
         query: str,
-        context: Optional[str] = None,
-        conversation_id: Optional[str] = None,
+        context: str | None = None,
+        conversation_id: str | None = None,
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Generate a response directly without RAG.
 
@@ -93,12 +91,11 @@ class ResponseGeneratorInterface(ABC):
         Returns:
             Dictionary containing the response and metadata
         """
-        pass
 
     @abstractmethod
     async def retrieve_context(
         self, query: str, max_chunks: int = 3, **kwargs
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Retrieve relevant context chunks for a query.
 
@@ -113,10 +110,9 @@ class ResponseGeneratorInterface(ABC):
         Returns:
             List of context chunk dictionaries
         """
-        pass
 
     @abstractmethod
-    def get_prompt_template(self, template_type: str) -> Dict[str, str]:
+    def get_prompt_template(self, template_type: str) -> dict[str, str]:
         """
         Get a prompt template for the specified type.
 
@@ -129,12 +125,11 @@ class ResponseGeneratorInterface(ABC):
         Returns:
             Dictionary containing the prompt template
         """
-        pass
 
     @abstractmethod
     def format_prompt(
         self, template_type: str, context: str, query: str, **kwargs
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         """
         Format a prompt using the specified template.
 
@@ -150,4 +145,3 @@ class ResponseGeneratorInterface(ABC):
         Returns:
             Dictionary containing the formatted prompt
         """
-        pass

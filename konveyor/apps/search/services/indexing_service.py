@@ -14,7 +14,7 @@ Example:
     ```
 """
 
-from typing import Any, Dict, List
+from typing import Any
 
 from django.db import transaction
 
@@ -70,7 +70,7 @@ class IndexingService(AzureService):
             self.log_error("Failed to initialize service", e)
             raise
 
-    def _calculate_batch_size(self, chunks: List[DocumentChunk]) -> int:
+    def _calculate_batch_size(self, chunks: list[DocumentChunk]) -> int:
         """Calculate optimal batch size based on content size.
 
         Uses a sampling approach to estimate average chunk size and determine
@@ -105,7 +105,7 @@ class IndexingService(AzureService):
         )
 
     @transaction.atomic
-    def index_document(self, document_id: str) -> Dict[str, Any]:
+    def index_document(self, document_id: str) -> dict[str, Any]:
         """
         Index all chunks of a document with improved batch processing and error handling.  # noqa: E501
         """
@@ -215,7 +215,7 @@ class IndexingService(AzureService):
             self.log_error(error_msg, exc_info=True)
             raise
 
-    def _index_chunk_batch(self, chunks: List[DocumentChunk]) -> Dict[str, Any]:
+    def _index_chunk_batch(self, chunks: list[DocumentChunk]) -> dict[str, Any]:
         """
         Index a batch of document chunks with improved error handling and retries.
         """
@@ -264,7 +264,7 @@ class IndexingService(AzureService):
 
         return results
 
-    def index_all_documents(self) -> List[Dict[str, Any]]:
+    def index_all_documents(self) -> list[dict[str, Any]]:
         """
         Index all documents in the database.
 

@@ -21,7 +21,6 @@ import time
 from typing import (  # noqa: E501, F401
     Any,
     BinaryIO,
-    Callable,
     Dict,
     List,
     Optional,
@@ -97,7 +96,7 @@ class DocumentService(AzureService):  # Inherit from AzureService
 
     def parse_file(
         self, file_obj: BinaryIO, content_type: str
-    ) -> Tuple[str, Dict[str, Any]]:
+    ) -> tuple[str, dict[str, Any]]:
         """Parse a document file and extract its content and metadata.
 
         Args:
@@ -142,7 +141,7 @@ class DocumentService(AzureService):  # Inherit from AzureService
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
     )
-    def _parse_pdf(self, file_obj: BinaryIO) -> Tuple[str, Dict[str, Any]]:
+    def _parse_pdf(self, file_obj: BinaryIO) -> tuple[str, dict[str, Any]]:
         """Parse PDF using Azure Document Intelligence.
 
         Args:
@@ -195,7 +194,7 @@ class DocumentService(AzureService):  # Inherit from AzureService
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
     )
-    def _parse_docx(self, file_obj: BinaryIO) -> Tuple[str, Dict[str, Any]]:
+    def _parse_docx(self, file_obj: BinaryIO) -> tuple[str, dict[str, Any]]:
         """Parse DOCX file.
 
         Args:
@@ -231,7 +230,7 @@ class DocumentService(AzureService):  # Inherit from AzureService
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
     )
-    def _parse_markdown(self, file_obj: BinaryIO) -> Tuple[str, Dict[str, Any]]:
+    def _parse_markdown(self, file_obj: BinaryIO) -> tuple[str, dict[str, Any]]:
         """Parse Markdown file.
 
         Args:
@@ -267,7 +266,7 @@ class DocumentService(AzureService):  # Inherit from AzureService
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
     )
-    def _parse_text(self, file_obj: BinaryIO) -> Tuple[str, Dict[str, Any]]:
+    def _parse_text(self, file_obj: BinaryIO) -> tuple[str, dict[str, Any]]:
         """Parse plain text file.
 
         Args:

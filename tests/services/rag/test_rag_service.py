@@ -7,7 +7,7 @@ from konveyor.core.rag.context_service import ContextService
 from konveyor.core.rag.rag_service import RAGService
 
 
-@pytest.fixture
+@pytest.fixture()
 async def rag_service():
     context_service = AsyncMock(spec=ContextService)
     storage_manager = AsyncMock(spec=AzureClientManager)
@@ -16,7 +16,7 @@ async def rag_service():
     return service
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_generate_response_kubernetes_concepts(rag_service):
     """Test response generation for Kubernetes conceptual questions"""
     # Mock context retrieval
@@ -47,7 +47,7 @@ async def test_generate_response_kubernetes_concepts(rag_service):
     assert response["sources"][0]["source"].endswith("pod-overview.md")
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_generate_response_linux_kernel(rag_service):
     """Test response generation for Linux kernel questions"""
     rag_service.context_service.retrieve_context.return_value = [
@@ -72,7 +72,7 @@ async def test_generate_response_linux_kernel(rag_service):
     assert response["sources"][0]["source"].endswith("syscalls.rst")
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_generate_response_with_code_examples(rag_service):
     """Test response generation with code examples"""
     rag_service.context_service.retrieve_context.return_value = [
@@ -101,7 +101,7 @@ async def test_generate_response_with_code_examples(rag_service):
     assert response["sources"][0]["source"].endswith("pod-yaml.md")
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_generate_response_with_multiple_sources(rag_service):
     """Test response generation combining multiple documentation sources"""
     rag_service.context_service.retrieve_context.return_value = [

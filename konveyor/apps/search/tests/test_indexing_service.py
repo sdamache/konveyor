@@ -768,9 +768,7 @@ class TestIndexingService(TestCase):
             content_desc = (
                 "Empty string"
                 if content == ""
-                else (
-                    "Long content" if len(content) > 1000 else "Special characters"
-                )  # noqa: E501
+                else ("Long content" if len(content) > 1000 else "Special characters")  # noqa: E501
             )
 
             # Create a problematic chunk

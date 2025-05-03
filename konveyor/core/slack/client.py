@@ -11,7 +11,8 @@ import logging
 import random
 import ssl
 import time
-from typing import Any, Callable, Dict, List, Optional, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 # Removed: import certifi
 from django.conf import settings
@@ -46,8 +47,8 @@ def retry_on_slack_error(
         Decorated function
     """
 
-    def decorator(func: Callable[..., Optional[T]]) -> Callable[..., Optional[T]]:
-        def wrapper(*args, **kwargs) -> Optional[T]:
+    def decorator(func: Callable[..., T | None]) -> Callable[..., T | None]:
+        def wrapper(*args, **kwargs) -> T | None:
             delay = initial_delay
             last_exception = None
 
@@ -114,7 +115,7 @@ class SlackService:
     looking up user information, and verifying Slack requests.
     """
 
-    def __init__(self, token: Optional[str] = None):
+    def __init__(self, token: str | None = None):
         """
         Initialize the Slack service.
 
@@ -136,9 +137,9 @@ class SlackService:
         self,
         channel: str,
         text: str,
-        blocks: Optional[List[Dict[str, Any]]] = None,
-        thread_ts: Optional[str] = None,
-    ) -> Optional[Dict[str, Any]]:
+        blocks: list[dict[str, Any]] | None = None,
+        thread_ts: str | None = None,
+    ) -> dict[str, Any] | None:
         """
         Send a message to a Slack channel.
 
@@ -184,7 +185,7 @@ class SlackService:
             return None
 
     @retry_on_slack_error(max_retries=3)
-    def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+    def get_user_by_email(self, email: str) -> dict[str, Any] | None:
         """
         Get a Slack user by email address.
 
@@ -208,9 +209,9 @@ class SlackService:
         self,
         user_id: str,
         text: str,
-        blocks: Optional[List[Dict[str, Any]]] = None,
-        thread_ts: Optional[str] = None,
-    ) -> Optional[Dict[str, Any]]:
+        blocks: list[dict[str, Any]] | None = None,
+        thread_ts: str | None = None,
+    ) -> dict[str, Any] | None:
         """
         Send a direct message to a user.
 
@@ -251,9 +252,9 @@ class SlackService:
         self,
         email: str,
         text: str,
-        blocks: Optional[List[Dict[str, Any]]] = None,
-        thread_ts: Optional[str] = None,
-    ) -> Optional[Dict[str, Any]]:
+        blocks: list[dict[str, Any]] | None = None,
+        thread_ts: str | None = None,
+    ) -> dict[str, Any] | None:
         """
         Send a direct message to a user by email.
 
@@ -274,7 +275,7 @@ class SlackService:
         return self.send_direct_message(user.get("id"), text, blocks, thread_ts)
 
     @retry_on_slack_error(max_retries=3)
-    def get_bot_user_id(self) -> Optional[str]:
+    def get_bot_user_id(self) -> str | None:
         """
         Get the bot's own user ID.
 
@@ -294,8 +295,8 @@ class SlackService:
 
     @retry_on_slack_error(max_retries=3)
     def get_conversation_history(
-        self, channel: str, limit: int = 10, thread_ts: Optional[str] = None
-    ) -> Optional[List[Dict[str, Any]]]:
+        self, channel: str, limit: int = 10, thread_ts: str | None = None
+    ) -> list[dict[str, Any]] | None:
         """
         Get the conversation history for a channel or thread.
 
@@ -350,7 +351,7 @@ class SlackService:
         request_body: bytes,
         signature: str,
         timestamp: str,
-        signing_secret: Optional[str] = None,
+        signing_secret: str | None = None,
     ) -> bool:
         """
         Verify that a request is from Slack.

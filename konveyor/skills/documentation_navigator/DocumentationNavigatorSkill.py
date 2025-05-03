@@ -41,7 +41,7 @@ class DocumentationNavigatorSkill:
         conversation_manager (Optional[ConversationInterface]): The conversation manager for memory  # noqa: E501
     """
 
-    def __init__(self, kernel: Optional[Kernel] = None):
+    def __init__(self, kernel: Kernel | None = None):
         """
         Initialize the Documentation Navigator Skill.
 
@@ -103,7 +103,7 @@ class DocumentationNavigatorSkill:
     @kernel_function(
         description="Search documentation for information", name="search_documentation"
     )
-    async def search_documentation(self, query: str, top: int = 5) -> Dict[str, Any]:
+    async def search_documentation(self, query: str, top: int = 5) -> dict[str, Any]:
         """
         Search documentation for information related to the query.
 
@@ -153,7 +153,7 @@ class DocumentationNavigatorSkill:
         description="Answer a question using documentation", name="answer_question"
     )
     async def answer_question(
-        self, question: str, top: int = 5, conversation_id: Optional[str] = None
+        self, question: str, top: int = 5, conversation_id: str | None = None
     ) -> str:
         """
         Answer a question using documentation search.
@@ -214,8 +214,8 @@ class DocumentationNavigatorSkill:
         name="format_for_slack",
     )
     async def format_for_slack(
-        self, query: str, top: int = 5, conversation_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, query: str, top: int = 5, conversation_id: str | None = None
+    ) -> dict[str, Any]:
         """
         Search documentation and format results in Slack-compatible Markdown.
 
@@ -459,7 +459,7 @@ class DocumentationNavigatorSkill:
         logger.info(f"Preprocessed query: '{query}' -> '{processed_query}'")
         return processed_query
 
-    def _format_results(self, results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _format_results(self, results: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
         Format search results for presentation.
 
@@ -498,7 +498,7 @@ class DocumentationNavigatorSkill:
         return formatted
 
     def _format_answer_with_citations(
-        self, question: str, results: List[Dict[str, Any]]
+        self, question: str, results: list[dict[str, Any]]
     ) -> str:
         """
         Format an answer with citations based on search results.
@@ -524,7 +524,9 @@ class DocumentationNavigatorSkill:
         document_ids = [result["document_id"] for result in results]
 
         # Start with a clear introduction
-        answer = f"Based on the documentation, here's what I found about your question:\n\n"  # noqa: E501, F541
+        answer = (
+            f"Based on the documentation, here's what I found about your question:\n\n"  # noqa: E501, F541
+        )
 
         # Add content with properly formatted citations
         for i, content in enumerate(contents):
@@ -550,15 +552,15 @@ class DocumentationNavigatorSkill:
 
         # Add detailed sources section with document IDs and titles
         answer += "**Sources:**\n"
-        for i, (title, doc_id) in enumerate(zip(titles, document_ids)):
+        for i, (title, doc_id) in enumerate(zip(titles, document_ids, strict=False)):
             # Format each citation with number, title, and document ID
             answer += f"{i+1}. **{title}** (Document ID: `{doc_id}`)\n"
 
         return answer
 
     def _format_slack_blocks(
-        self, query: str, results: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, query: str, results: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """
         Format search results as Slack blocks.
 
@@ -805,9 +807,7 @@ class DocumentationNavigatorSkill:
     @kernel_function(
         description="Create a new conversation", name="create_conversation"
     )
-    async def create_conversation(
-        self, user_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+    async def create_conversation(self, user_id: str | None = None) -> dict[str, Any]:
         """
         Create a new conversation for contextual interactions.
 
@@ -849,7 +849,7 @@ class DocumentationNavigatorSkill:
             }
 
     def _enhance_query_with_context(
-        self, query: str, previous_queries: List[str], max_previous: int = 2
+        self, query: str, previous_queries: list[str], max_previous: int = 2
     ) -> str:
         """
         Enhance a query with context from previous queries.
@@ -895,7 +895,7 @@ class DocumentationNavigatorSkill:
 
         return query
 
-    def _format_slack_text(self, query: str, results: List[Dict[str, Any]]) -> str:
+    def _format_slack_text(self, query: str, results: list[dict[str, Any]]) -> str:
         """
         Format search results as plain text for Slack.
 

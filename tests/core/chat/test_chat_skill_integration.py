@@ -15,7 +15,7 @@ from konveyor.core.chat.skill_updated import ChatSkill
 
 
 # Test the ChatSkill with mocked dependencies
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_chat_skill_integration():
     """Test the ChatSkill integration with the new core components."""
     # Create a mock kernel
@@ -33,7 +33,6 @@ async def test_chat_skill_integration():
             "konveyor.core.generation.factory.ResponseGeneratorFactory.get_generator"
         ) as mock_get_generator,
     ):
-
         # Create mock conversation manager
         mock_conversation_manager = AsyncMock()
         mock_conversation_manager.create_conversation.return_value = {

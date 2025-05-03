@@ -17,7 +17,7 @@ from konveyor.apps.rag.views_updated import ConversationViewSet
 
 
 # Test the ConversationViewSet
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_conversation_viewset():
     """Test the ConversationViewSet."""
     # Create a request factory
@@ -36,7 +36,6 @@ async def test_conversation_viewset():
             "konveyor.core.formatters.factory.FormatterFactory.get_formatter"
         ) as mock_get_formatter,
     ):
-
         # Create mock client manager
         mock_client_manager = MagicMock()
         MockClientManager.return_value = mock_client_manager

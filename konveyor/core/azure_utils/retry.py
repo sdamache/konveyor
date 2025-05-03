@@ -1,7 +1,8 @@
 """Retry utilities for Azure service operations."""
 
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 from azure.core.exceptions import AzureError
 from tenacity import (

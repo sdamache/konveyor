@@ -75,7 +75,7 @@ TEST_FILES_DIR="$SCRIPT_DIR/test_files"
 if [ ! -d "$TEST_FILES_DIR" ]; then
     echo "Creating test_files directory: $TEST_FILES_DIR"
     mkdir -p "$TEST_FILES_DIR"
-    
+
     # Create a sample text file for tests
     echo "Creating sample.txt for tests..."
     cat > "$TEST_FILES_DIR/sample.txt" << EOF
@@ -156,4 +156,4 @@ else
     echo "}"
 fi
 
-exit $TEST_RESULT 
+exit $TEST_RESULT

@@ -27,7 +27,7 @@ class KnowledgeGapAnalyzerSkill:
     knowledge gaps.
     """
 
-    def __init__(self, kernel: Optional[Kernel] = None):
+    def __init__(self, kernel: Kernel | None = None):
         """
         Initialize the KnowledgeGapAnalyzerSkill.
 
@@ -234,7 +234,7 @@ class KnowledgeGapAnalyzerSkill:
         return json.dumps(learning_path, indent=2)
 
     def _update_confidence_scores(
-        self, user_id: str, question: str, relevant_domains: List[Dict[str, Any]]
+        self, user_id: str, question: str, relevant_domains: list[dict[str, Any]]
     ) -> None:
         """
         Update confidence scores based on the question and relevant domains.
@@ -269,7 +269,7 @@ class KnowledgeGapAnalyzerSkill:
                 f"Updated confidence for user {user_id}, domain {domain_id}: {current_confidence} -> {new_confidence}"  # noqa: E501
             )
 
-    def _identify_knowledge_gaps(self, user_id: str) -> List[Dict[str, Any]]:
+    def _identify_knowledge_gaps(self, user_id: str) -> list[dict[str, Any]]:
         """
         Identify knowledge gaps for a user based on confidence scores.
 
@@ -294,7 +294,7 @@ class KnowledgeGapAnalyzerSkill:
 
         return gaps
 
-    def _get_suggested_resources(self, domain_id: str) -> List[Dict[str, str]]:
+    def _get_suggested_resources(self, domain_id: str) -> list[dict[str, str]]:
         """
         Get suggested resources for a knowledge domain.
 

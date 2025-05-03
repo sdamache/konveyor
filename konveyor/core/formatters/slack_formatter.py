@@ -25,9 +25,8 @@ class SlackFormatter(FormatterInterface):
 
     def __init__(self):
         """Initialize the Slack formatter."""
-        pass
 
-    def format_message(self, text: str, **kwargs) -> Dict[str, Any]:
+    def format_message(self, text: str, **kwargs) -> dict[str, Any]:
         """
         Format a message for Slack.
 
@@ -63,7 +62,7 @@ class SlackFormatter(FormatterInterface):
 
         return response
 
-    def format_error(self, error: str, **kwargs) -> Dict[str, Any]:
+    def format_error(self, error: str, **kwargs) -> dict[str, Any]:
         """
         Format an error message for Slack.
 
@@ -94,8 +93,8 @@ class SlackFormatter(FormatterInterface):
         return response
 
     def format_code_block(
-        self, code: str, language: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, code: str, language: str | None = None
+    ) -> dict[str, Any]:
         """
         Format a code block for Slack with syntax highlighting.
 
@@ -191,8 +190,8 @@ class SlackFormatter(FormatterInterface):
         return {"text": formatted_code, "blocks": blocks}
 
     def format_table(
-        self, headers: List[str], rows: List[List[Any]], **kwargs
-    ) -> Dict[str, Any]:
+        self, headers: list[str], rows: list[list[Any]], **kwargs
+    ) -> dict[str, Any]:
         """
         Format a table for Slack.
 
@@ -268,8 +267,8 @@ class SlackFormatter(FormatterInterface):
         return response
 
     def format_visualization(
-        self, title: str, description: str, image_url: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, title: str, description: str, image_url: str | None = None
+    ) -> dict[str, Any]:
         """
         Format a visualization for Slack.
 
@@ -302,7 +301,7 @@ class SlackFormatter(FormatterInterface):
 
         return {"text": f"{title}: {description}", "blocks": blocks}
 
-    def format_list(self, items: List[str], **kwargs) -> Dict[str, Any]:
+    def format_list(self, items: list[str], **kwargs) -> dict[str, Any]:
         """
         Format a list for Slack.
 
@@ -353,8 +352,8 @@ class SlackFormatter(FormatterInterface):
         return response
 
     def format_code(
-        self, code: str, language: Optional[str] = None, **kwargs
-    ) -> Dict[str, Any]:
+        self, code: str, language: str | None = None, **kwargs
+    ) -> dict[str, Any]:
         """
         Format code for Slack with syntax highlighting.
 
@@ -481,8 +480,8 @@ class SlackFormatter(FormatterInterface):
         return response
 
     def format_rich_message(
-        self, blocks: List[Dict[str, Any]], **kwargs
-    ) -> Dict[str, Any]:
+        self, blocks: list[dict[str, Any]], **kwargs
+    ) -> dict[str, Any]:
         """
         Format a rich message with custom blocks for Slack.
 
@@ -498,7 +497,7 @@ class SlackFormatter(FormatterInterface):
 
         return {"text": text, "blocks": blocks}
 
-    def parse_markdown(self, markdown: str, **kwargs) -> Dict[str, Any]:
+    def parse_markdown(self, markdown: str, **kwargs) -> dict[str, Any]:
         """
         Parse Markdown and convert it to Slack format.
 
@@ -546,7 +545,7 @@ class SlackFormatter(FormatterInterface):
 
         return text
 
-    def _create_blocks_from_text(self, text: str) -> List[Dict[str, Any]]:
+    def _create_blocks_from_text(self, text: str) -> list[dict[str, Any]]:
         """
         Create Block Kit blocks from text.
 

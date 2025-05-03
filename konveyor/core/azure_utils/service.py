@@ -113,8 +113,8 @@ class AzureService:
     def log_error(
         self,
         message: str,
-        error: Optional[Exception] = None,
-        exc_info: Optional[Exception] = None,
+        error: Exception | None = None,
+        exc_info: Exception | None = None,
     ) -> None:
         """
         Log an error message with optional exception and exc_info for stack trace.
@@ -130,7 +130,7 @@ class AzureService:
         else:
             logger.error(f"{self.service_name}: {message}", exc_info=exc_info)
 
-    def log_warning(self, message: str, exc_info: Optional[Exception] = None) -> None:
+    def log_warning(self, message: str, exc_info: Exception | None = None) -> None:
         """Log a warning message.
 
         Args:
@@ -148,7 +148,7 @@ class AzureService:
         else:
             logger.warning(f"{self.service_name}: {message}")
 
-    def log_debug(self, message: str, exc_info: Optional[Exception] = None) -> None:
+    def log_debug(self, message: str, exc_info: Exception | None = None) -> None:
         """Log a debug message.
 
         Args:

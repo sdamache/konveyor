@@ -15,7 +15,7 @@ import json
 import logging
 import ssl
 import traceback
-from typing import Any, Dict, Optional
+from typing import Any
 
 # Removed: import certifi
 # Removed: from django.conf import settings
@@ -587,8 +587,8 @@ def slack_slash_command(request):
 
 
 def process_message(
-    text: str, user_id: str, channel_id: str, thread_ts: Optional[str] = None
-) -> Dict[str, Any]:
+    text: str, user_id: str, channel_id: str, thread_ts: str | None = None
+) -> dict[str, Any]:
     """
     Process a message using the Agent Orchestration Layer.
 

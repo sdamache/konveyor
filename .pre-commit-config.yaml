@@ -7,30 +7,17 @@ repos:
     -   id: check-yaml
     -   id: debug-statements
 
--   repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.3.3
     hooks:
-    -   id: isort
-        args: ["--profile", "black"]
-
--   repo: https://github.com/psf/black
-    rev: 24.3.0
-    hooks:
-    -   id: black
-        language_version: python3
-
--   repo: https://github.com/pycqa/flake8
-    rev: 7.0.0
-    hooks:
-    -   id: flake8
-        additional_dependencies: [flake8-docstrings]
-        args: ["--config=.flake8"]
-        exclude: "backups/|backups/.*"
+    -   id: ruff
+        args: [--fix]
+    -   id: ruff-format
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.9.0
     hooks:
     -   id: mypy
         additional_dependencies: [types-requests, types-setuptools, types-pyyaml]
-        args: ["--ignore-missing-imports", "--config-file=mypy.ini"]
+        args: ["--ignore-missing-imports"]
         exclude: "tests/|backups/|backups/.*"

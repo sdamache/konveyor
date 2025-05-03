@@ -72,7 +72,7 @@ class UserKnowledgeStore:
             f"Set confidence for user {user_id}, domain {domain_id}: {confidence}"
         )
 
-    def get_user_knowledge(self, user_id: str) -> Dict[str, float]:
+    def get_user_knowledge(self, user_id: str) -> dict[str, float]:
         """
         Get all knowledge confidence scores for a user.
 

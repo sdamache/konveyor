@@ -38,11 +38,11 @@ class UnifiedAzureOpenAIClient(OpenAIClientInterface):
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        endpoint: Optional[str] = None,
-        api_version: Optional[str] = None,
-        chat_deployment: Optional[str] = None,
-        embedding_deployment: Optional[str] = None,
+        api_key: str | None = None,
+        endpoint: str | None = None,
+        api_version: str | None = None,
+        chat_deployment: str | None = None,
+        embedding_deployment: str | None = None,
         use_sdk: bool = True,
     ):
         """
@@ -100,7 +100,7 @@ class UnifiedAzureOpenAIClient(OpenAIClientInterface):
             )
 
     def generate_completion(
-        self, messages: List[Dict[str, str]], max_tokens: int = 1000
+        self, messages: list[dict[str, str]], max_tokens: int = 1000
     ) -> str:
         """
         Generate a chat completion response.
@@ -126,7 +126,7 @@ class UnifiedAzureOpenAIClient(OpenAIClientInterface):
             logger.error(f"Error generating completion: {str(e)}")
             raise
 
-    def generate_embedding(self, text: str) -> List[float]:
+    def generate_embedding(self, text: str) -> list[float]:
         """
         Generate an embedding for the given text.
 
@@ -156,7 +156,7 @@ class UnifiedAzureOpenAIClient(OpenAIClientInterface):
         reraise=True,
     )
     def generate_completion_with_retry(
-        self, messages: List[Dict[str, str]], max_tokens: int = 1000
+        self, messages: list[dict[str, str]], max_tokens: int = 1000
     ) -> str:
         """
         Generate a chat completion response with automatic retries.

@@ -139,26 +139,26 @@ from typing import Dict, List, Optional, Any
 
 class ConversationInterface(ABC):
     """Interface for conversation management."""
-    
+
     @abstractmethod
     async def create_conversation(self, user_id: Optional[str] = None) -> Dict[str, Any]:
         """Create a new conversation."""
         pass
-    
+
     @abstractmethod
-    async def add_message(self, conversation_id: str, content: str, 
+    async def add_message(self, conversation_id: str, content: str,
                          message_type: str, metadata: Optional[Dict] = None) -> Dict[str, Any]:
         """Add a message to a conversation."""
         pass
-    
+
     @abstractmethod
-    async def get_conversation_messages(self, conversation_id: str, 
+    async def get_conversation_messages(self, conversation_id: str,
                                       limit: int = 50) -> List[Dict[str, Any]]:
         """Get messages for a conversation."""
         pass
-    
+
     @abstractmethod
-    async def get_conversation_context(self, conversation_id: str, 
+    async def get_conversation_context(self, conversation_id: str,
                                      format: str = 'string') -> Any:
         """Get the conversation context in the specified format."""
         pass
@@ -175,17 +175,17 @@ from typing import Dict, Any, Optional, List
 
 class FormatterInterface(ABC):
     """Interface for message formatting."""
-    
+
     @abstractmethod
     def format_message(self, text: str, **kwargs) -> Dict[str, Any]:
         """Format a message for the target platform."""
         pass
-    
+
     @abstractmethod
     def format_error(self, error: str, **kwargs) -> Dict[str, Any]:
         """Format an error message for the target platform."""
         pass
-    
+
     @abstractmethod
     def format_list(self, items: List[str], **kwargs) -> Dict[str, Any]:
         """Format a list for the target platform."""
@@ -203,19 +203,19 @@ from typing import Dict, Any, List, Optional
 
 class OpenAIClientInterface(ABC):
     """Interface for Azure OpenAI client."""
-    
+
     @abstractmethod
-    async def generate_completion(self, messages: List[Dict[str, str]], 
-                                temperature: float = 0.7, 
+    async def generate_completion(self, messages: List[Dict[str, str]],
+                                temperature: float = 0.7,
                                 max_tokens: Optional[int] = None) -> Dict[str, Any]:
         """Generate a completion from the given messages."""
         pass
-    
+
     @abstractmethod
     async def generate_embedding(self, text: str) -> List[float]:
         """Generate an embedding for the given text."""
         pass
-    
+
     @abstractmethod
     def get_model_info(self, model_id: str) -> Dict[str, Any]:
         """Get information about a model."""
@@ -233,23 +233,23 @@ from typing import Dict, Any, List, Optional
 
 class ResponseGeneratorInterface(ABC):
     """Interface for response generation."""
-    
+
     @abstractmethod
-    async def generate_response(self, query: str, 
+    async def generate_response(self, query: str,
                               context: Optional[str] = None,
                               conversation_id: Optional[str] = None,
                               use_rag: bool = False,
                               **kwargs) -> Dict[str, Any]:
         """Generate a response for the given query."""
         pass
-    
+
     @abstractmethod
     async def generate_with_rag(self, query: str,
                               conversation_id: Optional[str] = None,
                               **kwargs) -> Dict[str, Any]:
         """Generate a response using RAG."""
         pass
-    
+
     @abstractmethod
     async def generate_direct(self, query: str,
                             context: Optional[str] = None,

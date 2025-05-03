@@ -19,7 +19,7 @@ class FormatterInterface(ABC):
     """
 
     @abstractmethod
-    def format_message(self, text: str, **kwargs) -> Dict[str, Any]:
+    def format_message(self, text: str, **kwargs) -> dict[str, Any]:
         """
         Format a message for the target platform.
 
@@ -30,10 +30,9 @@ class FormatterInterface(ABC):
         Returns:
             Dictionary containing the formatted message
         """
-        pass
 
     @abstractmethod
-    def format_error(self, error: str, **kwargs) -> Dict[str, Any]:
+    def format_error(self, error: str, **kwargs) -> dict[str, Any]:
         """
         Format an error message for the target platform.
 
@@ -44,10 +43,9 @@ class FormatterInterface(ABC):
         Returns:
             Dictionary containing the formatted error message
         """
-        pass
 
     @abstractmethod
-    def format_list(self, items: List[str], **kwargs) -> Dict[str, Any]:
+    def format_list(self, items: list[str], **kwargs) -> dict[str, Any]:
         """
         Format a list for the target platform.
 
@@ -58,12 +56,11 @@ class FormatterInterface(ABC):
         Returns:
             Dictionary containing the formatted list
         """
-        pass
 
     @abstractmethod
     def format_code(
-        self, code: str, language: Optional[str] = None, **kwargs
-    ) -> Dict[str, Any]:
+        self, code: str, language: str | None = None, **kwargs
+    ) -> dict[str, Any]:
         """
         Format code for the target platform.
 
@@ -75,12 +72,11 @@ class FormatterInterface(ABC):
         Returns:
             Dictionary containing the formatted code
         """
-        pass
 
     @abstractmethod
     def format_table(
-        self, headers: List[str], rows: List[List[Any]], **kwargs
-    ) -> Dict[str, Any]:
+        self, headers: list[str], rows: list[list[Any]], **kwargs
+    ) -> dict[str, Any]:
         """
         Format a table for the target platform.
 
@@ -92,12 +88,11 @@ class FormatterInterface(ABC):
         Returns:
             Dictionary containing the formatted table
         """
-        pass
 
     @abstractmethod
     def format_rich_message(
-        self, blocks: List[Dict[str, Any]], **kwargs
-    ) -> Dict[str, Any]:
+        self, blocks: list[dict[str, Any]], **kwargs
+    ) -> dict[str, Any]:
         """
         Format a rich message with custom blocks for the target platform.
 
@@ -108,10 +103,9 @@ class FormatterInterface(ABC):
         Returns:
             Dictionary containing the formatted rich message
         """
-        pass
 
     @abstractmethod
-    def parse_markdown(self, markdown: str, **kwargs) -> Dict[str, Any]:
+    def parse_markdown(self, markdown: str, **kwargs) -> dict[str, Any]:
         """
         Parse Markdown and convert it to the target platform's format.
 
@@ -122,4 +116,3 @@ class FormatterInterface(ABC):
         Returns:
             Dictionary containing the parsed and formatted message
         """
-        pass

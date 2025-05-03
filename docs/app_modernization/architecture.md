@@ -16,67 +16,67 @@ graph TD
         OI[OpenAIClientInterface]
         RI[ResponseGeneratorInterface]
     end
-    
+
     subgraph Implementations
         subgraph Conversation
             IM[InMemoryConversationManager]
             AS[AzureStorageManager]
             CF[ConversationManagerFactory]
         end
-        
+
         subgraph Formatters
             SF[SlackFormatter]
             MF[MarkdownFormatter]
             FF[FormatterFactory]
         end
-        
+
         subgraph OpenAI
             UC[UnifiedAzureOpenAIClient]
             OF[OpenAIClientFactory]
         end
-        
+
         subgraph Generation
             RG[ResponseGenerator]
             RF[ResponseGeneratorFactory]
         end
     end
-    
+
     subgraph Applications
         CS[ChatSkill]
         RS[RAGService]
         BV[BotViews]
         RV[RAGViews]
     end
-    
+
     CI --> IM
     CI --> AS
     IM --> CF
     AS --> CF
-    
+
     FI --> SF
     FI --> MF
     SF --> FF
     MF --> FF
-    
+
     OI --> UC
     UC --> OF
-    
+
     RI --> RG
     RG --> RF
-    
+
     CF --> CS
     CF --> RS
     CF --> BV
     CF --> RV
-    
+
     FF --> CS
     FF --> RS
     FF --> BV
     FF --> RV
-    
+
     OF --> CS
     OF --> RS
-    
+
     RF --> CS
     RF --> RS
 ```
@@ -228,23 +228,23 @@ graph TD
         OT[OpenAI Client Tests]
         RT[Response Generator Tests]
     end
-    
+
     subgraph IntegrationTests
         CST[ChatSkill Integration Tests]
         RST[RAG Service Integration Tests]
         BVT[Bot Views Integration Tests]
         RVT[RAG Views Integration Tests]
     end
-    
+
     subgraph TestRunner
         TR[Test Runner Script]
     end
-    
+
     CT --> TR
     FT --> TR
     OT --> TR
     RT --> TR
-    
+
     CST --> TR
     RST --> TR
     BVT --> TR
@@ -284,48 +284,48 @@ graph TD
         SA[Search App]
         RA[RAG App]
         BA[Bot App]
-        
+
         DS[Document Service]
         SS[Search Service]
         RS1[RAG Service]
         BS[Bot Service]
-        
+
         DA --> DS
         SA --> SS
         RA --> RS1
         BA --> BS
     end
-    
+
     subgraph ModernizedComponents
         CI[Conversation Interface]
         FI[Formatter Interface]
         OI[OpenAI Client Interface]
         RI[Response Generator Interface]
-        
+
         RS2[Updated RAG Service]
         CS[Updated ChatSkill]
         BV[Updated Bot Views]
         RV[Updated RAG Views]
     end
-    
+
     RS1 --> RS2
     BS --> CS
     BA --> BV
     RA --> RV
-    
+
     RS2 --> CI
     RS2 --> FI
     RS2 --> OI
     RS2 --> RI
-    
+
     CS --> CI
     CS --> FI
     CS --> OI
     CS --> RI
-    
+
     BV --> CI
     BV --> FI
-    
+
     RV --> CI
     RV --> FI
 ```

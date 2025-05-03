@@ -26,17 +26,17 @@ from konveyor.skills.documentation_navigator import (  # noqa: E402, E501
 from konveyor.skills.setup import create_kernel  # noqa: E402
 
 
-@pytest.mark.integration
+@pytest.mark.integration()
 class TestDocumentationNavigatorIntegration:
     """Integration tests for the DocumentationNavigatorSkill."""
 
-    @pytest.fixture
+    @pytest.fixture()
     def skill(self):
         """Create a DocumentationNavigatorSkill instance for testing."""
         kernel = create_kernel()
         return DocumentationNavigatorSkill(kernel)
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_search_documentation(self, skill):
         """Test searching documentation with the real SearchService."""
         # Skip if SKIP_INTEGRATION_TESTS is set
@@ -63,7 +63,7 @@ class TestDocumentationNavigatorIntegration:
                 assert "title" in result
                 assert "document_id" in result
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_answer_question_with_conversation(self, skill):
         """Test answering a question with conversation context using the real SearchService."""  # noqa: E501
         # Skip if SKIP_INTEGRATION_TESTS is set
@@ -90,7 +90,7 @@ class TestDocumentationNavigatorIntegration:
         assert follow_up_answer
         assert len(follow_up_answer) > 0
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_format_for_slack(self, skill):
         """Test formatting search results for Slack using the real SearchService."""
         # Skip if SKIP_INTEGRATION_TESTS is set

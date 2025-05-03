@@ -31,17 +31,17 @@ class SkillRegistry:
 
     def __init__(self):
         """Initialize the skill registry."""
-        self.skills: Dict[str, Any] = {}
-        self.skill_descriptions: Dict[str, str] = {}
-        self.function_descriptions: Dict[str, Dict[str, str]] = {}
-        self.keywords: Dict[str, Set[str]] = {}
+        self.skills: dict[str, Any] = {}
+        self.skill_descriptions: dict[str, str] = {}
+        self.function_descriptions: dict[str, dict[str, str]] = {}
+        self.keywords: dict[str, set[str]] = {}
 
     def register_skill(
         self,
         skill: Any,
-        skill_name: Optional[str] = None,
-        description: Optional[str] = None,
-        keywords: Optional[List[str]] = None,
+        skill_name: str | None = None,
+        description: str | None = None,
+        keywords: list[str] | None = None,
     ) -> str:
         """
         Register a skill with the registry.
@@ -109,9 +109,9 @@ class SkillRegistry:
                             0
                         ]
                     else:
-                        self.function_descriptions[skill_name][
-                            name
-                        ] = f"{name} function"
+                        self.function_descriptions[skill_name][name] = (
+                            f"{name} function"
+                        )
             # Also check for methods with a kernel_function attribute directly
             elif hasattr(skill, name) and hasattr(
                 getattr(skill, name), "kernel_function"
@@ -129,9 +129,9 @@ class SkillRegistry:
                             0
                         ]
                     else:
-                        self.function_descriptions[skill_name][
-                            name
-                        ] = f"{name} function"
+                        self.function_descriptions[skill_name][name] = (
+                            f"{name} function"
+                        )
 
         # Store keywords
         if keywords:
@@ -159,7 +159,7 @@ class SkillRegistry:
 
         return skill_name
 
-    def get_skill(self, skill_name: str) -> Optional[Any]:
+    def get_skill(self, skill_name: str) -> Any | None:
         """
         Get a skill by name.
 
@@ -171,7 +171,7 @@ class SkillRegistry:
         """
         return self.skills.get(skill_name)
 
-    def get_all_skills(self) -> Dict[str, Any]:
+    def get_all_skills(self) -> dict[str, Any]:
         """
         Get all registered skills.
 
@@ -180,7 +180,7 @@ class SkillRegistry:
         """
         return self.skills
 
-    def get_skill_description(self, skill_name: str) -> Optional[str]:
+    def get_skill_description(self, skill_name: str) -> str | None:
         """
         Get the description of a skill.
 
@@ -192,7 +192,7 @@ class SkillRegistry:
         """
         return self.skill_descriptions.get(skill_name)
 
-    def get_function_descriptions(self, skill_name: str) -> Dict[str, str]:
+    def get_function_descriptions(self, skill_name: str) -> dict[str, str]:
         """
         Get descriptions of all functions in a skill.
 
@@ -204,7 +204,7 @@ class SkillRegistry:
         """
         return self.function_descriptions.get(skill_name, {})
 
-    def find_skills_by_keywords(self, query: str) -> List[str]:
+    def find_skills_by_keywords(self, query: str) -> list[str]:
         """
         Find skills matching the given keywords.
 
@@ -238,7 +238,7 @@ class SkillRegistry:
         logger.debug(f"Returning matches: {result}")
         return result
 
-    def find_skill_for_request(self, request: str) -> Optional[str]:
+    def find_skill_for_request(self, request: str) -> str | None:
         """
         Find the most appropriate skill for a given request.
 

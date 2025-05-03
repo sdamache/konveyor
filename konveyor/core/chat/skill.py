@@ -37,7 +37,7 @@ class ChatSkill:
     message formatting, and response generation.
     """
 
-    def __init__(self, kernel: Optional[Kernel] = None):
+    def __init__(self, kernel: Kernel | None = None):
         """
         Initialize the ChatSkill.
 
@@ -128,8 +128,8 @@ class ChatSkill:
     async def answer_question(
         self,
         question: str,
-        context: Optional[str] = None,
-        system_message: Optional[str] = None,
+        context: str | None = None,
+        system_message: str | None = None,
     ) -> str:
         """
         Answer a question using Azure OpenAI.
@@ -265,8 +265,8 @@ class ChatSkill:
         description="Process a message in the context of a conversation", name="chat"
     )
     async def chat(
-        self, message: str, conversation_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, message: str, conversation_id: str | None = None
+    ) -> dict[str, Any]:
         """
         Process a message in the context of a conversation.
 
@@ -361,7 +361,7 @@ class ChatSkill:
 
     def format_for_slack(
         self, text: str, include_blocks: bool = True
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Format a response for Slack, handling Markdown conversion and creating blocks.
 

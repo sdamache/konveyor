@@ -80,7 +80,9 @@ LOGGING = {
             "level": "DEBUG",
             "class": "logging.FileHandler",
             "filename": os.path.join(
-                BASE_DIR, "logs", "konveyor-dev.log"  # noqa: F405
+                BASE_DIR,
+                "logs",
+                "konveyor-dev.log",  # noqa: F405
             ),  # noqa: E501
             "formatter": "structured",
         },

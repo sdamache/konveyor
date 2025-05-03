@@ -24,7 +24,7 @@ import logging
 import uuid
 from datetime import datetime, timedelta
 from json import JSONEncoder
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import redis.asyncio as redis
 from pymongo import MongoClient
@@ -209,7 +209,7 @@ class AzureStorageManager(ConversationInterface):
         # Create indexes in background
         self._init_task = asyncio.create_task(self._ensure_database_exists())
 
-    async def create_conversation(self, user_id: Optional[str] = None) -> Dict:
+    async def create_conversation(self, user_id: str | None = None) -> dict:
         """Create a new conversation."""
         # Wait for initialization to complete
         await self._init_task
@@ -228,8 +228,8 @@ class AzureStorageManager(ConversationInterface):
         conversation_id: str,
         message_type: str,
         content: str,
-        metadata: Optional[Dict] = None,
-    ) -> Dict:
+        metadata: dict | None = None,
+    ) -> dict:
         """Add a message to a conversation."""
         message = {
             "id": str(uuid.uuid4()),
@@ -258,7 +258,7 @@ class AzureStorageManager(ConversationInterface):
         limit: int = 50,
         skip: int = 0,
         include_metadata: bool = True,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get messages for a conversation.
 
@@ -338,8 +338,8 @@ class AzureStorageManager(ConversationInterface):
         return True
 
     async def update_conversation_metadata(
-        self, conversation_id: str, metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, conversation_id: str, metadata: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Update the metadata for a conversation.
 
@@ -380,7 +380,7 @@ class AzureStorageManager(ConversationInterface):
 
     async def get_user_conversations(
         self, user_id: str, limit: int = 10, skip: int = 0
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get conversations for a user.
 
@@ -400,17 +400,15 @@ class AzureStorageManager(ConversationInterface):
         )
 
         # Debug log for retrieved conversations
-        print(
-            f"Retrieved {len(conversations)} conversations for user {user_id}"
-        )  # noqa: E501
+        print(f"Retrieved {len(conversations)} conversations for user {user_id}")  # noqa: E501
         return conversations
 
     async def get_conversation_context(
         self,
         conversation_id: str,
         format: str = "string",
-        max_messages: Optional[int] = None,
-    ) -> Union[str, List[Dict[str, Any]]]:
+        max_messages: int | None = None,
+    ) -> str | list[dict[str, Any]]:
         """
         Get the conversation context in the specified format.
 

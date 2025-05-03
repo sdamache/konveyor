@@ -10,13 +10,13 @@ from konveyor.core.kernel import create_kernel
 config = AzureConfig()
 
 
-@pytest.mark.integration
+@pytest.mark.integration()
 @pytest.mark.skipif(
     not config.get_setting("AZURE_OPENAI_ENDPOINT")
     or not config.get_setting("AZURE_OPENAI_API_KEY"),
     reason="Azure OpenAI environment not configured",
 )
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_create_kernel_services_real():
     """
     Robust integration test for Semantic Kernel with Azure OpenAI.

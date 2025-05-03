@@ -6,7 +6,8 @@ This module contains handlers for Slack slash commands.
 
 # Removed: import json
 import logging
-from typing import Any, Callable, Dict, List, Optional
+from collections.abc import Callable
+from typing import Any
 
 from django.conf import settings
 
@@ -34,7 +35,7 @@ def register_command(command_name: str, handler: Callable, description: str):
     logger.info(f"Registered slash command: /{command_name}")
 
 
-def get_command_handler(command_name: str) -> Optional[Dict[str, Any]]:
+def get_command_handler(command_name: str) -> dict[str, Any] | None:
     """
     Get a command handler by name.
 
@@ -47,7 +48,7 @@ def get_command_handler(command_name: str) -> Optional[Dict[str, Any]]:
     return command_registry.get(command_name)
 
 
-def get_all_commands() -> List[Dict[str, str]]:
+def get_all_commands() -> list[dict[str, str]]:
     """
     Get all registered commands.
 
@@ -65,7 +66,7 @@ def get_all_commands() -> List[Dict[str, str]]:
 
 def handle_help_command(
     command_text: str, user_id: str, channel_id: str, response_url: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Handle the /help command.
 
@@ -116,7 +117,7 @@ def handle_help_command(
 
 def handle_status_command(
     command_text: str, user_id: str, channel_id: str, response_url: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Handle the /status command.
 
@@ -167,7 +168,7 @@ def handle_status_command(
 
 def handle_info_command(
     command_text: str, user_id: str, channel_id: str, response_url: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Handle the /info command.
 
@@ -218,7 +219,7 @@ def handle_info_command(
 
 def handle_code_command(
     command_text: str, user_id: str, channel_id: str, response_url: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Handle the /code command for code formatting examples.
 
@@ -313,7 +314,7 @@ slack_user_profile_service = SlackUserProfileService()
 
 def handle_preferences_command(
     command_text: str, user_id: str, channel_id: str, response_url: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Handle the /preferences command for viewing and setting user preferences.
 
@@ -434,7 +435,7 @@ def handle_preferences_command(
 
 def handle_profile_command(
     command_text: str, user_id: str, channel_id: str, response_url: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Handle the /profile command for viewing user profile information.
 

@@ -54,9 +54,9 @@ class MockSearchService:
 
 # Replace the SearchService with our mock
 sys.modules["konveyor.apps.search.services.search_service"] = MagicMock()
-sys.modules["konveyor.apps.search.services.search_service"].SearchService = (
-    MockSearchService
-)
+sys.modules[
+    "konveyor.apps.search.services.search_service"
+].SearchService = MockSearchService
 
 
 # Mock the Semantic Kernel

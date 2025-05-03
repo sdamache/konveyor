@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any
 
 from konveyor.core.azure_utils.service import AzureService
 
@@ -44,7 +44,7 @@ class BotSettingsService(AzureService):
     def get_settings(self) -> BotSettings:
         return self.settings
 
-    def get_channel_config(self) -> Dict[str, Any]:
+    def get_channel_config(self) -> dict[str, Any]:
         """Get Azure Bot Service channel configuration"""
         return {
             "location": "global",

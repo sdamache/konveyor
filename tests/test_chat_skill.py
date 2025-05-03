@@ -21,7 +21,7 @@ IN_CI = os.environ.get("CI") == "true"
 HAS_AZURE_CREDENTIALS = bool(os.environ.get("AZURE_OPENAI_ENDPOINT"))
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_kernel():
     """Mock Kernel for testing when real credentials aren't available."""
     with patch("konveyor.core.kernel.factory.Kernel") as mock_kernel_class:
@@ -85,7 +85,7 @@ def mock_kernel():
         yield kernel_instance
 
 
-@pytest.fixture
+@pytest.fixture()
 def real_or_mock_kernel(mock_kernel):
     """
     Return a real kernel if Azure credentials are available,
@@ -202,7 +202,7 @@ def test_chat_skill_format_as_bullet_list(real_or_mock_kernel):
     assert len(result.strip().split("\n")) == 3
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_azure_client_manager():
     """Mock AzureClientManager for testing."""
     with patch("konveyor.core.kernel.factory.AzureClientManager") as mock_manager:
@@ -216,7 +216,7 @@ def mock_azure_client_manager():
         yield mock_manager
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_azure_chat_completion():
     """Mock AzureChatCompletion for testing."""
     with patch("konveyor.core.kernel.factory.AzureChatCompletion") as mock_chat:
@@ -225,7 +225,7 @@ def mock_azure_chat_completion():
         yield mock_chat
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_volatile_memory_store():
     """Mock VolatileMemoryStore for testing."""
     with patch("konveyor.core.kernel.factory.VolatileMemoryStore") as mock_store:

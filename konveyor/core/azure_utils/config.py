@@ -142,7 +142,7 @@ class AzureConfig:
         self.storage_account_key = os.getenv("AZURE_STORAGE_ACCOUNT_KEY")
         self.storage_connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 
-    def get_credential(self) -> Optional[TokenCredential]:
+    def get_credential(self) -> TokenCredential | None:
         """Get Azure credential for token-based authentication.
 
         Returns:
@@ -150,7 +150,7 @@ class AzureConfig:
         """
         return self.credential
 
-    def get_endpoint(self, service: str) -> Optional[str]:
+    def get_endpoint(self, service: str) -> str | None:
         """Get endpoint URL for a specific Azure service.
 
         Args:
@@ -161,7 +161,7 @@ class AzureConfig:
         """
         return self.endpoints.get(service)
 
-    def get_key(self, service: str) -> Optional[str]:
+    def get_key(self, service: str) -> str | None:
         """Get API key for a specific Azure service.
 
         Args:
@@ -245,7 +245,7 @@ class AzureConfig:
 
         return value
 
-    def get_key_vault_url(self) -> Optional[str]:
+    def get_key_vault_url(self) -> str | None:
         """Get Azure Key Vault URL.
 
         Returns:
@@ -256,7 +256,7 @@ class AzureConfig:
         """
         return self.key_vault_url
 
-    def get_storage_connection_string(self) -> Optional[str]:
+    def get_storage_connection_string(self) -> str | None:
         """Get Azure Storage connection string.
 
         This method will first check for a complete connection string in environment variables.  # noqa: E501
@@ -285,7 +285,7 @@ class AzureConfig:
 
         return None
 
-    def get_cosmos_connection_string(self) -> Optional[str]:
+    def get_cosmos_connection_string(self) -> str | None:
         """Get Azure Cosmos DB connection string.
 
         Returns:
@@ -296,7 +296,7 @@ class AzureConfig:
         """
         return self.cosmos_connection_string
 
-    def get_redis_connection_string(self) -> Optional[str]:
+    def get_redis_connection_string(self) -> str | None:
         """Get Redis connection string.
 
         Returns:

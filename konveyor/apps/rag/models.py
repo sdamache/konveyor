@@ -3,7 +3,6 @@ Models for the RAG Django app using Azure storage.
 """
 
 from datetime import datetime  # noqa: F401
-from typing import Dict, List, Optional
 
 from django.conf import settings
 
@@ -19,7 +18,7 @@ class ConversationManager:
             redis_connection_str=settings.AZURE_REDIS_CONNECTION_STRING,
         )
 
-    async def create_conversation(self, user_id: Optional[str] = None) -> Dict:
+    async def create_conversation(self, user_id: str | None = None) -> dict:
         """Create a new conversation."""
         return await self.storage.create_conversation(user_id)
 
@@ -28,8 +27,8 @@ class ConversationManager:
         conversation_id: str,
         content: str,
         message_type: str = "user",
-        metadata: Optional[Dict] = None,
-    ) -> Dict:
+        metadata: dict | None = None,
+    ) -> dict:
         """Add a message to a conversation."""
         return await self.storage.add_message(
             conversation_id=conversation_id,
@@ -40,7 +39,7 @@ class ConversationManager:
 
     async def get_conversation_messages(
         self, conversation_id: str, limit: int = 50
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """Get messages for a conversation."""
         return await self.storage.get_conversation_messages(
             conversation_id=conversation_id, limit=limit

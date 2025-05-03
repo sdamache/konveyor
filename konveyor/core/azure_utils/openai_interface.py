@@ -28,7 +28,7 @@ class OpenAIClientInterface(ABC):
 
     @abstractmethod
     def generate_completion(
-        self, messages: List[Dict[str, str]], max_tokens: int = 1000
+        self, messages: list[dict[str, str]], max_tokens: int = 1000
     ) -> str:
         """
         Generate a chat completion response.
@@ -40,10 +40,9 @@ class OpenAIClientInterface(ABC):
         Returns:
             The generated text response
         """
-        pass
 
     @abstractmethod
-    def generate_embedding(self, text: str) -> List[float]:
+    def generate_embedding(self, text: str) -> list[float]:
         """
         Generate an embedding for the given text.
 
@@ -53,4 +52,3 @@ class OpenAIClientInterface(ABC):
         Returns:
             A list of floats representing the embedding vector
         """
-        pass

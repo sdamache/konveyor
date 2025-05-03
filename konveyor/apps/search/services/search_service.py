@@ -299,7 +299,7 @@ class SearchService(AzureService):
             raise
 
     @azure_retry()
-    def generate_embedding(self, text: str) -> List[float]:
+    def generate_embedding(self, text: str) -> list[float]:
         """
         Generate an embedding for the given text using LangChain's AzureOpenAIEmbeddings.  # noqa: E501
         Includes retry logic for resilience and detailed logging.
@@ -399,8 +399,8 @@ class SearchService(AzureService):
         document_id: str,
         content: str,
         chunk_index: int,
-        metadata: Dict[str, Any],
-        embedding: Optional[List[float]] = None,
+        metadata: dict[str, Any],
+        embedding: list[float] | None = None,
     ) -> bool:
         """
         Index a document chunk in Azure Cognitive Search.
@@ -474,8 +474,8 @@ class SearchService(AzureService):
     # and was marked for removal in the modernization plan.
     @azure_retry()
     def vector_similarity_search(
-        self, query: str, top: int = 5, filter_expr: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        self, query: str, top: int = 5, filter_expr: str | None = None
+    ) -> list[dict[str, Any]]:
         """
         Perform pure vector similarity search.
 
@@ -537,8 +537,8 @@ class SearchService(AzureService):
         query: str,
         top: int = 5,
         load_full_content: bool = False,
-        filter_expr: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        filter_expr: str | None = None,
+    ) -> list[dict[str, Any]]:
         """
         Perform hybrid search using both vector embeddings and text similarity.
 

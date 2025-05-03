@@ -83,7 +83,7 @@ class FeedbackService:
         self.storage_provider = storage_provider
         logger.info("Initialized FeedbackService")
 
-    def process_reaction_event(self, event: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def process_reaction_event(self, event: dict[str, Any]) -> dict[str, Any] | None:
         """
         Process a reaction event and record feedback.
 
@@ -147,7 +147,7 @@ class FeedbackService:
 
         return feedback_data
 
-    def _get_feedback_type(self, reaction: str, event_type: str) -> Optional[str]:
+    def _get_feedback_type(self, reaction: str, event_type: str) -> str | None:
         """
         Determine the feedback type based on the reaction and event type.
 
@@ -229,7 +229,7 @@ class FeedbackService:
             logger.error(f"Error updating message content: {str(e)}")
             return False
 
-    def get_feedback_stats(self, days: int = 30) -> Dict[str, Any]:
+    def get_feedback_stats(self, days: int = 30) -> dict[str, Any]:
         """
         Get feedback statistics for the specified time period.
 
@@ -264,7 +264,7 @@ class FeedbackService:
                 "error": str(e),
             }
 
-    def get_feedback_by_skill(self, days: int = 30) -> List[Dict[str, Any]]:
+    def get_feedback_by_skill(self, days: int = 30) -> list[dict[str, Any]]:
         """
         Get feedback statistics grouped by skill.
 

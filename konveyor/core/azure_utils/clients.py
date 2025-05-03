@@ -59,14 +59,14 @@ class AzureClientManager:
         config (AzureConfig): Configuration instance for Azure services
     """
 
-    def __init__(self, config: Optional[AzureConfig] = None):
+    def __init__(self, config: AzureConfig | None = None):
         """Initialize with optional config."""
         self.config = config or AzureConfig()
 
     @azure_retry()
     def get_search_clients(
         self, index_name: str
-    ) -> Tuple[SearchIndexClient, SearchClient]:
+    ) -> tuple[SearchIndexClient, SearchClient]:
         """Initialize and return Azure Cognitive Search clients.
 
         Creates both an index client for managing search indexes and a search client

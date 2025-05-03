@@ -13,7 +13,7 @@ import asyncio
 import logging
 import os
 import sys
-from typing import Any, Dict
+from typing import Any
 
 # Set up logging
 logging.basicConfig(
@@ -35,7 +35,7 @@ from konveyor.core.chat import ChatSkill  # noqa: E402
 from konveyor.core.kernel import create_kernel, get_kernel_settings  # noqa: E402
 
 
-async def run_chat_example() -> Dict[str, Any]:
+async def run_chat_example() -> dict[str, Any]:
     """
     Run a simple example of using the ChatSkill.
 

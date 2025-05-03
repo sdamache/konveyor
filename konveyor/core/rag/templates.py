@@ -13,7 +13,7 @@ class PromptTemplate:
     system_message: str
     user_message: str
 
-    def format(self, **kwargs) -> Dict[str, str]:
+    def format(self, **kwargs) -> dict[str, str]:
         """Format the prompt template with given parameters."""
         return {
             "system": self.system_message.format(**kwargs),
@@ -64,7 +64,7 @@ class RAGPromptManager:
         """Add a new prompt template."""
         self.templates[name] = template
 
-    def format_prompt(self, template_type: str, **kwargs) -> Dict[str, str]:
+    def format_prompt(self, template_type: str, **kwargs) -> dict[str, str]:
         """Format a prompt template with given parameters."""
         template = self.get_template(template_type)
         return template.format(**kwargs)

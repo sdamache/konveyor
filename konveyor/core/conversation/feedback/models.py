@@ -37,7 +37,7 @@ class FeedbackStorageProvider:
     Concrete implementations can use different storage backends (e.g., database, file system).  # noqa: E501
     """
 
-    def store_feedback(self, feedback_data: Dict[str, Any]) -> Dict[str, Any]:
+    def store_feedback(self, feedback_data: dict[str, Any]) -> dict[str, Any]:
         """
         Store feedback data.
 
@@ -49,7 +49,7 @@ class FeedbackStorageProvider:
         """
         raise NotImplementedError("Subclasses must implement store_feedback")
 
-    def update_feedback_content(self, update_data: Dict[str, Any]) -> bool:
+    def update_feedback_content(self, update_data: dict[str, Any]) -> bool:
         """
         Update the content of feedback entries.
 
@@ -61,7 +61,7 @@ class FeedbackStorageProvider:
         """
         raise NotImplementedError("Subclasses must implement update_feedback_content")
 
-    def get_feedback_stats(self, days: int = 30) -> Dict[str, Any]:
+    def get_feedback_stats(self, days: int = 30) -> dict[str, Any]:
         """
         Get feedback statistics for the specified time period.
 
@@ -73,7 +73,7 @@ class FeedbackStorageProvider:
         """
         raise NotImplementedError("Subclasses must implement get_feedback_stats")
 
-    def get_feedback_by_skill(self, days: int = 30) -> List[Dict[str, Any]]:
+    def get_feedback_by_skill(self, days: int = 30) -> list[dict[str, Any]]:
         """
         Get feedback statistics grouped by skill.
 
@@ -85,7 +85,7 @@ class FeedbackStorageProvider:
         """
         raise NotImplementedError("Subclasses must implement get_feedback_by_skill")
 
-    def get_feedback_data(self, days: int = 30) -> List[Dict[str, Any]]:
+    def get_feedback_data(self, days: int = 30) -> list[dict[str, Any]]:
         """
         Get raw feedback data for the specified time period.
 

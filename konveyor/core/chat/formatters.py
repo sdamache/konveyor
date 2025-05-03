@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional  # noqa: F401
 logger = logging.getLogger(__name__)
 
 
-def format_conversation_history(messages: List[Dict[str, Any]]) -> str:
+def format_conversation_history(messages: list[dict[str, Any]]) -> str:
     """
     Format a list of messages into a conversation history string.
 
@@ -37,7 +37,7 @@ def format_conversation_history(messages: List[Dict[str, Any]]) -> str:
     return "\n".join(history)
 
 
-def parse_conversation_history(history: str) -> List[Dict[str, Any]]:
+def parse_conversation_history(history: str) -> list[dict[str, Any]]:
     """
     Parse a conversation history string into a list of message dictionaries.
 
@@ -99,7 +99,7 @@ def parse_conversation_history(history: str) -> List[Dict[str, Any]]:
 
 def create_chat_context(
     user_id: str, channel_id: str, history: str = ""
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Create a context dictionary for a chat interaction.
 

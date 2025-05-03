@@ -217,7 +217,7 @@ def run_test_file(test_file, verbose=False):
     if test_file.endswith(".py"):
         # Check if the file uses pytest
         try:
-            with open(test_file, "r") as f:
+            with open(test_file) as f:
                 content = f.read()
                 uses_pytest = "import pytest" in content or "pytest" in content
         except Exception as e:

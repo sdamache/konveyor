@@ -71,7 +71,8 @@ def test_redis_connection():
 
     # Configure Redis client with SSL settings
     redis_client = redis.from_url(
-        redis_connection_string, ssl_cert_reqs=None  # For testing only
+        redis_connection_string,
+        ssl_cert_reqs=None,  # For testing only
     )
 
     try:
