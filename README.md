@@ -111,6 +111,12 @@ konveyor/
 - [ ] Implement Teams bot integration
 - [ ] Create admin interface for content management
 
-## Environment Setup
-1. Copy `.env.example` to `.env`
-2. Update `.env` with your local values
+## 🏆 The Vision
+
+Konveyor aims to transform software engineer onboarding from a fragmented, high-cost process into a streamlined, AI-augmented experience that empowers engineers to become productive, confident contributors in record time.
+
+This isn't just about reducing costs—it's about creating a better onboarding experience for engineers and enabling organizations to unlock the full potential of their technical talent.
+
+---
+
+Built with ❤️ for the Azure AI Hackathon
