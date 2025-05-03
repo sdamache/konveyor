@@ -21,6 +21,5 @@ elif environment == "konveyor.settings.testing":
     from .testing import *  # noqa: F401, F403
 else:
     raise ImportError(
-        'Settings module "%s" not found. Check DJANGO_SETTINGS_MODULE environment variable.'  # noqa: E501
-        % environment
+        f'Settings module "{environment}" not found. Check DJANGO_SETTINGS_MODULE environment variable.'  # noqa: E501
     )
