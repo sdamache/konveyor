@@ -5,11 +5,12 @@ This module contains tests for the DocumentationNavigatorSkill, including
 unit tests and integration tests with the SearchService.
 """
 
-import asyncio
+import asyncio  # noqa: F401
+
 # Mock the Django models and SearchService before importing DocumentationNavigatorSkill
 import sys
-from typing import Any, Dict, List
-from unittest.mock import AsyncMock, MagicMock, patch
+from typing import Any, Dict, List  # noqa: F401, F401, F401
+from unittest.mock import AsyncMock, MagicMock, patch  # noqa: F401, F401
 
 import pytest
 
@@ -49,9 +50,9 @@ class MockSearchService:
 
 
 # Replace the SearchService with our mock
-sys.modules["konveyor.apps.search.services.search_service"].SearchService = (
-    MockSearchService
-)
+sys.modules[
+    "konveyor.apps.search.services.search_service"
+].SearchService = MockSearchService
 
 
 # Create a mock ConversationManager
@@ -148,13 +149,14 @@ class MockConversationManagerFactory:
 
 # Mock the ConversationManagerFactory
 sys.modules["konveyor.core.conversation.factory"] = MagicMock()
-sys.modules["konveyor.core.conversation.factory"].ConversationManagerFactory = (
-    MockConversationManagerFactory
-)
+sys.modules[
+    "konveyor.core.conversation.factory"
+].ConversationManagerFactory = MockConversationManagerFactory
 
 # Now import DocumentationNavigatorSkill
-from konveyor.skills.documentation_navigator.DocumentationNavigatorSkill import \
-    DocumentationNavigatorSkill
+from konveyor.skills.documentation_navigator.DocumentationNavigatorSkill import (  # noqa: E402, E501
+    DocumentationNavigatorSkill,
+)
 
 
 # Mock the Semantic Kernel
@@ -177,7 +179,7 @@ def mock_create_kernel():
 class TestDocumentationNavigatorSkill:
     """Tests for the DocumentationNavigatorSkill."""
 
-    @pytest.fixture
+    @pytest.fixture()
     def skill(self):
         """Create a DocumentationNavigatorSkill with a mock SearchService."""
         # The SearchService is already mocked at the module level
@@ -190,7 +192,7 @@ class TestDocumentationNavigatorSkill:
         assert skill is not None
         assert hasattr(skill, "search_service")
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_search_documentation(self, skill):
         """Test the search_documentation function."""
         # Call the function
@@ -209,7 +211,7 @@ class TestDocumentationNavigatorSkill:
         assert result["success"] is True
         assert len(result["results"]) == 2
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_answer_question(self, skill):
         """Test the answer_question function."""
         # Call the function
@@ -219,7 +221,7 @@ class TestDocumentationNavigatorSkill:
         assert "Based on the documentation" in answer
         assert "Sources:" in answer
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_answer_question_with_conversation(self, skill):
         """Test the answer_question function with conversation context."""
         # Create a conversation
@@ -243,7 +245,7 @@ class TestDocumentationNavigatorSkill:
         assert messages[1]["type"] == "assistant"
         assert "What is the onboarding process?" in messages[0]["content"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_continue_conversation(self, skill):
         """Test the continue_conversation function."""
         # Create a conversation
@@ -272,7 +274,7 @@ class TestDocumentationNavigatorSkill:
         assert messages[3]["type"] == "assistant"
         assert "What should I do on my first day?" in messages[2]["content"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_create_conversation(self, skill):
         """Test the create_conversation function."""
         # Create a conversation
@@ -282,7 +284,7 @@ class TestDocumentationNavigatorSkill:
         assert "id" in conversation
         assert conversation["user_id"] == "test-user"
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_format_for_slack(self, skill):
         """Test the format_for_slack function."""
         # Call the function

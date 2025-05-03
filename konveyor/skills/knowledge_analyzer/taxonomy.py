@@ -6,9 +6,9 @@ defined in the knowledge_taxonomy.yaml file.
 """
 
 import logging
-import os
+import os  # noqa: F401
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union  # noqa: F401
 
 import yaml
 
@@ -24,7 +24,7 @@ class KnowledgeTaxonomyLoader:
     and providing methods to access and query the taxonomy.
     """
 
-    def __init__(self, taxonomy_file: Optional[str] = None):
+    def __init__(self, taxonomy_file: str | None = None):
         """
         Initialize the KnowledgeTaxonomyLoader.
         Args:
@@ -40,7 +40,7 @@ class KnowledgeTaxonomyLoader:
         self.taxonomy = self._load_taxonomy()
         logger.info(f"Loaded knowledge taxonomy from {taxonomy_file}")
 
-    def _load_taxonomy(self) -> Dict[str, Any]:
+    def _load_taxonomy(self) -> dict[str, Any]:
         """
         Load the taxonomy from the YAML file.
 
@@ -52,10 +52,10 @@ class KnowledgeTaxonomyLoader:
             yaml.YAMLError: If the YAML file is invalid.
         """
         try:
-            with open(self.taxonomy_file, "r") as file:
+            with open(self.taxonomy_file) as file:
                 taxonomy = yaml.safe_load(file)
                 logger.debug(
-                    f"Successfully loaded taxonomy: {len(taxonomy.get('domains', []))} domains"
+                    f"Successfully loaded taxonomy: {len(taxonomy.get('domains', []))} domains"  # noqa: E501
                 )
                 return taxonomy
         except FileNotFoundError:
@@ -65,7 +65,7 @@ class KnowledgeTaxonomyLoader:
             logger.error(f"Error parsing taxonomy YAML: {e}")
             raise
 
-    def get_all_domains(self) -> List[Dict[str, Any]]:
+    def get_all_domains(self) -> list[dict[str, Any]]:
         """
         Get all knowledge domains.
 
@@ -74,7 +74,7 @@ class KnowledgeTaxonomyLoader:
         """
         return self.taxonomy.get("domains", [])
 
-    def get_domain_by_id(self, domain_id: str) -> Optional[Dict[str, Any]]:
+    def get_domain_by_id(self, domain_id: str) -> dict[str, Any] | None:
         """
         Get a domain by its ID.
 
@@ -89,7 +89,7 @@ class KnowledgeTaxonomyLoader:
                 return domain
         return None
 
-    def get_subcategories(self, domain_id: str) -> List[Dict[str, Any]]:
+    def get_subcategories(self, domain_id: str) -> list[dict[str, Any]]:
         """
         Get all subcategories for a domain.
 
@@ -104,7 +104,7 @@ class KnowledgeTaxonomyLoader:
             return domain.get("subcategories", [])
         return []
 
-    def get_learning_paths(self) -> List[Dict[str, Any]]:
+    def get_learning_paths(self) -> list[dict[str, Any]]:
         """
         Get all learning paths.
 
@@ -113,7 +113,7 @@ class KnowledgeTaxonomyLoader:
         """
         return self.taxonomy.get("learning_paths", [])
 
-    def get_learning_path_by_role(self, role: str) -> Optional[Dict[str, Any]]:
+    def get_learning_path_by_role(self, role: str) -> dict[str, Any] | None:
         """
         Get a learning path by role.
 
@@ -127,7 +127,7 @@ class KnowledgeTaxonomyLoader:
                 return path
         return None
 
-    def get_relationships(self) -> List[Dict[str, Any]]:
+    def get_relationships(self) -> list[dict[str, Any]]:
         """
         Get all relationships between domains.
 
@@ -136,7 +136,7 @@ class KnowledgeTaxonomyLoader:
         """
         return self.taxonomy.get("relationships", [])
 
-    def get_keywords_for_domain(self, domain_id: str) -> List[str]:
+    def get_keywords_for_domain(self, domain_id: str) -> list[str]:
         """
         Get all keywords associated with a domain and its subcategories.
 
@@ -154,7 +154,7 @@ class KnowledgeTaxonomyLoader:
 
         return keywords
 
-    def find_domains_by_keyword(self, keyword: str) -> List[Dict[str, Any]]:
+    def find_domains_by_keyword(self, keyword: str) -> list[dict[str, Any]]:
         """
         Find domains that contain a specific keyword in their subcategories.
 
@@ -175,7 +175,7 @@ class KnowledgeTaxonomyLoader:
 
         return matching_domains
 
-    def get_taxonomy_metadata(self) -> Dict[str, str]:
+    def get_taxonomy_metadata(self) -> dict[str, str]:
         """
         Get metadata about the taxonomy.
 
@@ -187,7 +187,7 @@ class KnowledgeTaxonomyLoader:
             "last_updated": self.taxonomy.get("last_updated", "unknown"),
         }
 
-    def map_query_to_domains(self, query: str) -> List[Dict[str, Any]]:
+    def map_query_to_domains(self, query: str) -> list[dict[str, Any]]:
         """
         Map a user query to relevant knowledge domains.
 

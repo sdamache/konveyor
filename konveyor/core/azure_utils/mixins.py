@@ -2,7 +2,7 @@
 
 import logging
 import os
-from typing import Any, Optional
+from typing import Any, Optional  # noqa: F401
 
 from azure.ai.documentintelligence import DocumentIntelligenceClient
 from azure.core.credentials import AzureKeyCredential
@@ -23,7 +23,7 @@ class ServiceLoggingMixin:
         logger.info(f"Initializing {service_name}...")
 
     def log_azure_credentials(
-        self, service: str, endpoint: Optional[str], key: Optional[str]
+        self, service: str, endpoint: str | None, key: str | None
     ) -> None:
         """Log Azure service credentials status."""
         logger.info(f"{service} Endpoint: {endpoint if endpoint else 'Not set'}")
@@ -33,7 +33,7 @@ class ServiceLoggingMixin:
         """Log a success message."""
         logger.info(message)
 
-    def log_error(self, message: str, error: Optional[Exception] = None) -> None:
+    def log_error(self, message: str, error: Exception | None = None) -> None:
         """Log an error message with optional exception."""
         if error:
             logger.error(f"{message}: {str(error)}")
@@ -75,7 +75,7 @@ class AzureClientMixin:
                 azure_endpoint=base_endpoint, api_key=api_key, api_version=api_version
             )
             logger.info(
-                f"Successfully initialized Azure OpenAI client with API version {api_version}"
+                f"Successfully initialized Azure OpenAI client with API version {api_version}"  # noqa: E501
             )
 
             return azure_openai_client, openai_client
@@ -130,6 +130,6 @@ class AzureServiceConfig:
     def validate(self) -> None:
         """Validate required configuration is present."""
         if not self.endpoint or not self.key:
-            error_msg = f"AZURE_{self.service_name}_ENDPOINT and AZURE_{self.service_name}_API_KEY must be configured"
+            error_msg = f"AZURE_{self.service_name}_ENDPOINT and AZURE_{self.service_name}_API_KEY must be configured"  # noqa: E501
             logger.error(error_msg)
             raise ValueError(error_msg)

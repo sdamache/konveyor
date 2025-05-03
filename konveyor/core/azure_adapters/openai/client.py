@@ -1,18 +1,19 @@
 import logging
 import os
 from typing import (
-    Any,  # Any type
-    Dict,  # Dictionary type
-    List,  # List type
-    Set,  # Set type
-    Tuple,  # Tuple type
-    Union,  # Union of types
-    Optional,  # Optional type (equivalent to Union[Type, None])
+    Any,  # Any type  # noqa: F401
+    Set,  # Set type  # noqa: F401
+    Tuple,  # Tuple type  # noqa: F401
+    Union,  # Union of types  # noqa: F401
 )
 
 import requests
-from tenacity import (retry, retry_if_exception_type, stop_after_attempt,
-                      wait_exponential)
+from tenacity import (  # noqa: F401
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -27,12 +28,12 @@ class AzureOpenAIClient:
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        endpoint: Optional[str] = None,
-        embeddings_api_version: Optional[str] = None,
-        gpt_api_version: Optional[str] = None,
-        gpt_deployment: Optional[str] = None,
-        embeddings_deployment: Optional[str] = None,
+        api_key: str | None = None,
+        endpoint: str | None = None,
+        embeddings_api_version: str | None = None,
+        gpt_api_version: str | None = None,
+        gpt_deployment: str | None = None,
+        embeddings_deployment: str | None = None,
     ):
         """Initialize the Azure OpenAI client.
 
@@ -86,7 +87,7 @@ class AzureOpenAIClient:
         wait=wait_exponential(multiplier=1, min=4, max=10),
         reraise=True,
     )
-    def generate_embedding(self, text: str) -> List[float]:
+    def generate_embedding(self, text: str) -> list[float]:
         """Generate an embedding for the given text.
 
         Args:
@@ -107,7 +108,7 @@ class AzureOpenAIClient:
                 )
 
             # Construct the URL for embeddings deployment
-            embeddings_url = f"{self.endpoint}/openai/deployments/{self.embeddings_deployment}/embeddings?api-version={self.embeddings_api_version}"
+            embeddings_url = f"{self.endpoint}/openai/deployments/{self.embeddings_deployment}/embeddings?api-version={self.embeddings_api_version}"  # noqa: E501
 
             # Prepare the request payload for embeddings
             payload = {"input": truncated_text}
@@ -161,7 +162,7 @@ class AzureOpenAIClient:
         reraise=True,
     )
     def generate_completion(
-        self, messages: List[Dict[str, str]], max_tokens: int = 1000
+        self, messages: list[dict[str, str]], max_tokens: int = 1000
     ) -> str:
         """Generate a chat completion response.
 
@@ -177,7 +178,7 @@ class AzureOpenAIClient:
         """
         try:
             # Construct the URL for GPT deployment
-            gpt_url = f"{self.endpoint}/openai/deployments/{self.gpt_deployment}/chat/completions?api-version={self.gpt_api_version}"
+            gpt_url = f"{self.endpoint}/openai/deployments/{self.gpt_deployment}/chat/completions?api-version={self.gpt_api_version}"  # noqa: E501
 
             logger.info(f"Using API version {self.gpt_api_version} for GPT completion")
 

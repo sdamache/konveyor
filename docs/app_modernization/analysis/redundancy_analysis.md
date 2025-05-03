@@ -107,9 +107,9 @@ def format_for_slack(self, text: str, include_blocks: bool = True) -> Dict[str, 
             else:
                 # Add line to current section
                 current_section += line + '\n'
-        
+
         # ... more formatting logic ...
-    
+
     return {
         "text": formatted_text,
         "blocks": blocks if include_blocks else None

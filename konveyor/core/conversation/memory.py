@@ -5,11 +5,11 @@ This module provides an in-memory implementation of the ConversationInterface.
 It's designed for development, testing, and scenarios where persistence is not required.
 """
 
-import json
+import json  # noqa: F401
 import logging
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from konveyor.core.conversation.interface import ConversationInterface
 
@@ -21,7 +21,7 @@ class InMemoryConversationManager(ConversationInterface):
     In-memory implementation of the ConversationInterface.
 
     This class provides a simple in-memory storage for conversations and messages.
-    It's useful for development, testing, and scenarios where persistence is not required.
+    It's useful for development, testing, and scenarios where persistence is not required.  # noqa: E501
 
     All data is stored in memory and will be lost when the application restarts.
     """
@@ -33,8 +33,8 @@ class InMemoryConversationManager(ConversationInterface):
         logger.info("Initialized InMemoryConversationManager")
 
     async def create_conversation(
-        self, user_id: Optional[str] = None, metadata: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        self, user_id: str | None = None, metadata: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         Create a new conversation.
 
@@ -67,8 +67,8 @@ class InMemoryConversationManager(ConversationInterface):
         conversation_id: str,
         content: str,
         message_type: str,
-        metadata: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """
         Add a message to a conversation.
 
@@ -111,7 +111,7 @@ class InMemoryConversationManager(ConversationInterface):
         limit: int = 50,
         skip: int = 0,
         include_metadata: bool = True,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get messages for a conversation.
 
@@ -150,8 +150,8 @@ class InMemoryConversationManager(ConversationInterface):
         self,
         conversation_id: str,
         format: str = "string",
-        max_messages: Optional[int] = None,
-    ) -> Union[str, List[Dict[str, Any]]]:
+        max_messages: int | None = None,
+    ) -> str | list[dict[str, Any]]:
         """
         Get the conversation context in the specified format.
 
@@ -236,8 +236,8 @@ class InMemoryConversationManager(ConversationInterface):
         return True
 
     async def update_conversation_metadata(
-        self, conversation_id: str, metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, conversation_id: str, metadata: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Update the metadata for a conversation.
 
@@ -265,7 +265,7 @@ class InMemoryConversationManager(ConversationInterface):
 
     async def get_user_conversations(
         self, user_id: str, limit: int = 10, skip: int = 0
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get conversations for a user.
 

@@ -6,8 +6,8 @@ ResponseGeneratorInterface. It supports both RAG and direct generation approache
 """
 
 import logging
-import os
-from typing import Any, Dict, List, Optional, Union
+import os  # noqa: F401
+from typing import Any, Dict, List, Optional, Union  # noqa: F401
 
 from konveyor.core.azure_utils.openai_factory import OpenAIClientFactory
 from konveyor.core.generation.interface import ResponseGeneratorInterface
@@ -27,7 +27,7 @@ class ResponseGenerator(ResponseGeneratorInterface):
     def __init__(
         self,
         openai_client_type: str = "unified",
-        openai_config: Optional[Dict[str, Any]] = None,
+        openai_config: dict[str, Any] | None = None,
         context_service=None,
         conversation_service=None,
     ):
@@ -35,7 +35,7 @@ class ResponseGenerator(ResponseGeneratorInterface):
         Initialize the response generator.
 
         Args:
-            openai_client_type: Type of OpenAI client to use ('unified', 'custom', 'sdk')
+            openai_client_type: Type of OpenAI client to use ('unified', 'custom', 'sdk')  # noqa: E501
             openai_config: Configuration for the OpenAI client
             context_service: Service for retrieving context (for RAG)
             conversation_service: Service for managing conversations
@@ -53,11 +53,11 @@ class ResponseGenerator(ResponseGeneratorInterface):
         self.prompt_templates = {
             "default": {"system": "You are a helpful assistant.", "user": "{query}"},
             "rag": {
-                "system": "You are a helpful assistant. Use the following context to answer the question. If the context doesn't contain the answer, say so.\n\nContext:\n{context}",
+                "system": "You are a helpful assistant. Use the following context to answer the question. If the context doesn't contain the answer, say so.\n\nContext:\n{context}",  # noqa: E501
                 "user": "{query}",
             },
             "chat": {
-                "system": "You are a helpful assistant. Provide a friendly and informative response.",
+                "system": "You are a helpful assistant. Provide a friendly and informative response.",  # noqa: E501
                 "user": "{query}",
             },
         }
@@ -67,11 +67,11 @@ class ResponseGenerator(ResponseGeneratorInterface):
     async def generate_response(
         self,
         query: str,
-        context: Optional[str] = None,
-        conversation_id: Optional[str] = None,
+        context: str | None = None,
+        conversation_id: str | None = None,
         use_rag: bool = False,
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Generate a response for the given query.
 
@@ -103,10 +103,10 @@ class ResponseGenerator(ResponseGeneratorInterface):
     async def generate_with_rag(
         self,
         query: str,
-        conversation_id: Optional[str] = None,
+        conversation_id: str | None = None,
         max_context_chunks: int = 3,
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Generate a response using RAG (Retrieval-Augmented Generation).
 
@@ -187,10 +187,10 @@ class ResponseGenerator(ResponseGeneratorInterface):
     async def generate_direct(
         self,
         query: str,
-        context: Optional[str] = None,
-        conversation_id: Optional[str] = None,
+        context: str | None = None,
+        conversation_id: str | None = None,
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Generate a response directly without RAG.
 
@@ -248,7 +248,7 @@ class ResponseGenerator(ResponseGeneratorInterface):
 
     async def retrieve_context(
         self, query: str, max_chunks: int = 3, **kwargs
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Retrieve relevant context chunks for a query.
 
@@ -280,7 +280,7 @@ class ResponseGenerator(ResponseGeneratorInterface):
             logger.error(f"Error retrieving context: {str(e)}")
             return []
 
-    def get_prompt_template(self, template_type: str) -> Dict[str, str]:
+    def get_prompt_template(self, template_type: str) -> dict[str, str]:
         """
         Get a prompt template for the specified type.
 
@@ -301,7 +301,7 @@ class ResponseGenerator(ResponseGeneratorInterface):
 
     def format_prompt(
         self, template_type: str, context: str, query: str, **kwargs
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         """
         Format a prompt using the specified template.
 
@@ -328,7 +328,7 @@ class ResponseGenerator(ResponseGeneratorInterface):
 
         return formatted_prompt
 
-    def _format_context_chunks(self, context_chunks: List[Dict[str, Any]]) -> str:
+    def _format_context_chunks(self, context_chunks: list[dict[str, Any]]) -> str:
         """
         Format context chunks into a string.
 

@@ -5,7 +5,7 @@ This module contains tests for the formatter components,
 including the SlackFormatter, MarkdownFormatter, and FormatterFactory.
 """
 
-from typing import Any, Dict, List
+from typing import Any
 
 import pytest
 
@@ -194,31 +194,31 @@ def test_formatter_factory():
 
     # Test registering a custom formatter
     class CustomFormatter(FormatterInterface):
-        def format_message(self, text: str, **kwargs) -> Dict[str, Any]:
+        def format_message(self, text: str, **kwargs) -> dict[str, Any]:
             return {"text": f"Custom: {text}"}
 
-        def format_error(self, error: str, **kwargs) -> Dict[str, Any]:
+        def format_error(self, error: str, **kwargs) -> dict[str, Any]:
             return {"text": f"Custom Error: {error}"}
 
-        def format_list(self, items: List[str], **kwargs) -> Dict[str, Any]:
+        def format_list(self, items: list[str], **kwargs) -> dict[str, Any]:
             return {"text": f"Custom List: {', '.join(items)}"}
 
         def format_code(
             self, code: str, language: str = None, **kwargs
-        ) -> Dict[str, Any]:
+        ) -> dict[str, Any]:
             return {"text": f"Custom Code: {code}"}
 
         def format_table(
-            self, headers: List[str], rows: List[List[Any]], **kwargs
-        ) -> Dict[str, Any]:
+            self, headers: list[str], rows: list[list[Any]], **kwargs
+        ) -> dict[str, Any]:
             return {"text": f"Custom Table: {headers}"}
 
         def format_rich_message(
-            self, blocks: List[Dict[str, Any]], **kwargs
-        ) -> Dict[str, Any]:
+            self, blocks: list[dict[str, Any]], **kwargs
+        ) -> dict[str, Any]:
             return {"text": "Custom Rich Message"}
 
-        def parse_markdown(self, markdown: str, **kwargs) -> Dict[str, Any]:
+        def parse_markdown(self, markdown: str, **kwargs) -> dict[str, Any]:
             return {"text": f"Custom Markdown: {markdown}"}
 
     custom_formatter = CustomFormatter()

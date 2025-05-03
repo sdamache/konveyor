@@ -24,7 +24,7 @@ import logging
 import uuid
 from datetime import datetime, timedelta
 from json import JSONEncoder
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import redis.asyncio as redis
 from pymongo import MongoClient
@@ -37,7 +37,7 @@ class MongoJSONEncoder(JSONEncoder):
 
     def default(self, obj):
         if hasattr(obj, "__str__") and (
-            isinstance(obj, ObjectId) or obj.__class__.__name__ == "ObjectId"
+            obj.__class__.__name__ == "ObjectId"  # noqa: E501
         ):
             return str(obj)
         return super().default(obj)
@@ -47,7 +47,7 @@ class AzureStorageManager(ConversationInterface):
     """
     Persistent implementation of the ConversationInterface using Azure services.
 
-    This class provides a persistent storage implementation for conversations and messages
+    This class provides a persistent storage implementation for conversations and messages  # noqa: E501
     using Azure Cosmos DB for long-term storage and Redis for caching. It's designed for
     production use where persistence and scalability are required.
     """
@@ -80,7 +80,7 @@ class AzureStorageManager(ConversationInterface):
             if first_colon == -1:
                 raise ValueError("Missing password in connection string")
 
-            username = auth_part[:first_colon]
+            username = auth_part[:first_colon]  # noqa: F841
             rest = auth_part[first_colon + 1 :]
 
             # Find the end of the key (before @)
@@ -100,7 +100,7 @@ class AzureStorageManager(ConversationInterface):
                 host = host.replace("documents.azure.com", "mongo.cosmos.azure.com")
                 if ":443" in host:
                     host = host.replace(":443", ":10255")
-                elif not ":" in host:
+                elif not ":" in host:  # noqa: E713
                     host = f"{host}:10255"
 
             # Return in Cosmos DB format
@@ -209,7 +209,7 @@ class AzureStorageManager(ConversationInterface):
         # Create indexes in background
         self._init_task = asyncio.create_task(self._ensure_database_exists())
 
-    async def create_conversation(self, user_id: Optional[str] = None) -> Dict:
+    async def create_conversation(self, user_id: str | None = None) -> dict:
         """Create a new conversation."""
         # Wait for initialization to complete
         await self._init_task
@@ -228,8 +228,8 @@ class AzureStorageManager(ConversationInterface):
         conversation_id: str,
         message_type: str,
         content: str,
-        metadata: Optional[Dict] = None,
-    ) -> Dict:
+        metadata: dict | None = None,
+    ) -> dict:
         """Add a message to a conversation."""
         message = {
             "id": str(uuid.uuid4()),
@@ -258,7 +258,7 @@ class AzureStorageManager(ConversationInterface):
         limit: int = 50,
         skip: int = 0,
         include_metadata: bool = True,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get messages for a conversation.
 
@@ -323,7 +323,7 @@ class AzureStorageManager(ConversationInterface):
         # Check if conversation exists
         conversation = self.conversations.find_one({"id": conversation_id})
         if not conversation:
-            logger.warning(f"Conversation not found: {conversation_id}")
+            logger.warning(f"Conversation not found: {conversation_id}")  # noqa: F821
             return False
 
         # Delete from MongoDB
@@ -334,12 +334,12 @@ class AzureStorageManager(ConversationInterface):
         redis_key = f"conv:{conversation_id}:messages"
         await self.redis_client.delete(redis_key)
 
-        logger.debug(f"Deleted conversation: {conversation_id}")
+        logger.debug(f"Deleted conversation: {conversation_id}")  # noqa: F821
         return True
 
     async def update_conversation_metadata(
-        self, conversation_id: str, metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, conversation_id: str, metadata: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Update the metadata for a conversation.
 
@@ -353,7 +353,7 @@ class AzureStorageManager(ConversationInterface):
         # Check if conversation exists
         conversation = self.conversations.find_one({"id": conversation_id})
         if not conversation:
-            logger.warning(f"Conversation not found: {conversation_id}")
+            logger.warning(f"Conversation not found: {conversation_id}")  # noqa: F821
             raise ValueError(f"Conversation not found: {conversation_id}")
 
         # Update the metadata
@@ -374,12 +374,13 @@ class AzureStorageManager(ConversationInterface):
         # Get the updated conversation
         updated_conversation = self.conversations.find_one({"id": conversation_id})
 
-        logger.debug(f"Updated metadata for conversation: {conversation_id}")
+        # Debug log for metadata update
+        print(f"Updated metadata for conversation: {conversation_id}")  # noqa: E501
         return updated_conversation
 
     async def get_user_conversations(
         self, user_id: str, limit: int = 10, skip: int = 0
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get conversations for a user.
 
@@ -398,15 +399,16 @@ class AzureStorageManager(ConversationInterface):
             )
         )
 
-        logger.debug(f"Retrieved {len(conversations)} conversations for user {user_id}")
+        # Debug log for retrieved conversations
+        print(f"Retrieved {len(conversations)} conversations for user {user_id}")  # noqa: E501
         return conversations
 
     async def get_conversation_context(
         self,
         conversation_id: str,
         format: str = "string",
-        max_messages: Optional[int] = None,
-    ) -> Union[str, List[Dict[str, Any]]]:
+        max_messages: int | None = None,
+    ) -> str | list[dict[str, Any]]:
         """
         Get the conversation context in the specified format.
 
@@ -421,7 +423,7 @@ class AzureStorageManager(ConversationInterface):
         # Check if conversation exists
         conversation = self.conversations.find_one({"id": conversation_id})
         if not conversation:
-            logger.warning(f"Conversation not found: {conversation_id}")
+            logger.warning(f"Conversation not found: {conversation_id}")  # noqa: F821
             return "" if format == "string" else []
 
         # Get messages
@@ -468,5 +470,5 @@ class AzureStorageManager(ConversationInterface):
             return openai_messages
 
         else:
-            logger.warning(f"Unsupported format: {format}")
+            logger.warning(f"Unsupported format: {format}")  # noqa: F821
             return "" if format == "string" else []

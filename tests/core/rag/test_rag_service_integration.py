@@ -6,7 +6,7 @@ verifying that it works correctly with the new core components.
 """
 
 import asyncio
-from typing import Any, Dict, List
+from typing import Any, Dict, List  # noqa: F401, F401, F401
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -15,7 +15,7 @@ from konveyor.core.rag.rag_service_updated import RAGService
 
 
 # Test the RAG service with mocked dependencies
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_rag_service_integration():
     """Test the RAG service integration with the new core components."""
     # Create a mock client manager
@@ -40,17 +40,21 @@ async def test_rag_service_integration():
     mock_context_service.format_context.return_value = "Test context"
 
     # Create the RAG service with mocked dependencies
-    with patch(
-        "konveyor.core.conversation.factory.ConversationManagerFactory.create_manager"
-    ) as mock_create_manager, patch(
-        "konveyor.core.formatters.factory.FormatterFactory.get_formatter"
-    ) as mock_get_formatter, patch(
-        "konveyor.core.generation.factory.ResponseGeneratorFactory.get_generator"
-    ) as mock_get_generator, patch(
-        "konveyor.core.rag.rag_service_updated.ContextService",
-        return_value=mock_context_service,
+    with (
+        patch(
+            "konveyor.core.conversation.factory.ConversationManagerFactory.create_manager"  # noqa: E501
+        ) as mock_create_manager,
+        patch(
+            "konveyor.core.formatters.factory.FormatterFactory.get_formatter"
+        ) as mock_get_formatter,
+        patch(
+            "konveyor.core.generation.factory.ResponseGeneratorFactory.get_generator"
+        ) as mock_get_generator,
+        patch(
+            "konveyor.core.rag.rag_service_updated.ContextService",
+            return_value=mock_context_service,
+        ),
     ):
-
         # Create mock conversation manager
         mock_conversation_manager = AsyncMock()
         mock_conversation_manager.create_conversation.return_value = {

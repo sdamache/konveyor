@@ -6,7 +6,7 @@ specified generator type and configuration.
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from konveyor.core.generation.generator import ResponseGenerator
 from konveyor.core.generation.interface import ResponseGeneratorInterface
@@ -27,7 +27,7 @@ class ResponseGeneratorFactory:
 
     @classmethod
     def get_generator(
-        cls, generator_type: str = "default", config: Optional[Dict[str, Any]] = None
+        cls, generator_type: str = "default", config: dict[str, Any] | None = None
     ) -> ResponseGeneratorInterface:
         """
         Get a response generator.
@@ -68,7 +68,7 @@ class ResponseGeneratorFactory:
             # For RAG, we need a context service
             if not context_service:
                 logger.warning(
-                    "Context service not provided for RAG generator, using default generator"
+                    "Context service not provided for RAG generator, using default generator"  # noqa: E501
                 )
                 return cls.get_generator("default", config)
 
@@ -83,7 +83,7 @@ class ResponseGeneratorFactory:
             # For chat, we need a conversation service
             if not conversation_service:
                 logger.warning(
-                    "Conversation service not provided for chat generator, using default generator"
+                    "Conversation service not provided for chat generator, using default generator"  # noqa: E501
                 )
                 return cls.get_generator("default", config)
 

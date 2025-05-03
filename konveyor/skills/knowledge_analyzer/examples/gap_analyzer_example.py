@@ -7,7 +7,7 @@ track user knowledge, and identify knowledge gaps.
 
 import json
 import logging
-import os
+import os  # noqa: F401
 import sys
 from pathlib import Path
 
@@ -15,9 +15,12 @@ from pathlib import Path
 parent_dir = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(parent_dir))
 
-from konveyor.skills.knowledge_analyzer.knowledge_gap_analyzer import \
-    KnowledgeGapAnalyzerSkill
-from konveyor.skills.knowledge_analyzer.taxonomy import KnowledgeTaxonomyLoader
+from konveyor.skills.knowledge_analyzer.knowledge_gap_analyzer import (  # noqa: E402
+    KnowledgeGapAnalyzerSkill,
+)
+from konveyor.skills.knowledge_analyzer.taxonomy import (  # noqa: E402, E501
+    KnowledgeTaxonomyLoader,
+)
 
 # Set up logging
 logging.basicConfig(
@@ -112,7 +115,7 @@ def main():
 
         gap_marker = "⚠️ GAP" if domain["is_gap"] else ""
         print(
-            f"- {domain_name} (Priority: {domain['priority']}, Confidence: {domain['confidence']:.2f}) {gap_marker}"
+            f"- {domain_name} (Priority: {domain['priority']}, Confidence: {domain['confidence']:.2f}) {gap_marker}"  # noqa: E501
         )
 
 

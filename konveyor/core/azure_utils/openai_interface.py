@@ -5,12 +5,12 @@ This module defines the interface for interacting with Azure OpenAI services,
 providing a common contract for different implementations.
 
 This interface is designed to be compatible with both:
-1. The AzureOpenAI client from the OpenAI SDK (used in konveyor/core/azure_utils/clients.py)
-2. The custom AzureOpenAIClient implementation (in konveyor/core/azure_adapters/openai/client.py)
+1. The AzureOpenAI client from the OpenAI SDK (used in konveyor/core/azure_utils/clients.py)  # noqa: E501
+2. The custom AzureOpenAIClient implementation (in konveyor/core/azure_adapters/openai/client.py)  # noqa: E501
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union  # noqa: F401, F401, F401
 
 
 class OpenAIClientInterface(ABC):
@@ -28,7 +28,7 @@ class OpenAIClientInterface(ABC):
 
     @abstractmethod
     def generate_completion(
-        self, messages: List[Dict[str, str]], max_tokens: int = 1000
+        self, messages: list[dict[str, str]], max_tokens: int = 1000
     ) -> str:
         """
         Generate a chat completion response.
@@ -40,10 +40,9 @@ class OpenAIClientInterface(ABC):
         Returns:
             The generated text response
         """
-        pass
 
     @abstractmethod
-    def generate_embedding(self, text: str) -> List[float]:
+    def generate_embedding(self, text: str) -> list[float]:
         """
         Generate an embedding for the given text.
 
@@ -53,4 +52,3 @@ class OpenAIClientInterface(ABC):
         Returns:
             A list of floats representing the embedding vector
         """
-        pass

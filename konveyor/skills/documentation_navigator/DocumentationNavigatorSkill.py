@@ -12,13 +12,14 @@ import logging
 import re
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union  # noqa: F401, F401
 
 from semantic_kernel import Kernel
 from semantic_kernel.functions import kernel_function
 
 from konveyor.apps.search.services.search_service import SearchService
 from konveyor.core.conversation.factory import ConversationManagerFactory
+
 # Removed: from konveyor.core.conversation.interface import ConversationInterface
 
 # Configure logging
@@ -37,10 +38,10 @@ class DocumentationNavigatorSkill:
     Attributes:
         search_service (SearchService): The search service for documentation retrieval
         kernel (Optional[Kernel]): The Semantic Kernel instance (if provided)
-        conversation_manager (Optional[ConversationInterface]): The conversation manager for memory
+        conversation_manager (Optional[ConversationInterface]): The conversation manager for memory  # noqa: E501
     """
 
-    def __init__(self, kernel: Optional[Kernel] = None):
+    def __init__(self, kernel: Kernel | None = None):
         """
         Initialize the Documentation Navigator Skill.
 
@@ -58,19 +59,20 @@ class DocumentationNavigatorSkill:
         """Initialize the conversation manager."""
         try:
             # Use the factory to create a conversation manager
-            # Note: We're not awaiting the coroutine here, but we'll await it when needed
+            # Note: We're not awaiting the coroutine here, but we'll await it when needed  # noqa: E501
             self.conversation_manager = ConversationManagerFactory.create_manager
             logger.info("Initialized conversation manager")
         except Exception as e:
             logger.warning(f"Failed to initialize conversation manager: {str(e)}")
             logger.warning(
-                "Continuing without conversation memory - contextual conversations will be limited"
+                "Continuing without conversation memory - contextual conversations will be limited"  # noqa: E501
             )
 
             # Fallback to in-memory conversation manager
             try:
-                from konveyor.core.conversation.memory import \
-                    InMemoryConversationManager
+                from konveyor.core.conversation.memory import (
+                    InMemoryConversationManager,
+                )
 
                 self.conversation_manager = lambda: InMemoryConversationManager()
                 logger.info("Initialized fallback in-memory conversation manager")
@@ -101,7 +103,7 @@ class DocumentationNavigatorSkill:
     @kernel_function(
         description="Search documentation for information", name="search_documentation"
     )
-    async def search_documentation(self, query: str, top: int = 5) -> Dict[str, Any]:
+    async def search_documentation(self, query: str, top: int = 5) -> dict[str, Any]:
         """
         Search documentation for information related to the query.
 
@@ -151,7 +153,7 @@ class DocumentationNavigatorSkill:
         description="Answer a question using documentation", name="answer_question"
     )
     async def answer_question(
-        self, question: str, top: int = 5, conversation_id: Optional[str] = None
+        self, question: str, top: int = 5, conversation_id: str | None = None
     ) -> str:
         """
         Answer a question using documentation search.
@@ -171,7 +173,7 @@ class DocumentationNavigatorSkill:
 
         if not search_results["success"] or search_results["result_count"] == 0:
             logger.warning(f"No results found for question: {question}")
-            return "I couldn't find any relevant information to answer your question. Could you please rephrase or ask something else?"
+            return "I couldn't find any relevant information to answer your question. Could you please rephrase or ask something else?"  # noqa: E501
 
         # Format the answer with citations
         answer = self._format_answer_with_citations(question, search_results["results"])
@@ -212,8 +214,8 @@ class DocumentationNavigatorSkill:
         name="format_for_slack",
     )
     async def format_for_slack(
-        self, query: str, top: int = 5, conversation_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, query: str, top: int = 5, conversation_id: str | None = None
+    ) -> dict[str, Any]:
         """
         Search documentation and format results in Slack-compatible Markdown.
 
@@ -248,20 +250,20 @@ class DocumentationNavigatorSkill:
 
                         await conversation_manager.add_message(
                             conversation_id=conversation_id,
-                            content="I couldn't find any relevant information. Could you please rephrase your query?",
+                            content="I couldn't find any relevant information. Could you please rephrase your query?",  # noqa: E501
                             message_type="assistant",
                         )
                 except Exception as e:
                     logger.error(f"Error updating conversation history: {str(e)}")
 
             return {
-                "text": "I couldn't find any relevant information. Could you please rephrase your query?",
+                "text": "I couldn't find any relevant information. Could you please rephrase your query?",  # noqa: E501
                 "blocks": [
                     {
                         "type": "section",
                         "text": {
                             "type": "mrkdwn",
-                            "text": "I couldn't find any relevant information. Could you please rephrase your query?",
+                            "text": "I couldn't find any relevant information. Could you please rephrase your query?",  # noqa: E501
                         },
                     }
                 ],
@@ -297,7 +299,7 @@ class DocumentationNavigatorSkill:
                         },
                     )
                     logger.info(
-                        f"Added search results to conversation history: {conversation_id}"
+                        f"Added search results to conversation history: {conversation_id}"  # noqa: E501
                     )
             except Exception as e:
                 logger.error(f"Error updating conversation history: {str(e)}")
@@ -457,7 +459,7 @@ class DocumentationNavigatorSkill:
         logger.info(f"Preprocessed query: '{query}' -> '{processed_query}'")
         return processed_query
 
-    def _format_results(self, results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _format_results(self, results: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
         Format search results for presentation.
 
@@ -496,7 +498,7 @@ class DocumentationNavigatorSkill:
         return formatted
 
     def _format_answer_with_citations(
-        self, question: str, results: List[Dict[str, Any]]
+        self, question: str, results: list[dict[str, Any]]
     ) -> str:
         """
         Format an answer with citations based on search results.
@@ -518,12 +520,12 @@ class DocumentationNavigatorSkill:
         # Extract content and metadata from results
         contents = [result["content"] for result in results]
         titles = [result["title"] for result in results]
-        citations = [result["citation"] for result in results]
+        citations = [result["citation"] for result in results]  # noqa: F841
         document_ids = [result["document_id"] for result in results]
 
         # Start with a clear introduction
         answer = (
-            f"Based on the documentation, here's what I found about your question:\n\n"
+            f"Based on the documentation, here's what I found about your question:\n\n"  # noqa: E501, F541
         )
 
         # Add content with properly formatted citations
@@ -550,15 +552,15 @@ class DocumentationNavigatorSkill:
 
         # Add detailed sources section with document IDs and titles
         answer += "**Sources:**\n"
-        for i, (title, doc_id) in enumerate(zip(titles, document_ids)):
+        for i, (title, doc_id) in enumerate(zip(titles, document_ids, strict=False)):
             # Format each citation with number, title, and document ID
             answer += f"{i+1}. **{title}** (Document ID: `{doc_id}`)\n"
 
         return answer
 
     def _format_slack_blocks(
-        self, query: str, results: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, query: str, results: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """
         Format search results as Slack blocks.
 
@@ -635,7 +637,7 @@ class DocumentationNavigatorSkill:
                     "elements": [
                         {
                             "type": "mrkdwn",
-                            "text": f"*Source:* Document ID: `{document_id}` {' | ' + relevance_str if relevance_str else ''}",
+                            "text": f"*Source:* Document ID: `{document_id}` {' | ' + relevance_str if relevance_str else ''}",  # noqa: E501
                         }
                     ],
                 }
@@ -666,7 +668,7 @@ class DocumentationNavigatorSkill:
                 "elements": [
                     {
                         "type": "mrkdwn",
-                        "text": "💡 _Ask follow-up questions for more details on any of these results._",
+                        "text": "💡 _Ask follow-up questions for more details on any of these results._",  # noqa: E501
                     }
                 ],
             }
@@ -682,7 +684,7 @@ class DocumentationNavigatorSkill:
         self, follow_up_question: str, conversation_id: str, top: int = 5
     ) -> str:
         """
-        Continue a conversation with follow-up questions, using conversation history for context.
+        Continue a conversation with follow-up questions, using conversation history for context.  # noqa: E501
 
         Args:
             follow_up_question: The follow-up question
@@ -693,7 +695,7 @@ class DocumentationNavigatorSkill:
             Formatted answer with citations
         """
         logger.info(
-            f"Processing follow-up question: {follow_up_question} in conversation: {conversation_id}"
+            f"Processing follow-up question: {follow_up_question} in conversation: {conversation_id}"  # noqa: E501
         )
 
         # Get the conversation manager
@@ -711,7 +713,7 @@ class DocumentationNavigatorSkill:
                 conversation_id=conversation_id, format="string"
             )
             logger.info(
-                f"Retrieved conversation context with length: {len(context) if context else 0}"
+                f"Retrieved conversation context with length: {len(context) if context else 0}"  # noqa: E501
             )
 
             # Extract previous queries from conversation history
@@ -751,7 +753,7 @@ class DocumentationNavigatorSkill:
 
                 if not search_results["success"] or search_results["result_count"] == 0:
                     logger.warning(
-                        f"No results found for original query either: {follow_up_question}"
+                        f"No results found for original query either: {follow_up_question}"  # noqa: E501
                     )
 
                     # Add to conversation history
@@ -761,7 +763,7 @@ class DocumentationNavigatorSkill:
                         message_type="user",
                     )
 
-                    no_results_response = "I couldn't find any relevant information to answer your follow-up question. Could you please rephrase or ask something else?"
+                    no_results_response = "I couldn't find any relevant information to answer your follow-up question. Could you please rephrase or ask something else?"  # noqa: E501
 
                     await conversation_manager.add_message(
                         conversation_id=conversation_id,
@@ -805,9 +807,7 @@ class DocumentationNavigatorSkill:
     @kernel_function(
         description="Create a new conversation", name="create_conversation"
     )
-    async def create_conversation(
-        self, user_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+    async def create_conversation(self, user_id: str | None = None) -> dict[str, Any]:
         """
         Create a new conversation for contextual interactions.
 
@@ -849,7 +849,7 @@ class DocumentationNavigatorSkill:
             }
 
     def _enhance_query_with_context(
-        self, query: str, previous_queries: List[str], max_previous: int = 2
+        self, query: str, previous_queries: list[str], max_previous: int = 2
     ) -> str:
         """
         Enhance a query with context from previous queries.
@@ -895,7 +895,7 @@ class DocumentationNavigatorSkill:
 
         return query
 
-    def _format_slack_text(self, query: str, results: List[Dict[str, Any]]) -> str:
+    def _format_slack_text(self, query: str, results: list[dict[str, Any]]) -> str:
         """
         Format search results as plain text for Slack.
 

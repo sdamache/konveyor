@@ -1,6 +1,6 @@
 import os
 
-from .base import *
+from .base import *  # noqa: F403
 
 # Development settings
 DEBUG = True
@@ -10,7 +10,7 @@ ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 # Add any ngrok domains from environment variables
 NGROK_URL = os.environ.get("NGROK_URL", "")
 if NGROK_URL:
-    # Extract the domain from the URL (e.g., 'abc123.ngrok.io' from 'https://abc123.ngrok.io')
+    # Extract the domain from the URL (e.g., 'abc123.ngrok.io' from 'https://abc123.ngrok.io')  # noqa: E501
     from urllib.parse import urlparse
 
     ngrok_domain = urlparse(NGROK_URL).netloc or urlparse(NGROK_URL).path
@@ -31,7 +31,7 @@ ALLOWED_HOSTS.extend(
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",  # noqa: F405
     }
 }
 
@@ -50,9 +50,9 @@ INTERNAL_IPS = [
 
 # Enable django extensions if installed
 try:
-    import django_extensions
+    import django_extensions  # noqa: F401
 
-    INSTALLED_APPS += ["django_extensions"]
+    INSTALLED_APPS += ["django_extensions"]  # noqa: F405
 except ImportError:
     pass
 
@@ -79,7 +79,11 @@ LOGGING = {
         "file": {
             "level": "DEBUG",
             "class": "logging.FileHandler",
-            "filename": os.path.join(BASE_DIR, "logs", "konveyor-dev.log"),
+            "filename": os.path.join(
+                BASE_DIR,
+                "logs",
+                "konveyor-dev.log",  # noqa: F405
+            ),  # noqa: E501
             "formatter": "structured",
         },
     },

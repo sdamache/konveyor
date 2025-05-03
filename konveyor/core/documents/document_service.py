@@ -1,6 +1,6 @@
 """Document processing service using Azure Document Intelligence.
 
-This module provides document parsing and processing capabilities using Azure Document Intelligence.
+This module provides document parsing and processing capabilities using Azure Document Intelligence.  # noqa: E501
 It handles various document formats including PDF, DOCX, Markdown, and plain text.
 
 Example:
@@ -16,23 +16,37 @@ Example:
 
 # Removed: import logging
 import time
+
 # Removed: from functools import wraps
-from typing import (Any, BinaryIO, Callable, Dict, List, Optional, Tuple,
-                    TypeVar)
+from typing import (  # noqa: E501, F401
+    Any,
+    BinaryIO,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    TypeVar,
+)
 
 import docx
 import markdown
 from azure.core.exceptions import AzureError, ResourceExistsError
 from bs4 import BeautifulSoup
-# Removed ServiceLoggingMixin, AzureClientMixin imports
-from tenacity import (retry, retry_if_exception_type, stop_after_attempt,
-                      wait_exponential)
 
-from konveyor.core.azure_utils.clients import \
-    AzureClientManager  # Import client manager
+# Removed ServiceLoggingMixin, AzureClientMixin imports
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
+
+from konveyor.core.azure_utils.clients import (  # Import client manager  # noqa: F401
+    AzureClientManager,
+)
+
 # Removed AzureKeyCredential, DocumentIntelligenceClient imports
-from konveyor.core.azure_utils.service import \
-    AzureService  # Import base service
+from konveyor.core.azure_utils.service import AzureService  # Import base service
 
 # Removed module-level logger
 
@@ -52,13 +66,12 @@ class DocumentService(AzureService):  # Inherit from AzureService
 
     # Removed redundant log_warning method (provided by AzureService base class)
     """Service for processing documents using Azure Document Intelligence.
-    
+      # noqa: W293
     This service provides methods to parse and process various document formats using
     Azure Document Intelligence. It supports PDF, DOCX, Markdown, and plain text files.
-    
+      # noqa: W293
     Attributes:
-        doc_intelligence_client (DocumentIntelligenceClient): Azure Document Intelligence client
-        
+        doc_intelligence_client (DocumentIntelligenceClient): Azure Document Intelligence client  # noqa: E501
     Required Environment Variables:
         AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT: Document Intelligence endpoint
         AZURE_DOCUMENT_INTELLIGENCE_API_KEY: Document Intelligence API key
@@ -75,7 +88,7 @@ class DocumentService(AzureService):  # Inherit from AzureService
         self.doc_intelligence_client = (
             self.client_manager.get_document_intelligence_client()
         )
-        # Blob client is retrieved on demand in storage methods using self.client_manager
+        # Blob client is retrieved on demand in storage methods using self.client_manager  # noqa: E501
 
         self.log_success("DocumentService initialized using AzureService base")
 
@@ -83,14 +96,14 @@ class DocumentService(AzureService):  # Inherit from AzureService
 
     def parse_file(
         self, file_obj: BinaryIO, content_type: str
-    ) -> Tuple[str, Dict[str, Any]]:
+    ) -> tuple[str, dict[str, Any]]:
         """Parse a document file and extract its content and metadata.
 
         Args:
             file_obj (BinaryIO): File-like object containing the document
             content_type (str): MIME type of the document. Supported types:
                 - application/pdf
-                - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+                - application/vnd.openxmlformats-officedocument.wordprocessingml.document  # noqa: E501
                 - text/markdown
                 - text/plain
 
@@ -108,7 +121,7 @@ class DocumentService(AzureService):  # Inherit from AzureService
                 return self._parse_pdf(file_obj)
             elif (
                 content_type
-                == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"  # noqa: E501
             ):
                 return self._parse_docx(file_obj)
             elif content_type == "text/markdown":
@@ -128,7 +141,7 @@ class DocumentService(AzureService):  # Inherit from AzureService
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
     )
-    def _parse_pdf(self, file_obj: BinaryIO) -> Tuple[str, Dict[str, Any]]:
+    def _parse_pdf(self, file_obj: BinaryIO) -> tuple[str, dict[str, Any]]:
         """Parse PDF using Azure Document Intelligence.
 
         Args:
@@ -181,7 +194,7 @@ class DocumentService(AzureService):  # Inherit from AzureService
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
     )
-    def _parse_docx(self, file_obj: BinaryIO) -> Tuple[str, Dict[str, Any]]:
+    def _parse_docx(self, file_obj: BinaryIO) -> tuple[str, dict[str, Any]]:
         """Parse DOCX file.
 
         Args:
@@ -204,7 +217,7 @@ class DocumentService(AzureService):  # Inherit from AzureService
             metadata = {"paragraph_count": len(doc.paragraphs), "document_type": "docx"}
 
             self.log_success(
-                f"Successfully parsed DOCX with {metadata['paragraph_count']} paragraphs"
+                f"Successfully parsed DOCX with {metadata['paragraph_count']} paragraphs"  # noqa: E501
             )
             return "\n".join(content), metadata
 
@@ -217,7 +230,7 @@ class DocumentService(AzureService):  # Inherit from AzureService
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
     )
-    def _parse_markdown(self, file_obj: BinaryIO) -> Tuple[str, Dict[str, Any]]:
+    def _parse_markdown(self, file_obj: BinaryIO) -> tuple[str, dict[str, Any]]:
         """Parse Markdown file.
 
         Args:
@@ -253,7 +266,7 @@ class DocumentService(AzureService):  # Inherit from AzureService
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
     )
-    def _parse_text(self, file_obj: BinaryIO) -> Tuple[str, Dict[str, Any]]:
+    def _parse_text(self, file_obj: BinaryIO) -> tuple[str, dict[str, Any]]:
         """Parse plain text file.
 
         Args:
@@ -305,7 +318,7 @@ class DocumentService(AzureService):  # Inherit from AzureService
             # Get container client
             container_client = blob_service_client.get_container_client(container_name)
 
-            # Create container if it doesn't exist with specific retry for ContainerBeingDeleted
+            # Create container if it doesn't exist with specific retry for ContainerBeingDeleted  # noqa: E501
             max_retries = 5
             retry_delay = 2
             container_exists_or_created = False
@@ -333,36 +346,36 @@ class DocumentService(AzureService):  # Inherit from AzureService
                     if "ContainerBeingDeleted" in str(e):
                         if attempt == max_retries - 1:
                             self.log_error(
-                                f"Failed to create container {container_name} after {max_retries} attempts due to ContainerBeingDeleted.",
+                                f"Failed to create container {container_name} after {max_retries} attempts due to ContainerBeingDeleted.",  # noqa: E501
                                 e,
                             )
                             raise  # Re-raise the final error if all retries fail
                         self.log_warning(
-                            f"Attempt {attempt + 1} failed: Container {container_name} is being deleted. Retrying in {retry_delay}s..."
+                            f"Attempt {attempt + 1} failed: Container {container_name} is being deleted. Retrying in {retry_delay}s..."  # noqa: E501
                         )
                         # import time # Moved import to top level
                         time.sleep(retry_delay)
                         retry_delay *= 2  # Exponential backoff
                     else:
-                        # If it's another ResourceExistsError (like ContainerAlreadyExists, which is fine if caught by exists()),
-                        # or some other unexpected ResourceExistsError, log and re-raise immediately.
+                        # If it's another ResourceExistsError (like ContainerAlreadyExists, which is fine if caught by exists()),  # noqa: E501
+                        # or some other unexpected ResourceExistsError, log and re-raise immediately.  # noqa: E501
                         if "ContainerAlreadyExists" in str(e):
-                            # This case should ideally be caught by container_client.exists(), but handle defensively
+                            # This case should ideally be caught by container_client.exists(), but handle defensively  # noqa: E501
                             self.log_debug(
-                                f"Container {container_name} already exists (caught in exception). Proceeding."
+                                f"Container {container_name} already exists (caught in exception). Proceeding."  # noqa: E501
                             )  # Use debug
                             container_exists_or_created = True
                             break  # Container exists, proceed
                         else:
                             self.log_error(
-                                f"Unexpected ResourceExistsError during container creation check/attempt",
+                                f"Unexpected ResourceExistsError during container creation check/attempt",  # noqa: E501, F541
                                 e,
                             )
                             raise  # Re-raise unexpected ResourceExistsError
                 except Exception as e:
-                    # Catch any other unexpected exceptions during container creation/check
+                    # Catch any other unexpected exceptions during container creation/check  # noqa: E501
                     self.log_error(
-                        f"Unexpected error checking or creating container {container_name} on attempt {attempt + 1}",
+                        f"Unexpected error checking or creating container {container_name} on attempt {attempt + 1}",  # noqa: E501
                         e,
                     )
                     if attempt == max_retries - 1:
@@ -373,7 +386,7 @@ class DocumentService(AzureService):  # Inherit from AzureService
 
             if not container_exists_or_created:
                 raise Exception(
-                    f"Failed to ensure container {container_name} exists after {max_retries} attempts."
+                    f"Failed to ensure container {container_name} exists after {max_retries} attempts."  # noqa: E501
                 )
 
             # Get blob client for this specific chunk within the container
@@ -387,19 +400,19 @@ class DocumentService(AzureService):  # Inherit from AzureService
                 try:
                     blob_client.upload_blob(content.encode("utf-8"), overwrite=True)
                     self.log_success(
-                        f"Successfully stored content for chunk {chunk.id} in {container_name}/{blob_name}"
+                        f"Successfully stored content for chunk {chunk.id} in {container_name}/{blob_name}"  # noqa: E501
                     )
                     upload_successful = True
                     break
                 except Exception as e:
                     if attempt == max_retries_upload - 1:
                         self.log_error(
-                            f"Failed to upload blob {blob_name} after {max_retries_upload} attempts.",
+                            f"Failed to upload blob {blob_name} after {max_retries_upload} attempts.",  # noqa: E501
                             e,
                         )
                         raise
                     self.log_warning(
-                        f"Attempt {attempt + 1} failed to upload blob {blob_name}: {str(e)}. Retrying in {retry_delay_upload}s..."
+                        f"Attempt {attempt + 1} failed to upload blob {blob_name}: {str(e)}. Retrying in {retry_delay_upload}s..."  # noqa: E501
                     )
                     # import time # Moved import to top level
                     time.sleep(retry_delay_upload)
@@ -407,7 +420,7 @@ class DocumentService(AzureService):  # Inherit from AzureService
 
             if not upload_successful:
                 raise Exception(
-                    f"Failed to upload blob {blob_name} after {max_retries_upload} attempts."
+                    f"Failed to upload blob {blob_name} after {max_retries_upload} attempts."  # noqa: E501
                 )
 
         except Exception as e:
@@ -460,7 +473,7 @@ class DocumentService(AzureService):  # Inherit from AzureService
                     if attempt == max_retries - 1:
                         raise
                     self.log_warning(
-                        f"Attempt {attempt + 1} failed to download blob: {str(e)}. Retrying..."
+                        f"Attempt {attempt + 1} failed to download blob: {str(e)}. Retrying..."  # noqa: E501
                     )
                     # import time # Moved import to top level
                     time.sleep(retry_delay)

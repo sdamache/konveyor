@@ -13,7 +13,7 @@ import asyncio
 import logging
 import os
 import sys
-from typing import Any, Dict
+from typing import Any
 
 # Set up logging
 logging.basicConfig(
@@ -31,11 +31,11 @@ if project_root not in sys.path:
 # Set Django settings module
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "konveyor.settings.development")
 
-from konveyor.core.chat import ChatSkill
-from konveyor.core.kernel import create_kernel, get_kernel_settings
+from konveyor.core.chat import ChatSkill  # noqa: E402
+from konveyor.core.kernel import create_kernel, get_kernel_settings  # noqa: E402
 
 
-async def run_chat_example() -> Dict[str, Any]:
+async def run_chat_example() -> dict[str, Any]:
     """
     Run a simple example of using the ChatSkill.
 
@@ -62,7 +62,7 @@ async def run_chat_example() -> Dict[str, Any]:
     # Import the ChatSkill
     chat_skill = ChatSkill()
     # In newer versions of Semantic Kernel, we use add_plugin instead of import_skill
-    plugin = kernel.add_plugin(chat_skill, plugin_name="chat")
+    plugin = kernel.add_plugin(chat_skill, plugin_name="chat")  # noqa: F841
     # Get the function names from the ChatSkill class
     function_names = [
         func
@@ -112,7 +112,7 @@ async def run_chat_example() -> Dict[str, Any]:
         # Mock the follow-up response since we're using dummy credentials
         follow_up_result = {
             "response": f"Mocked follow-up response to: {follow_up}",
-            "history": f"{chat_result['history']}\nUser: {follow_up}\nAssistant: Mocked follow-up response",
+            "history": f"{chat_result['history']}\nUser: {follow_up}\nAssistant: Mocked follow-up response",  # noqa: E501
         }
 
         results["follow_up"] = follow_up_result
@@ -123,7 +123,7 @@ async def run_chat_example() -> Dict[str, Any]:
 
     # Format a response for Slack
     try:
-        markdown_text = "Here are some *important* points about our architecture:\n* Microservices\n* Event-driven\n* Cloud-native"
+        markdown_text = "Here are some *important* points about our architecture:\n* Microservices\n* Event-driven\n* Cloud-native"  # noqa: E501
         logger.info(f"Formatting for Slack: {markdown_text}")
 
         # Mock the Slack formatting since we're using dummy credentials

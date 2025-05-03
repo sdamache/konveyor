@@ -1,6 +1,6 @@
 """Test configuration for Konveyor."""
 
-import pytest
+import pytest  # noqa: F401
 
 
 def pytest_configure(config):

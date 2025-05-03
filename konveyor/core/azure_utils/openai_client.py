@@ -8,14 +8,19 @@ OpenAI SDK and the custom AzureOpenAIClient implementation.
 
 import logging
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union  # noqa: F401, F401
 
 from openai import AzureOpenAI
-from tenacity import (retry, retry_if_exception_type, stop_after_attempt,
-                      wait_exponential)
+from tenacity import (  # noqa: F401
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
-from konveyor.core.azure_adapters.openai.client import \
-    AzureOpenAIClient as CustomAzureOpenAIClient
+from konveyor.core.azure_adapters.openai.client import (
+    AzureOpenAIClient as CustomAzureOpenAIClient,
+)
 from konveyor.core.azure_utils.openai_interface import OpenAIClientInterface
 
 logger = logging.getLogger(__name__)
@@ -33,11 +38,11 @@ class UnifiedAzureOpenAIClient(OpenAIClientInterface):
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        endpoint: Optional[str] = None,
-        api_version: Optional[str] = None,
-        chat_deployment: Optional[str] = None,
-        embedding_deployment: Optional[str] = None,
+        api_key: str | None = None,
+        endpoint: str | None = None,
+        api_version: str | None = None,
+        chat_deployment: str | None = None,
+        embedding_deployment: str | None = None,
         use_sdk: bool = True,
     ):
         """
@@ -49,7 +54,7 @@ class UnifiedAzureOpenAIClient(OpenAIClientInterface):
             api_version: API version
             chat_deployment: Chat model deployment name
             embedding_deployment: Embedding model deployment name
-            use_sdk: Whether to use the OpenAI SDK client (True) or the custom client (False)
+            use_sdk: Whether to use the OpenAI SDK client (True) or the custom client (False)  # noqa: E501
         """
         # Load configuration from environment variables if not provided
         self.api_key = api_key or os.environ.get("AZURE_OPENAI_API_KEY")
@@ -95,7 +100,7 @@ class UnifiedAzureOpenAIClient(OpenAIClientInterface):
             )
 
     def generate_completion(
-        self, messages: List[Dict[str, str]], max_tokens: int = 1000
+        self, messages: list[dict[str, str]], max_tokens: int = 1000
     ) -> str:
         """
         Generate a chat completion response.
@@ -121,7 +126,7 @@ class UnifiedAzureOpenAIClient(OpenAIClientInterface):
             logger.error(f"Error generating completion: {str(e)}")
             raise
 
-    def generate_embedding(self, text: str) -> List[float]:
+    def generate_embedding(self, text: str) -> list[float]:
         """
         Generate an embedding for the given text.
 
@@ -151,7 +156,7 @@ class UnifiedAzureOpenAIClient(OpenAIClientInterface):
         reraise=True,
     )
     def generate_completion_with_retry(
-        self, messages: List[Dict[str, str]], max_tokens: int = 1000
+        self, messages: list[dict[str, str]], max_tokens: int = 1000
     ) -> str:
         """
         Generate a chat completion response with automatic retries.

@@ -11,7 +11,7 @@ load_dotenv()
 
 
 # Integration test for real Slack Bot via ngrok
-@pytest.mark.integration
+@pytest.mark.integration()
 def test_slack_e2e():
     # Load environment
     ngrok_url = os.getenv("NGROK_URL")

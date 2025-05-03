@@ -97,12 +97,12 @@ relationships:
     to: "technologies"
     type: "implements"
     description: "System architecture is implemented using core technologies"
-  
+
   - from: "development"
     to: "deployment"
     type: "enables"
     description: "Development practices enable smooth deployment and operations"
-  
+
   - from: "domain_knowledge"
     to: "architecture"
     type: "informs"
@@ -124,7 +124,7 @@ learning_paths:
         priority: "medium"
       - id: "deployment"
         priority: "low"
-  
+
   - role: "devops_engineer"
     name: "DevOps Engineer Onboarding"
     description: "Essential knowledge for DevOps engineers joining the team"

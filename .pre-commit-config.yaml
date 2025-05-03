@@ -1,0 +1,29 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+    -   id: trailing-whitespace
+        exclude: "backups/|backups/.*|.cursor/|.cursor/.*|.devcontainer/|.devcontainer/.*|.*.md|.windsurfrules"
+    -   id: end-of-file-fixer
+        exclude: "backups/|backups/.*|.cursor/|.cursor/.*|.devcontainer/|.devcontainer/.*|.*.md|.windsurfrules"
+    -   id: check-yaml
+        exclude: "backups/|backups/.*|.cursor/|.cursor/.*|.devcontainer/|.devcontainer/.*"
+    -   id: debug-statements
+        exclude: "backups/|backups/.*|.cursor/|.cursor/.*|.devcontainer/|.devcontainer/.*"
+
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.3.3
+    hooks:
+    -   id: ruff
+        args: [--fix]
+        exclude: "backups/|backups/.*|.cursor/|.cursor/.*|.devcontainer/|.devcontainer/.*|.*.md|.windsurfrules"
+    -   id: ruff-format
+        exclude: "backups/|backups/.*|.cursor/|.cursor/.*|.devcontainer/|.devcontainer/.*|.*.md|.windsurfrules"
+
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.9.0
+    hooks:
+    -   id: mypy
+        additional_dependencies: [types-requests, types-setuptools, types-pyyaml]
+        args: ["--ignore-missing-imports", "--config-file=mypy.ini"]
+        exclude: "tests/|backups/|backups/.*|.cursor/|.cursor/.*|.devcontainer/|.devcontainer/.*|.*.md|.windsurfrules"

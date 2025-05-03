@@ -79,7 +79,7 @@ def check_environment_variables():
             sys.exit(1)
     else:
         logger.info(
-            "All required environment variables seem to be present in the shell environment."
+            "All required environment variables seem to be present in the shell environment."  # noqa: E501
         )
 
     # Log the specific version being used
@@ -116,12 +116,12 @@ def test_search_init():
     logger.info("Attempting to instantiate SearchService...")
     try:
         # Instantiation includes the test embedding call
-        search_service = SearchService()
+        search_service = SearchService()  # noqa: F841
         logger.info("--- SearchService initialized successfully! ---")
         # Optional: Log success details if needed
         # logger.info(f"Initialized with index: {search_service.index_name}")
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: F841
         logger.error("--- Failed to initialize SearchService ---", exc_info=True)
         return False
 

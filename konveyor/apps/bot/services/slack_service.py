@@ -7,7 +7,10 @@ which has been moved to konveyor.core.slack.client.
 
 import logging
 
-from konveyor.core.slack.client import SlackService, retry_on_slack_error
+from konveyor.core.slack.client import (  # noqa: E501, F401
+    SlackService,
+    retry_on_slack_error,
+)
 
 # Configure logging
 logger = logging.getLogger(__name__)

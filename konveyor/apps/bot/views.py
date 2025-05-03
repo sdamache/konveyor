@@ -15,7 +15,7 @@ import json
 import logging
 import ssl
 import traceback
-from typing import Any, Dict, Optional
+from typing import Any
 
 # Removed: import certifi
 # Removed: from django.conf import settings
@@ -24,7 +24,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from konveyor.apps.bot.services.slack_service import SlackService
-from konveyor.apps.bot.services.slack_user_profile_service import SlackUserProfileService
+from konveyor.apps.bot.services.slack_user_profile_service import (
+    SlackUserProfileService,
+)
 from konveyor.apps.bot.slash_commands import get_command_handler
 from konveyor.core.agent import AgentOrchestratorSkill, SkillRegistry
 from konveyor.core.chat import ChatSkill
@@ -97,7 +99,7 @@ def root_handler(request):
     """
     Handle requests to the root URL.
 
-    This is a catch-all handler for the root URL to handle Slack's verification requests.
+    This is a catch-all handler for the root URL to handle Slack's verification requests.  # noqa: E501
 
     Args:
         request: The HTTP request
@@ -144,7 +146,7 @@ def root_handler(request):
 
     # For other requests, return a simple response
     return HttpResponse(
-        "Konveyor Slack Bot is running. Please use the /api/bot/slack/events/ endpoint for Slack events."
+        "Konveyor Slack Bot is running. Please use the /api/bot/slack/events/ endpoint for Slack events."  # noqa: E501
     )
 
 
@@ -249,7 +251,7 @@ def slack_webhook(request):
                     list(slack_webhook.processed_events)[-1000:]
                 )
                 logger.debug(
-                    f"Trimmed processed events to {len(slack_webhook.processed_events)} items"
+                    f"Trimmed processed events to {len(slack_webhook.processed_events)} items"  # noqa: E501
                 )
 
         # Process reaction events
@@ -262,7 +264,7 @@ def slack_webhook(request):
             item = event.get("item", {})
 
             logger.info(
-                f"Reaction: {reaction}, User: {user_id}, Item type: {item.get('type', '')}"
+                f"Reaction: {reaction}, User: {user_id}, Item type: {item.get('type', '')}"  # noqa: E501
             )
 
             # Process the reaction using the feedback service
@@ -271,7 +273,7 @@ def slack_webhook(request):
                     feedback = feedback_service.process_reaction_event(event)
                     if feedback:
                         logger.info(
-                            f"Recorded feedback: {feedback.get('feedback_type')} from user {user_id}"
+                            f"Recorded feedback: {feedback.get('feedback_type')} from user {user_id}"  # noqa: E501
                         )
                     else:
                         logger.debug(f"No feedback recorded for reaction: {reaction}")
@@ -304,7 +306,7 @@ def slack_webhook(request):
             # Log message details at appropriate levels
             thread_info = f" in thread {thread_ts}" if thread_ts else ""
             logger.info(
-                f"Processing message from user {user} in {channel_type} {channel}{thread_info}"
+                f"Processing message from user {user} in {channel_type} {channel}{thread_info}"  # noqa: E501
             )
             text_preview = text[:50] + ("..." if len(text) > 50 else "")
             logger.debug(f"Message text preview: {text_preview}")
@@ -312,7 +314,7 @@ def slack_webhook(request):
             try:
                 # Process the message through the orchestrator
                 logger.debug(
-                    f"Calling process_message with user: {user}, channel: {channel}, thread_ts: {thread_ts}"
+                    f"Calling process_message with user: {user}, channel: {channel}, thread_ts: {thread_ts}"  # noqa: E501
                 )
                 result = process_message(text, user, channel, thread_ts)
 
@@ -352,7 +354,7 @@ def slack_webhook(request):
 
                     if channel_type == "im":
                         logger.info(
-                            f"Sending direct message response to user {user}{thread_info}"
+                            f"Sending direct message response to user {user}{thread_info}"  # noqa: E501
                         )
                         response = slack_service.send_direct_message(
                             user, response_text, blocks, thread_ts=result_thread_ts
@@ -369,7 +371,7 @@ def slack_webhook(request):
                     if not response.get("ok", False):
                         error_code = response.get("error", "unknown_error")
                         logger.error(
-                            f"Slack API error: {error_code} when sending message to {channel_type} {channel}{thread_info}"
+                            f"Slack API error: {error_code} when sending message to {channel_type} {channel}{thread_info}"  # noqa: E501
                         )
 
                         # Handle specific Slack API errors
@@ -382,13 +384,13 @@ def slack_webhook(request):
                         elif error_code == "rate_limited":
                             retry_after = response.get("retry_after", 60)
                             logger.error(
-                                f"Rate limited by Slack API. Retry after {retry_after} seconds"
+                                f"Rate limited by Slack API. Retry after {retry_after} seconds"  # noqa: E501
                             )
 
                         # Don't raise an exception here, just log the error
                     else:
                         logger.debug(
-                            f"Message sent successfully to {channel_type} {channel}{thread_info}"
+                            f"Message sent successfully to {channel_type} {channel}{thread_info}"  # noqa: E501
                         )
 
                         # Store message content for potential feedback
@@ -398,7 +400,7 @@ def slack_webhook(request):
                             if message_ts:
                                 # Update the feedback service with message content
                                 feedback_service.update_message_content(
-                                    message_id=message_ts,  # Changed from message_ts to message_id
+                                    message_id=message_ts,  # Changed from message_ts to message_id  # noqa: E501
                                     channel_id=channel,
                                     question=text,
                                     answer=response_text,
@@ -421,7 +423,7 @@ def slack_webhook(request):
                         f"Error sending message: {error_type}: {error_message}"
                     )
                     logger.error(
-                        f"Error details - Type: {error_type}, Message: {error_message}, User: {user}, Channel: {channel}"
+                        f"Error details - Type: {error_type}, Message: {error_message}, User: {user}, Channel: {channel}"  # noqa: E501
                     )
                     logger.error(traceback.format_exc())
 
@@ -478,7 +480,7 @@ def slack_webhook(request):
                         )
                     else:
                         logger.debug(
-                            f"Error message sent successfully to {channel_type} {channel}{thread_info}"
+                            f"Error message sent successfully to {channel_type} {channel}{thread_info}"  # noqa: E501
                         )
                 except Exception as send_error:
                     error_type = type(send_error).__name__
@@ -487,12 +489,12 @@ def slack_webhook(request):
                         f"Error sending error message: {error_type}: {error_message}"
                     )
                     logger.error(
-                        f"Error details - Type: {error_type}, Message: {error_message}, User: {user}, Channel: {channel}"
+                        f"Error details - Type: {error_type}, Message: {error_message}, User: {user}, Channel: {channel}"  # noqa: E501
                     )
 
                     # As a last resort, try to send a very simple message without blocks
                     try:
-                        simple_message = "I encountered an error and couldn't process your request. Please try again later."
+                        simple_message = "I encountered an error and couldn't process your request. Please try again later."  # noqa: E501
                         if channel_type == "im":
                             slack_service.send_direct_message(
                                 user, simple_message, None, thread_ts=thread_ts
@@ -548,7 +550,7 @@ def slack_slash_command(request):
         response_url = request.POST.get("response_url", "")
 
         logger.info(
-            f"Received slash command: /{command} {text} from user {user_id} in channel {channel_id}"
+            f"Received slash command: /{command} {text} from user {user_id} in channel {channel_id}"  # noqa: E501
         )
 
         # Get the command handler
@@ -558,7 +560,7 @@ def slack_slash_command(request):
             return JsonResponse(
                 {
                     "response_type": "ephemeral",
-                    "text": f"Sorry, I don't know the command `/{command}`. Try `/help` to see available commands.",
+                    "text": f"Sorry, I don't know the command `/{command}`. Try `/help` to see available commands.",  # noqa: E501
                 }
             )
 
@@ -579,14 +581,14 @@ def slack_slash_command(request):
         return JsonResponse(
             {
                 "response_type": "ephemeral",
-                "text": f"Sorry, I encountered an error processing your command: {error_message}",
+                "text": f"Sorry, I encountered an error processing your command: {error_message}",  # noqa: E501
             }
         )
 
 
 def process_message(
-    text: str, user_id: str, channel_id: str, thread_ts: Optional[str] = None
-) -> Dict[str, Any]:
+    text: str, user_id: str, channel_id: str, thread_ts: str | None = None
+) -> dict[str, Any]:
     """
     Process a message using the Agent Orchestration Layer.
 
@@ -685,7 +687,7 @@ def process_message(
                     )
                 )
                 logger.debug(
-                    f"Retrieved conversation context with {len(conversation_context)} messages"
+                    f"Retrieved conversation context with {len(conversation_context)} messages"  # noqa: E501
                 )
 
                 return conversation_context
@@ -716,7 +718,7 @@ def process_message(
             )
         else:
             logger.warning(
-                f"Request processing completed with success=False by {skill_name}.{function_name}"
+                f"Request processing completed with success=False by {skill_name}.{function_name}"  # noqa: E501
             )
 
         # Add the conversation ID and thread_ts to the result
@@ -741,7 +743,7 @@ def process_message(
                             },
                         )
                         logger.debug(
-                            f"Added assistant response to conversation {conversation_id}"
+                            f"Added assistant response to conversation {conversation_id}"  # noqa: E501
                         )
 
                     # Run the async function
@@ -773,13 +775,13 @@ def process_message(
             "ValueError": f" {error_message}",
             "KeyError": " I couldn't find some required information.",
             "TimeoutError": " The operation timed out. Please try again later.",
-            "ConnectionError": " I'm having trouble connecting to a required service. Please try again later.",
-            "AuthenticationError": " There was an authentication issue. Please contact support.",
-            "PermissionError": " I don't have permission to access the requested resource.",
+            "ConnectionError": " I'm having trouble connecting to a required service. Please try again later.",  # noqa: E501
+            "AuthenticationError": " There was an authentication issue. Please contact support.",  # noqa: E501
+            "PermissionError": " I don't have permission to access the requested resource.",  # noqa: E501
             "ResourceNotFoundError": " The requested resource could not be found.",
-            "RateLimitError": " We've hit a rate limit. Please try again in a few minutes.",
-            "InvalidRequestError": " The request was invalid. Please check your input and try again.",
-            "ServiceUnavailableError": " A required service is currently unavailable. Please try again later.",
+            "RateLimitError": " We've hit a rate limit. Please try again in a few minutes.",  # noqa: E501
+            "InvalidRequestError": " The request was invalid. Please check your input and try again.",  # noqa: E501
+            "ServiceUnavailableError": " A required service is currently unavailable. Please try again later.",  # noqa: E501
         }
 
         # Add the specific error message if available, otherwise use a generic message
@@ -789,7 +791,7 @@ def process_message(
 
         # Log the error with additional context
         logger.error(
-            f"Error details - Type: {error_type}, Message: {error_message}, User: {user_id}, Channel: {channel_id}"
+            f"Error details - Type: {error_type}, Message: {error_message}, User: {user_id}, Channel: {channel_id}"  # noqa: E501
         )
 
         result = {

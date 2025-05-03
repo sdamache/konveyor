@@ -18,8 +18,9 @@ Example:
 """
 
 import logging
+from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Any, Dict, Iterator, List, Optional
+from typing import Any
 
 from konveyor.core.azure_utils.service import AzureService
 
@@ -42,7 +43,7 @@ class DocumentChunk:
     document_id: str
     content: str
     chunk_index: int
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
 
 class ChunkService(AzureService):
@@ -69,10 +70,10 @@ class ChunkService(AzureService):
         self.max_chunk_size = max_chunk_size
         self.max_batch_size = max_batch_size
         self.log_success(
-            f"Initialized with max_chunk_size={max_chunk_size}, max_batch_size={max_batch_size}"
+            f"Initialized with max_chunk_size={max_chunk_size}, max_batch_size={max_batch_size}"  # noqa: E501
         )
 
-    def calculate_batch_size(self, chunks: List[DocumentChunk]) -> int:
+    def calculate_batch_size(self, chunks: list[DocumentChunk]) -> int:
         """Calculate optimal batch size based on chunk contents.
 
         This method analyzes the chunks to determine the optimal batch size
@@ -102,13 +103,13 @@ class ChunkService(AzureService):
             )
 
         self.log_debug(
-            f"Calculated optimal batch size: {optimal_size} for avg chunk size: {avg_size:.0f}"
+            f"Calculated optimal batch size: {optimal_size} for avg chunk size: {avg_size:.0f}"  # noqa: E501
         )
         return optimal_size
 
     def process_in_batches(
-        self, chunks: List[DocumentChunk], batch_size: Optional[int] = None
-    ) -> Iterator[List[DocumentChunk]]:
+        self, chunks: list[DocumentChunk], batch_size: int | None = None
+    ) -> Iterator[list[DocumentChunk]]:
         """Process chunks in optimally sized batches.
 
         Args:
@@ -172,14 +173,14 @@ class ChunkService(AzureService):
             # Validate content size
             if len(chunk.content) > self.max_chunk_size:
                 self.log_warning(
-                    f"Chunk {chunk.id} exceeds max size: {len(chunk.content)} > {self.max_chunk_size}"
+                    f"Chunk {chunk.id} exceeds max size: {len(chunk.content)} > {self.max_chunk_size}"  # noqa: E501
                 )
                 return False
 
             # Validate metadata
             if not isinstance(chunk.metadata, dict):
                 self.log_warning(
-                    f"Chunk {chunk.id} has invalid metadata type: {type(chunk.metadata)}"
+                    f"Chunk {chunk.id} has invalid metadata type: {type(chunk.metadata)}"  # noqa: E501
                 )
                 return False
 

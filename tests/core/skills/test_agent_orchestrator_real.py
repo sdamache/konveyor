@@ -1,7 +1,7 @@
 """
 Real tests for Agent Orchestrator Skill.
 
-These tests verify the functionality of the Agent Orchestrator Skill with real Azure OpenAI credentials,
+These tests verify the functionality of the Agent Orchestrator Skill with real Azure OpenAI credentials,  # noqa: E501
 including request routing, skill selection, and response handling.
 
 This file requires the following environment variables to be set:
@@ -9,7 +9,7 @@ This file requires the following environment variables to be set:
 - AZURE_OPENAI_API_KEY: The Azure OpenAI API key
 
 Optional environment variables:
-- AZURE_OPENAI_CHAT_DEPLOYMENT: The name of the chat deployment (default: "gpt-35-turbo")
+- AZURE_OPENAI_CHAT_DEPLOYMENT: The name of the chat deployment (default: "gpt-35-turbo")  # noqa: E501
 - AZURE_OPENAI_API_VERSION: The API version (default: "2024-12-01-preview")
 """
 
@@ -18,7 +18,7 @@ import os
 
 import pytest
 from dotenv import load_dotenv
-from semantic_kernel import Kernel
+from semantic_kernel import Kernel  # noqa: F401
 
 from konveyor.core.agent import AgentOrchestratorSkill, SkillRegistry
 from konveyor.core.chat import ChatSkill
@@ -45,7 +45,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-@pytest.fixture
+@pytest.fixture()
 def real_kernel():
     """Create a real Kernel with Azure OpenAI for testing."""
     try:
@@ -56,19 +56,19 @@ def real_kernel():
         pytest.skip(f"Failed to create kernel: {str(e)}")
 
 
-@pytest.fixture
+@pytest.fixture()
 def registry():
     """Create a SkillRegistry for testing."""
     return SkillRegistry()
 
 
-@pytest.fixture
+@pytest.fixture()
 def chat_skill():
     """Create a ChatSkill for testing."""
     return ChatSkill()
 
 
-@pytest.fixture
+@pytest.fixture()
 def orchestrator(real_kernel, registry, chat_skill):
     """Create an AgentOrchestratorSkill for testing."""
     orchestrator = AgentOrchestratorSkill(real_kernel, registry)
@@ -81,7 +81,7 @@ def orchestrator(real_kernel, registry, chat_skill):
     return orchestrator
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_process_request_with_chat(orchestrator):
     """Test processing a chat request with real Azure OpenAI."""
     # Process a chat request
@@ -92,15 +92,15 @@ async def test_process_request_with_chat(orchestrator):
     assert isinstance(result, dict)
     assert "response" in result
     assert result["response"], "Response should not be empty"
-    # The skill_name might be either ChatSkill or AgentOrchestratorSkill depending on how routing works
+    # The skill_name might be either ChatSkill or AgentOrchestratorSkill depending on how routing works  # noqa: E501
     assert result["skill_name"] in ["ChatSkill", "AgentOrchestratorSkill"]
     # The function_name might vary depending on how the request is processed
     assert "function_name" in result
-    # Success might be True or False depending on whether the request was processed successfully
+    # Success might be True or False depending on whether the request was processed successfully  # noqa: E501
     assert "success" in result
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_process_request_with_question(orchestrator):
     """Test processing a question request with real Azure OpenAI."""
     # Process a question request
@@ -111,16 +111,16 @@ async def test_process_request_with_question(orchestrator):
     assert isinstance(result, dict)
     assert "response" in result
     assert result["response"], "Response should not be empty"
-    # We can't guarantee the exact content of the response, so we'll just check that it's not empty
-    # The skill_name might be either ChatSkill or AgentOrchestratorSkill depending on how routing works
+    # We can't guarantee the exact content of the response, so we'll just check that it's not empty  # noqa: E501
+    # The skill_name might be either ChatSkill or AgentOrchestratorSkill depending on how routing works  # noqa: E501
     assert result["skill_name"] in ["ChatSkill", "AgentOrchestratorSkill"]
     # The function_name might vary depending on how the request is processed
     assert "function_name" in result
-    # Success might be True or False depending on whether the request was processed successfully
+    # Success might be True or False depending on whether the request was processed successfully  # noqa: E501
     assert "success" in result
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_process_request_with_empty_request(orchestrator):
     """Test processing an empty request with real Azure OpenAI."""
     # Process an empty request

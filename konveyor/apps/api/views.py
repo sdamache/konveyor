@@ -1,6 +1,6 @@
 import os
 
-from django.conf import settings
+from django.conf import settings  # noqa: F401
 from django.http import JsonResponse
 
 

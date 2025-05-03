@@ -1,10 +1,10 @@
 """
 Context service for RAG operations.
-Integrates Azure Document Intelligence, AI Search, and OpenAI for document processing and retrieval.
+Integrates Azure Document Intelligence, AI Search, and OpenAI for document processing and retrieval.  # noqa: E501
 """
 
 import os
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple  # noqa: F401
 
 from openai import AzureOpenAI
 
@@ -22,8 +22,8 @@ class ContextService:
         self.openai_client = self.client_manager.get_openai_client()
         self.doc_client = self.client_manager.get_document_intelligence_client()
 
-    async def process_document(self, content: bytes, filename: str) -> List[Dict]:
-        """Process a document using Azure Document Intelligence and prepare for indexing."""
+    async def process_document(self, content: bytes, filename: str) -> list[dict]:
+        """Process a document using Azure Document Intelligence and prepare for indexing."""  # noqa: E501
         # Extract text using Document Intelligence
         result = await self.doc_client.analyze_document(content)
 
@@ -56,7 +56,7 @@ class ContextService:
         await self.search_client.upload_documents(chunk_documents)
         return chunk_documents
 
-    def _chunk_content(self, content: str, chunk_size: int) -> List[Tuple[str, int]]:
+    def _chunk_content(self, content: str, chunk_size: int) -> list[tuple[str, int]]:
         """Split content into chunks while preserving page boundaries."""
         # Simplified chunking - you might want more sophisticated logic
         chunks = []
@@ -81,7 +81,7 @@ class ContextService:
 
     async def retrieve_context(
         self, query: str, max_chunks: int = 3, min_relevance_score: float = 0.3
-    ) -> List[Dict[str, any]]:
+    ) -> list[dict[str, any]]:
         """Retrieve relevant context using hybrid search in Azure AI Search."""
         # Generate query embedding
         # Create embeddings client
@@ -132,7 +132,7 @@ class ContextService:
             context_chunks.append(
                 {
                     "content": result["content"],
-                    "source": f"Document {result['document_id']}, Chunk {result['chunk_id']}",
+                    "source": f"Document {result['document_id']}, Chunk {result['chunk_id']}",  # noqa: E501
                     "page": result.get("chunk_index"),
                     "relevance_score": result["@search.score"],
                     "metadata": result.get("metadata", {}),
@@ -141,7 +141,7 @@ class ContextService:
 
         return context_chunks
 
-    def format_context(self, chunks: List[Dict[str, any]]) -> str:
+    def format_context(self, chunks: list[dict[str, any]]) -> str:
         """Format retrieved chunks with source citations and metadata."""
         if not chunks:
             return "No relevant context found."

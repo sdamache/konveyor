@@ -7,8 +7,7 @@ import os
 import pytest
 from django.test import TestCase
 
-from konveyor.apps.documents.services.document_adapter import \
-    DjangoDocumentService
+from konveyor.apps.documents.services.document_adapter import DjangoDocumentService
 
 
 class TestDjangoDocumentService(TestCase):
@@ -44,7 +43,7 @@ class TestDjangoDocumentService(TestCase):
             self.logger.info(f"Read {len(pdf_bytes)} bytes from {pdf_path}")
             pdf_content_stream = io.BytesIO(pdf_bytes)
             self.logger.info(
-                f"Created BytesIO stream with size: {pdf_content_stream.getbuffer().nbytes}"
+                f"Created BytesIO stream with size: {pdf_content_stream.getbuffer().nbytes}"  # noqa: E501
             )
 
         content, metadata = self.service._parse_pdf(

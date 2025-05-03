@@ -6,7 +6,7 @@ contract for different implementations (in-memory, persistent storage, etc.).
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 
 class ConversationInterface(ABC):
@@ -21,8 +21,8 @@ class ConversationInterface(ABC):
 
     @abstractmethod
     async def create_conversation(
-        self, user_id: Optional[str] = None, metadata: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        self, user_id: str | None = None, metadata: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         Create a new conversation.
 
@@ -33,7 +33,6 @@ class ConversationInterface(ABC):
         Returns:
             Dictionary containing conversation details
         """
-        pass
 
     @abstractmethod
     async def add_message(
@@ -41,8 +40,8 @@ class ConversationInterface(ABC):
         conversation_id: str,
         content: str,
         message_type: str,
-        metadata: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """
         Add a message to a conversation.
 
@@ -55,7 +54,6 @@ class ConversationInterface(ABC):
         Returns:
             Dictionary containing message details
         """
-        pass
 
     @abstractmethod
     async def get_conversation_messages(
@@ -64,7 +62,7 @@ class ConversationInterface(ABC):
         limit: int = 50,
         skip: int = 0,
         include_metadata: bool = True,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get messages for a conversation.
 
@@ -77,15 +75,14 @@ class ConversationInterface(ABC):
         Returns:
             List of message dictionaries
         """
-        pass
 
     @abstractmethod
     async def get_conversation_context(
         self,
         conversation_id: str,
         format: str = "string",
-        max_messages: Optional[int] = None,
-    ) -> Union[str, List[Dict[str, Any]]]:
+        max_messages: int | None = None,
+    ) -> str | list[dict[str, Any]]:
         """
         Get the conversation context in the specified format.
 
@@ -97,7 +94,6 @@ class ConversationInterface(ABC):
         Returns:
             Conversation context in the specified format
         """
-        pass
 
     @abstractmethod
     async def delete_conversation(self, conversation_id: str) -> bool:
@@ -110,12 +106,11 @@ class ConversationInterface(ABC):
         Returns:
             True if the conversation was deleted, False otherwise
         """
-        pass
 
     @abstractmethod
     async def update_conversation_metadata(
-        self, conversation_id: str, metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, conversation_id: str, metadata: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Update the metadata for a conversation.
 
@@ -126,12 +121,11 @@ class ConversationInterface(ABC):
         Returns:
             Updated conversation dictionary
         """
-        pass
 
     @abstractmethod
     async def get_user_conversations(
         self, user_id: str, limit: int = 10, skip: int = 0
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get conversations for a user.
 
@@ -143,4 +137,3 @@ class ConversationInterface(ABC):
         Returns:
             List of conversation dictionaries
         """
-        pass

@@ -1,10 +1,10 @@
 """Azure configuration management.
 
 This module provides a centralized configuration management system for Azure services.
-It handles credential initialization, environment variable loading, and configuration validation.
+It handles credential initialization, environment variable loading, and configuration validation.  # noqa: E501
 
 Required Environment Variables:
-    None - All environment variables are optional and services will validate their required variables
+    None - All environment variables are optional and services will validate their required variables  # noqa: E501
 
 Optional Environment Variables:
     AZURE_KEY_VAULT_URL: URL for Azure Key Vault
@@ -34,9 +34,9 @@ Example:
 
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional  # noqa: F401
 
-from azure.core.credentials import AzureKeyCredential, TokenCredential
+from azure.core.credentials import AzureKeyCredential, TokenCredential  # noqa: F401
 from azure.identity import AzureCliCredential, DefaultAzureCredential
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -48,13 +48,13 @@ logger = logging.getLogger(__name__)
 class AzureConfig:
     """Unified Azure configuration management.
 
-    This class implements the Singleton pattern to ensure only one configuration instance exists.
-    It handles loading configuration from environment variables and provides methods to access
+    This class implements the Singleton pattern to ensure only one configuration instance exists.  # noqa: E501
+    It handles loading configuration from environment variables and provides methods to access  # noqa: E501
     service-specific configuration.
 
     Required Environment Variables:
         AZURE_OPENAI_EMBEDDING_DEPLOYMENT: Deployment name for embeddings model
-        AZURE_OPENAI_API_VERSION: API version for Azure OpenAI (defaults to 2024-12-01-preview)
+        AZURE_OPENAI_API_VERSION: API version for Azure OpenAI (defaults to 2024-12-01-preview)  # noqa: E501
 
     The class will attempt to initialize Azure credentials in the following order:
     1. DefaultAzureCredential
@@ -105,7 +105,7 @@ class AzureConfig:
                 # Final fallback to key-based auth
                 self.credential = None
                 logger.warning(
-                    "Failed to initialize Azure credentials, falling back to key-based auth"
+                    "Failed to initialize Azure credentials, falling back to key-based auth"  # noqa: E501
                 )
 
     def _load_configuration(self):
@@ -142,30 +142,30 @@ class AzureConfig:
         self.storage_account_key = os.getenv("AZURE_STORAGE_ACCOUNT_KEY")
         self.storage_connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 
-    def get_credential(self) -> Optional[TokenCredential]:
+    def get_credential(self) -> TokenCredential | None:
         """Get Azure credential for token-based authentication.
 
         Returns:
-            Optional[TokenCredential]: Azure credential if available, None if using key-based auth
+            Optional[TokenCredential]: Azure credential if available, None if using key-based auth  # noqa: E501
         """
         return self.credential
 
-    def get_endpoint(self, service: str) -> Optional[str]:
+    def get_endpoint(self, service: str) -> str | None:
         """Get endpoint URL for a specific Azure service.
 
         Args:
-            service (str): Service identifier (SEARCH, OPENAI, DOCUMENT_INTELLIGENCE, STORAGE)
+            service (str): Service identifier (SEARCH, OPENAI, DOCUMENT_INTELLIGENCE, STORAGE)  # noqa: E501
 
         Returns:
             Optional[str]: Service endpoint URL if configured, None otherwise
         """
         return self.endpoints.get(service)
 
-    def get_key(self, service: str) -> Optional[str]:
+    def get_key(self, service: str) -> str | None:
         """Get API key for a specific Azure service.
 
         Args:
-            service (str): Service identifier (SEARCH, OPENAI, DOCUMENT_INTELLIGENCE, BOT)
+            service (str): Service identifier (SEARCH, OPENAI, DOCUMENT_INTELLIGENCE, BOT)  # noqa: E501
 
         Returns:
             Optional[str]: Service API key if configured, None otherwise
@@ -217,7 +217,7 @@ class AzureConfig:
             value = default
             source = "default"
 
-        # Log the outcome - only at DEBUG level for most settings, INFO for critical ones
+        # Log the outcome - only at DEBUG level for most settings, INFO for critical ones  # noqa: E501
         is_sensitive = (
             "KEY" in var_name or "SECRET" in var_name or "PASSWORD" in var_name
         )
@@ -240,12 +240,12 @@ class AzureConfig:
         # Raise if required and still missing/empty
         if required and (value is None or value == ""):
             raise ImproperlyConfigured(
-                f"Required environment variable '{var_name}' is missing or empty (checked {source})."
+                f"Required environment variable '{var_name}' is missing or empty (checked {source})."  # noqa: E501
             )
 
         return value
 
-    def get_key_vault_url(self) -> Optional[str]:
+    def get_key_vault_url(self) -> str | None:
         """Get Azure Key Vault URL.
 
         Returns:
@@ -256,10 +256,10 @@ class AzureConfig:
         """
         return self.key_vault_url
 
-    def get_storage_connection_string(self) -> Optional[str]:
+    def get_storage_connection_string(self) -> str | None:
         """Get Azure Storage connection string.
 
-        This method will first check for a complete connection string in environment variables.
+        This method will first check for a complete connection string in environment variables.  # noqa: E501
         If not found, it will attempt to build one using the account name and key.
 
         Returns:
@@ -285,7 +285,7 @@ class AzureConfig:
 
         return None
 
-    def get_cosmos_connection_string(self) -> Optional[str]:
+    def get_cosmos_connection_string(self) -> str | None:
         """Get Azure Cosmos DB connection string.
 
         Returns:
@@ -296,7 +296,7 @@ class AzureConfig:
         """
         return self.cosmos_connection_string
 
-    def get_redis_connection_string(self) -> Optional[str]:
+    def get_redis_connection_string(self) -> str | None:
         """Get Redis connection string.
 
         Returns:
@@ -360,7 +360,7 @@ class AzureConfig:
                 ]
             ):
                 raise ImproperlyConfigured(
-                    "Missing required Bot Framework MICROSOFT_APP_ID or MICROSOFT_APP_PASSWORD"
+                    "Missing required Bot Framework MICROSOFT_APP_ID or MICROSOFT_APP_PASSWORD"  # noqa: E501
                 )
             # Optional: validate BOT endpoint if provided
             bot_ep = self.get_endpoint("BOT")

@@ -7,7 +7,7 @@ specified storage type and configuration.
 
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any
 
 from konveyor.core.conversation.interface import ConversationInterface
 from konveyor.core.conversation.memory import InMemoryConversationManager
@@ -27,7 +27,7 @@ class ConversationManagerFactory:
 
     @staticmethod
     async def create_manager(
-        storage_type: str = "memory", config: Optional[Dict[str, Any]] = None
+        storage_type: str = "memory", config: dict[str, Any] | None = None
     ) -> ConversationInterface:
         """
         Create a conversation manager.
@@ -62,7 +62,7 @@ class ConversationManagerFactory:
             # Validate configuration
             if not cosmos_conn_str or not redis_conn_str:
                 logger.warning(
-                    "Missing Azure storage configuration, falling back to in-memory storage"
+                    "Missing Azure storage configuration, falling back to in-memory storage"  # noqa: E501
                 )
                 return InMemoryConversationManager()
 

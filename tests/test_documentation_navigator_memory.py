@@ -10,11 +10,15 @@ including creating conversations, adding messages, and handling follow-up questi
 import sys
 import uuid
 from datetime import datetime
+
 # Removed: from typing import Any, Dict, List, Optional
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch  # noqa: F401
 
 import pytest
-from konveyor.skills.documentation_navigator.DocumentationNavigatorSkill import DocumentationNavigatorSkill
+
+from konveyor.skills.documentation_navigator.DocumentationNavigatorSkill import (
+    DocumentationNavigatorSkill,
+)
 
 sys.modules["konveyor.apps.documents.models"] = MagicMock()
 sys.modules["konveyor.apps.search.services.search_service"] = MagicMock()
@@ -137,35 +141,35 @@ class MockSearchService:
             {
                 "id": "doc1-chunk1",
                 "document_id": "doc1",
-                "content": "Onboarding is the process of integrating new employees into the company. It includes orientation, training, and introduction to company culture.",
+                "content": "Onboarding is the process of integrating new employees into the company. It includes orientation, training, and introduction to company culture.",  # noqa: E501
                 "metadata": {"title": "Onboarding Guide"},
                 "@search.score": 0.95,
             },
             {
                 "id": "doc1-chunk2",
                 "document_id": "doc1",
-                "content": "On your first day, you should complete the HR paperwork, set up your workstation, and meet with your manager and team members.",
+                "content": "On your first day, you should complete the HR paperwork, set up your workstation, and meet with your manager and team members.",  # noqa: E501
                 "metadata": {"title": "Onboarding Guide - First Day"},
                 "@search.score": 0.9,
             },
             {
                 "id": "doc2-chunk1",
                 "document_id": "doc2",
-                "content": "The IT department will help you set up your computer, email, and access to company systems. Contact the IT helpdesk at it@example.com.",
+                "content": "The IT department will help you set up your computer, email, and access to company systems. Contact the IT helpdesk at it@example.com.",  # noqa: E501
                 "metadata": {"title": "IT Setup Guide"},
                 "@search.score": 0.85,
             },
             {
                 "id": "doc3-chunk1",
                 "document_id": "doc3",
-                "content": "Company policies include guidelines for remote work, time off, and expense reimbursement. All policies are available in the employee handbook.",
+                "content": "Company policies include guidelines for remote work, time off, and expense reimbursement. All policies are available in the employee handbook.",  # noqa: E501
                 "metadata": {"title": "Company Policies"},
                 "@search.score": 0.8,
             },
             {
                 "id": "doc4-chunk1",
                 "document_id": "doc4",
-                "content": "The development environment setup includes installing Git, Docker, and VS Code. Follow the instructions in the README file.",
+                "content": "The development environment setup includes installing Git, Docker, and VS Code. Follow the instructions in the README file.",  # noqa: E501
                 "metadata": {"title": "Development Environment Setup"},
                 "@search.score": 0.75,
             },
@@ -204,13 +208,13 @@ class MockSearchService:
 
 
 # Mock the necessary modules
-sys.modules["konveyor.apps.search.services.search_service"].SearchService = (
-    MockSearchService
-)
+sys.modules[
+    "konveyor.apps.search.services.search_service"
+].SearchService = MockSearchService
 sys.modules["konveyor.core.conversation.factory"] = MagicMock()
-sys.modules["konveyor.core.conversation.factory"].ConversationManagerFactory = (
-    MockConversationManagerFactory
-)
+sys.modules[
+    "konveyor.core.conversation.factory"
+].ConversationManagerFactory = MockConversationManagerFactory
 
 # DocumentationNavigatorSkill is imported at the top of the file
 
@@ -218,12 +222,12 @@ sys.modules["konveyor.core.conversation.factory"].ConversationManagerFactory = (
 class TestDocumentationNavigatorMemory:
     """Tests for the DocumentationNavigatorSkill with conversation memory."""
 
-    @pytest.fixture
+    @pytest.fixture()
     def skill(self):
         """Create a DocumentationNavigatorSkill instance for testing."""
         return DocumentationNavigatorSkill()
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_create_conversation(self, skill):
         """Test creating a new conversation."""
         # Create a conversation
@@ -234,7 +238,7 @@ class TestDocumentationNavigatorMemory:
         assert conversation["user_id"] == "test-user"
         assert "created_at" in conversation
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_answer_question_with_conversation(self, skill):
         """Test answering a question with conversation context."""
         # Create a conversation
@@ -261,7 +265,7 @@ class TestDocumentationNavigatorMemory:
         assert messages[1]["type"] == "assistant"
         assert "What is the onboarding process?" in messages[0]["content"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_continue_conversation(self, skill):
         """Test continuing a conversation with follow-up questions."""
         # Create a conversation
@@ -318,7 +322,7 @@ class TestDocumentationNavigatorMemory:
         assert messages[5]["type"] == "assistant"
         assert "Who can help me with IT setup?" in messages[4]["content"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_format_for_slack_with_conversation(self, skill):
         """Test formatting search results for Slack with conversation context."""
         # Create a conversation
@@ -345,7 +349,7 @@ class TestDocumentationNavigatorMemory:
         assert messages[1]["type"] == "assistant"
         assert "company policies" in messages[0]["content"]
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_query_enhancement_with_context(self, skill):
         """Test query enhancement based on conversation context."""
         # Create a conversation

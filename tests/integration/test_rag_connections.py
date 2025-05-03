@@ -45,7 +45,7 @@ def test_cosmos_connection():
         result = db.conversations.insert_one(test_doc)
         print("✓ Successfully inserted test conversation")
 
-        found = db.conversations.find_one({"_id": result.inserted_id})
+        found = db.conversations.find_one({"_id": result.inserted_id})  # noqa: F841
         print("✓ Successfully retrieved test conversation")
 
         db.conversations.delete_one({"_id": result.inserted_id})
@@ -71,7 +71,8 @@ def test_redis_connection():
 
     # Configure Redis client with SSL settings
     redis_client = redis.from_url(
-        redis_connection_string, ssl_cert_reqs=None  # For testing only
+        redis_connection_string,
+        ssl_cert_reqs=None,  # For testing only
     )
 
     try:

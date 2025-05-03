@@ -5,11 +5,11 @@ This module contains integration tests for the updated RAG views,
 verifying that they work correctly with the new core components.
 """
 
-import json
+import json  # noqa: F401
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from django.test import RequestFactory
+from django.test import RequestFactory  # noqa: F401
 from rest_framework.response import Response
 from rest_framework.test import APIRequestFactory
 
@@ -17,23 +17,25 @@ from konveyor.apps.rag.views_updated import ConversationViewSet
 
 
 # Test the ConversationViewSet
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_conversation_viewset():
     """Test the ConversationViewSet."""
     # Create a request factory
     factory = APIRequestFactory()
 
     # Mock the AzureClientManager and RAGService
-    with patch(
-        "konveyor.apps.rag.views_updated.AzureClientManager"
-    ) as MockClientManager, patch(
-        "konveyor.apps.rag.views_updated.RAGService"
-    ) as MockRAGService, patch(
-        "konveyor.core.conversation.factory.ConversationManagerFactory.create_manager"
-    ) as mock_create_manager, patch(
-        "konveyor.core.formatters.factory.FormatterFactory.get_formatter"
-    ) as mock_get_formatter:
-
+    with (
+        patch(
+            "konveyor.apps.rag.views_updated.AzureClientManager"
+        ) as MockClientManager,
+        patch("konveyor.apps.rag.views_updated.RAGService") as MockRAGService,
+        patch(
+            "konveyor.core.conversation.factory.ConversationManagerFactory.create_manager"  # noqa: E501
+        ) as mock_create_manager,
+        patch(
+            "konveyor.core.formatters.factory.FormatterFactory.get_formatter"
+        ) as mock_get_formatter,
+    ):
         # Create mock client manager
         mock_client_manager = MagicMock()
         MockClientManager.return_value = mock_client_manager

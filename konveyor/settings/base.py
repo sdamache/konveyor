@@ -77,7 +77,7 @@ DATABASES = {
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",  # noqa: E501
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
@@ -166,7 +166,7 @@ LOGGING = {
 }
 
 # Load all Azure settings
-from .settings_loader import load_settings
+from .settings_loader import load_settings  # noqa: E402
 
 # Load and update settings
 azure_settings = load_settings()

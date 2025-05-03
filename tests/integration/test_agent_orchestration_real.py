@@ -1,7 +1,7 @@
 """
 Real integration tests for Agent Orchestration Layer.
 
-These tests verify the end-to-end functionality of the Agent Orchestration Layer with real Azure OpenAI credentials,
+These tests verify the end-to-end functionality of the Agent Orchestration Layer with real Azure OpenAI credentials,  # noqa: E501
 including integration with the Bot Framework and Semantic Kernel skills.
 
 This file requires the following environment variables to be set:
@@ -9,27 +9,34 @@ This file requires the following environment variables to be set:
 - AZURE_OPENAI_API_KEY: The Azure OpenAI API key
 
 Optional environment variables:
-- AZURE_OPENAI_CHAT_DEPLOYMENT: The name of the chat deployment (default: "gpt-35-turbo")
+- AZURE_OPENAI_CHAT_DEPLOYMENT: The name of the chat deployment (default: "gpt-35-turbo")  # noqa: E501
 - AZURE_OPENAI_API_VERSION: The API version (default: "2024-12-01-preview")
 
 Note: These tests use mocked Bot Framework components but real Azure OpenAI services.
 """
 
-import asyncio
+import asyncio  # noqa: F401
 import logging
 import os
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch  # noqa: F401
 
 import pytest
 from botbuilder.core import TurnContext
-from botbuilder.schema import (Activity, ActivityTypes, ChannelAccount,
-                               ConversationAccount)
+from botbuilder.schema import (
+    Activity,
+    ActivityTypes,
+    ChannelAccount,
+    ConversationAccount,
+)
 from dotenv import load_dotenv
 
 from konveyor.apps.bot.bot import KonveyorBot
-from konveyor.core.agent import AgentOrchestratorSkill, SkillRegistry
-from konveyor.core.chat import ChatSkill
-from konveyor.core.kernel import create_kernel
+from konveyor.core.agent import (  # noqa: E501, F401
+    AgentOrchestratorSkill,
+    SkillRegistry,
+)
+from konveyor.core.chat import ChatSkill  # noqa: F401
+from konveyor.core.kernel import create_kernel  # noqa: F401
 
 # Configure logging for tests
 logging.basicConfig(
@@ -52,7 +59,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_turn_context():
     """Create a mock TurnContext for testing."""
     context = MagicMock(spec=TurnContext)
@@ -73,7 +80,7 @@ def mock_turn_context():
     return context
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_bot_initialization():
     """Test that the bot initializes correctly with real Azure OpenAI."""
     try:
@@ -90,7 +97,7 @@ async def test_bot_initialization():
         pytest.fail(f"Bot initialization failed: {str(e)}")
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_bot_message_handling(mock_turn_context):
     """Test that the bot handles messages correctly with real Azure OpenAI."""
     try:
@@ -115,7 +122,7 @@ async def test_bot_message_handling(mock_turn_context):
         pytest.fail(f"Message handling failed: {str(e)}")
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_bot_members_added():
     """Test that the bot handles new members correctly with real Azure OpenAI."""
     try:

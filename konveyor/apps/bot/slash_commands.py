@@ -6,10 +6,14 @@ This module contains handlers for Slack slash commands.
 
 # Removed: import json
 import logging
-from typing import Any, Callable, Dict, List, Optional
+from collections.abc import Callable
+from typing import Any
 
 from django.conf import settings
-from konveyor.apps.bot.services.slack_user_profile_service import SlackUserProfileService
+
+from konveyor.apps.bot.services.slack_user_profile_service import (
+    SlackUserProfileService,
+)
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -31,7 +35,7 @@ def register_command(command_name: str, handler: Callable, description: str):
     logger.info(f"Registered slash command: /{command_name}")
 
 
-def get_command_handler(command_name: str) -> Optional[Dict[str, Any]]:
+def get_command_handler(command_name: str) -> dict[str, Any] | None:
     """
     Get a command handler by name.
 
@@ -44,7 +48,7 @@ def get_command_handler(command_name: str) -> Optional[Dict[str, Any]]:
     return command_registry.get(command_name)
 
 
-def get_all_commands() -> List[Dict[str, str]]:
+def get_all_commands() -> list[dict[str, str]]:
     """
     Get all registered commands.
 
@@ -62,7 +66,7 @@ def get_all_commands() -> List[Dict[str, str]]:
 
 def handle_help_command(
     command_text: str, user_id: str, channel_id: str, response_url: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Handle the /help command.
 
@@ -113,7 +117,7 @@ def handle_help_command(
 
 def handle_status_command(
     command_text: str, user_id: str, channel_id: str, response_url: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Handle the /status command.
 
@@ -149,7 +153,7 @@ def handle_status_command(
             "elements": [
                 {
                     "type": "mrkdwn",
-                    "text": f"Environment: {getattr(settings, 'ENVIRONMENT', 'development')}",
+                    "text": f"Environment: {getattr(settings, 'ENVIRONMENT', 'development')}",  # noqa: E501
                 }
             ],
         },
@@ -164,7 +168,7 @@ def handle_status_command(
 
 def handle_info_command(
     command_text: str, user_id: str, channel_id: str, response_url: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Handle the /info command.
 
@@ -187,21 +191,21 @@ def handle_info_command(
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": "Konveyor is an intelligent onboarding solution for software engineers. It helps new team members get up to speed quickly by providing context-aware answers about your codebase and development processes.",
+                "text": "Konveyor is an intelligent onboarding solution for software engineers. It helps new team members get up to speed quickly by providing context-aware answers about your codebase and development processes.",  # noqa: E501
             },
         },
         {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": "*Key Features:*\n• Contextual code understanding\n• RAG-powered knowledge retrieval\n• Conversation memory\n• Multi-channel support",
+                "text": "*Key Features:*\n• Contextual code understanding\n• RAG-powered knowledge retrieval\n• Conversation memory\n• Multi-channel support",  # noqa: E501
             },
         },
         {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": "For more information, visit our documentation or contact the development team.",
+                "text": "For more information, visit our documentation or contact the development team.",  # noqa: E501
             },
         },
     ]
@@ -215,7 +219,7 @@ def handle_info_command(
 
 def handle_code_command(
     command_text: str, user_id: str, channel_id: str, response_url: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Handle the /code command for code formatting examples.
 
@@ -256,14 +260,14 @@ def handle_code_command(
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": "*Basic Code Block:*\n```\nfunction example() {\n  return 'Hello, world!';\n}\n```",
+                "text": "*Basic Code Block:*\n```\nfunction example() {\n  return 'Hello, world!';\n}\n```",  # noqa: E501
             },
         },
         {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": '*Python Syntax Highlighting:*\n```python\ndef example():\n    return "Hello, world!"\n```',
+                "text": '*Python Syntax Highlighting:*\n```python\ndef example():\n    return "Hello, world!"\n```',  # noqa: E501
             },
         },
         {
@@ -274,7 +278,7 @@ def handle_code_command(
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": "*JavaScript Syntax Highlighting:*\n```javascript\nconst getData = async () => {\n  try {\n    const response = await fetch('/api/data');\n    return await response.json();\n  } catch (error) {\n    console.error('Error fetching data:', error);\n  }\n};\n```",
+                "text": "*JavaScript Syntax Highlighting:*\n```javascript\nconst getData = async () => {\n  try {\n    const response = await fetch('/api/data');\n    return await response.json();\n  } catch (error) {\n    console.error('Error fetching data:', error);\n  }\n};\n```",  # noqa: E501
             },
         },
         {
@@ -285,14 +289,14 @@ def handle_code_command(
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": "*Supported Languages:*\nPython, JavaScript, TypeScript, Java, C#, C++, Go, Ruby, Rust, PHP, HTML, CSS, SQL, Shell/Bash, JSON, XML, YAML, and more.",
+                "text": "*Supported Languages:*\nPython, JavaScript, TypeScript, Java, C#, C++, Go, Ruby, Rust, PHP, HTML, CSS, SQL, Shell/Bash, JSON, XML, YAML, and more.",  # noqa: E501
             },
         },
         {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": "*How to Use:*\nWrap your code in triple backticks and specify the language:\n\\```python\nyour code here\n\\```",
+                "text": "*How to Use:*\nWrap your code in triple backticks and specify the language:\n\\```python\nyour code here\n\\```",  # noqa: E501
             },
         },
     ]
@@ -310,7 +314,7 @@ slack_user_profile_service = SlackUserProfileService()
 
 def handle_preferences_command(
     command_text: str, user_id: str, channel_id: str, response_url: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Handle the /preferences command for viewing and setting user preferences.
 
@@ -353,11 +357,11 @@ def handle_preferences_command(
                 "fields": [
                     {
                         "type": "mrkdwn",
-                        "text": f"*Code Language:* {profile.code_language_preference or 'Not set'}",
+                        "text": f"*Code Language:* {profile.code_language_preference or 'Not set'}",  # noqa: E501
                     },
                     {
                         "type": "mrkdwn",
-                        "text": f"*Response Format:* {profile.response_format_preference or 'concise'}",
+                        "text": f"*Response Format:* {profile.response_format_preference or 'concise'}",  # noqa: E501
                     },
                 ],
             },
@@ -365,7 +369,7 @@ def handle_preferences_command(
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "To set a preference, use:\n`/preferences set code_language python`\n`/preferences set response_format [concise|detailed|technical]`",
+                    "text": "To set a preference, use:\n`/preferences set code_language python`\n`/preferences set response_format [concise|detailed|technical]`",  # noqa: E501
                 },
             },
         ]
@@ -382,7 +386,7 @@ def handle_preferences_command(
         if len(parts) < 3:
             return {
                 "response_type": "ephemeral",
-                "text": "Please specify both the preference name and value. Example: `/preferences set code_language python`",
+                "text": "Please specify both the preference name and value. Example: `/preferences set code_language python`",  # noqa: E501
             }
 
         preference_name = parts[1].lower()
@@ -392,7 +396,7 @@ def handle_preferences_command(
         if preference_name not in ["code_language", "response_format"]:
             return {
                 "response_type": "ephemeral",
-                "text": f"Unknown preference: {preference_name}. Available preferences: code_language, response_format",
+                "text": f"Unknown preference: {preference_name}. Available preferences: code_language, response_format",  # noqa: E501
             }
 
         # Validate response_format value
@@ -403,7 +407,7 @@ def handle_preferences_command(
         ]:
             return {
                 "response_type": "ephemeral",
-                "text": f"Invalid value for response_format: {preference_value}. Available options: concise, detailed, technical",
+                "text": f"Invalid value for response_format: {preference_value}. Available options: concise, detailed, technical",  # noqa: E501
             }
 
         # Update the preference
@@ -414,12 +418,12 @@ def handle_preferences_command(
         if updated_profile:
             return {
                 "response_type": "ephemeral",
-                "text": f"Your {preference_name} preference has been set to {preference_value}.",
+                "text": f"Your {preference_name} preference has been set to {preference_value}.",  # noqa: E501
             }
         else:
             return {
                 "response_type": "ephemeral",
-                "text": "There was an error updating your preference. Please try again.",
+                "text": "There was an error updating your preference. Please try again.",  # noqa: E501
             }
 
     # Handle unknown action
@@ -431,7 +435,7 @@ def handle_preferences_command(
 
 def handle_profile_command(
     command_text: str, user_id: str, channel_id: str, response_url: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Handle the /profile command for viewing user profile information.
 
@@ -462,7 +466,7 @@ def handle_profile_command(
                 },
                 {
                     "type": "mrkdwn",
-                    "text": f"*Display Name:* {profile.slack_display_name or 'Not set'}",
+                    "text": f"*Display Name:* {profile.slack_display_name or 'Not set'}",  # noqa: E501
                 },
             ],
         },
@@ -485,7 +489,7 @@ def handle_profile_command(
                 },
                 {
                     "type": "mrkdwn",
-                    "text": f"*Last Interaction:* {profile.last_interaction.strftime('%Y-%m-%d %H:%M:%S') if profile.last_interaction else 'Never'}",
+                    "text": f"*Last Interaction:* {profile.last_interaction.strftime('%Y-%m-%d %H:%M:%S') if profile.last_interaction else 'Never'}",  # noqa: E501
                 },
             ],
         },
@@ -493,7 +497,7 @@ def handle_profile_command(
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": "To update your profile information, use `/preferences` to set your preferences.",
+                "text": "To update your profile information, use `/preferences` to set your preferences.",  # noqa: E501
             },
         },
     ]

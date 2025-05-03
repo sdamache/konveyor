@@ -38,9 +38,9 @@ TODO: Feedback System Enhancements
 
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta  # noqa: F401
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +83,7 @@ class FeedbackService:
         self.storage_provider = storage_provider
         logger.info("Initialized FeedbackService")
 
-    def process_reaction_event(self, event: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def process_reaction_event(self, event: dict[str, Any]) -> dict[str, Any] | None:
         """
         Process a reaction event and record feedback.
 
@@ -122,7 +122,7 @@ class FeedbackService:
             return None
 
         logger.info(
-            f"Processing {feedback_type} feedback from user {user_id} on message {message_ts}"
+            f"Processing {feedback_type} feedback from user {user_id} on message {message_ts}"  # noqa: E501
         )
 
         # Create feedback data
@@ -147,7 +147,7 @@ class FeedbackService:
 
         return feedback_data
 
-    def _get_feedback_type(self, reaction: str, event_type: str) -> Optional[str]:
+    def _get_feedback_type(self, reaction: str, event_type: str) -> str | None:
         """
         Determine the feedback type based on the reaction and event type.
 
@@ -156,7 +156,7 @@ class FeedbackService:
             event_type: The event type ('reaction_added' or 'reaction_removed')
 
         Returns:
-            The feedback type ('positive', 'negative', 'neutral', 'removed'), or None if not applicable
+            The feedback type ('positive', 'negative', 'neutral', 'removed'), or None if not applicable  # noqa: E501
         """
         # Handle reaction removal
         if event_type == "reaction_removed":
@@ -229,7 +229,7 @@ class FeedbackService:
             logger.error(f"Error updating message content: {str(e)}")
             return False
 
-    def get_feedback_stats(self, days: int = 30) -> Dict[str, Any]:
+    def get_feedback_stats(self, days: int = 30) -> dict[str, Any]:
         """
         Get feedback statistics for the specified time period.
 
@@ -264,7 +264,7 @@ class FeedbackService:
                 "error": str(e),
             }
 
-    def get_feedback_by_skill(self, days: int = 30) -> List[Dict[str, Any]]:
+    def get_feedback_by_skill(self, days: int = 30) -> list[dict[str, Any]]:
         """
         Get feedback statistics grouped by skill.
 

@@ -5,10 +5,11 @@ This module provides functionality for handling Slack webhook events,
 including verification, event processing, and response generation.
 """
 
-import json
+import json  # noqa: F401
 import logging
 import traceback
-from typing import Any, Callable, Dict, Optional
+from collections.abc import Callable
+from typing import Any
 
 from konveyor.core.slack.client import SlackService
 
@@ -23,12 +24,12 @@ class SlackWebhookHandler:
     and generating appropriate responses.
     """
 
-    def __init__(self, slack_service: Optional[SlackService] = None):
+    def __init__(self, slack_service: SlackService | None = None):
         """
         Initialize the webhook handler.
 
         Args:
-            slack_service: Optional SlackService instance (creates a new one if not provided)
+            slack_service: Optional SlackService instance (creates a new one if not provided)  # noqa: E501
         """
         self.slack_service = slack_service or SlackService()
         self.processed_events = set()
@@ -51,8 +52,8 @@ class SlackWebhookHandler:
         return self.slack_service.verify_request(request_body, signature, timestamp)
 
     def process_event(
-        self, payload: Dict[str, Any], process_message_func: Callable
-    ) -> Optional[Dict[str, Any]]:
+        self, payload: dict[str, Any], process_message_func: Callable
+    ) -> dict[str, Any] | None:
         """
         Process a Slack event.
 
@@ -108,7 +109,7 @@ class SlackWebhookHandler:
                 if len(self.processed_events) > 1000:
                     self.processed_events = set(list(self.processed_events)[-1000:])
                     logger.debug(
-                        f"Trimmed processed events to {len(self.processed_events)} items"
+                        f"Trimmed processed events to {len(self.processed_events)} items"  # noqa: E501
                     )
 
             # Process message events
@@ -153,10 +154,10 @@ class SlackWebhookHandler:
         response_text: str,
         user: str = None,
         channel: str = None,
-        blocks: Optional[Dict[str, Any]] = None,
-        thread_ts: Optional[str] = None,
+        blocks: dict[str, Any] | None = None,
+        thread_ts: str | None = None,
         channel_type: str = None,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """
         Send a response to Slack.
 

@@ -6,13 +6,13 @@ import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse  # noqa: F401
 from django.test import RequestFactory
 
 from konveyor.apps.bot.views import process_message, slack_webhook
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_conversation_context_management():
     """Test that conversation context is correctly managed."""
     # Create a request factory
@@ -34,10 +34,13 @@ def test_conversation_context_management():
     )
 
     # Mock the SlackService and conversation manager
-    with patch("konveyor.apps.bot.views.slack_service") as mock_slack_service, patch(
-        "konveyor.apps.bot.views.conversation_manager", mock_conversation_manager
-    ), patch("konveyor.apps.bot.views.orchestrator") as mock_orchestrator:
-
+    with (
+        patch("konveyor.apps.bot.views.slack_service") as mock_slack_service,
+        patch(
+            "konveyor.apps.bot.views.conversation_manager", mock_conversation_manager
+        ),
+        patch("konveyor.apps.bot.views.orchestrator") as mock_orchestrator,
+    ):
         # Set up the mocks
         mock_slack_service.verify_request.return_value = True
         mock_slack_service.send_direct_message.return_value = {"ok": True}
@@ -78,7 +81,7 @@ def test_conversation_context_management():
 
         # Verify conversation manager methods were called
         mock_conversation_manager.get_user_conversations.assert_called_once()
-        mock_conversation_manager.add_message.assert_called()  # Called twice (user + assistant)
+        mock_conversation_manager.add_message.assert_called()  # Called twice (user + assistant)  # noqa: E501
         mock_conversation_manager.get_conversation_context.assert_called_once()
 
         # Verify orchestrator was called with conversation history
@@ -107,10 +110,12 @@ def test_process_message_with_context():
     )
 
     # Mock the orchestrator and conversation manager
-    with patch("konveyor.apps.bot.views.orchestrator") as mock_orchestrator, patch(
-        "konveyor.apps.bot.views.conversation_manager", mock_conversation_manager
+    with (
+        patch("konveyor.apps.bot.views.orchestrator") as mock_orchestrator,
+        patch(
+            "konveyor.apps.bot.views.conversation_manager", mock_conversation_manager
+        ),
     ):
-
         # Set up the mock
         mock_orchestrator.process_request_sync.return_value = {
             "response": "Test response",
@@ -120,11 +125,11 @@ def test_process_message_with_context():
         }
 
         # Call process_message
-        result = process_message("Hello, world!", "test_user", "test_channel")
+        _ = process_message("Hello, world!", "test_user", "test_channel")  # noqa: E501
 
         # Verify conversation manager methods were called
         mock_conversation_manager.get_user_conversations.assert_called_once()
-        mock_conversation_manager.add_message.assert_called()  # Called twice (user + assistant)
+        mock_conversation_manager.add_message.assert_called()  # Called twice (user + assistant)  # noqa: E501
         mock_conversation_manager.get_conversation_context.assert_called_once()
 
         # Verify orchestrator was called with conversation history

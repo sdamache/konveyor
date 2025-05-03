@@ -6,22 +6,27 @@ This script demonstrates how to register the DocumentationNavigatorSkill
 with the agent orchestrator for use in the Konveyor system.
 """
 
-import logging
 import asyncio
-import sys
+import logging
 import os
+import sys
 from unittest.mock import MagicMock
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Add the project root to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 print(f"Python path: {sys.path}")
 
 # Mock the Django models and SearchService before importing DocumentationNavigatorSkill
-sys.modules['konveyor.apps.documents.models'] = MagicMock()
-sys.modules['konveyor.core.documents.document_service'] = MagicMock()
-sys.modules['konveyor.core.azure_utils.service'] = MagicMock()
-sys.modules['konveyor.core.azure_utils.retry'] = MagicMock()
-sys.modules['konveyor.core.azure_utils.mixins'] = MagicMock()
+sys.modules["konveyor.apps.documents.models"] = MagicMock()
+sys.modules["konveyor.core.documents.document_service"] = MagicMock()
+sys.modules["konveyor.core.azure_utils.service"] = MagicMock()
+sys.modules["konveyor.core.azure_utils.retry"] = MagicMock()
+sys.modules["konveyor.core.azure_utils.mixins"] = MagicMock()
+
 
 # Create a mock SearchService class
 class MockSearchService:
@@ -35,20 +40,24 @@ class MockSearchService:
                 "document_id": "doc1",
                 "content": "This is sample content about onboarding.",
                 "metadata": {"title": "Onboarding Guide"},
-                "@search.score": 0.9
+                "@search.score": 0.9,
             },
             {
                 "id": "chunk2",
                 "document_id": "doc2",
                 "content": "More information about the onboarding process.",
                 "metadata": {"title": "Employee Handbook"},
-                "@search.score": 0.8
-            }
+                "@search.score": 0.8,
+            },
         ]
 
+
 # Replace the SearchService with our mock
-sys.modules['konveyor.apps.search.services.search_service'] = MagicMock()
-sys.modules['konveyor.apps.search.services.search_service'].SearchService = MockSearchService
+sys.modules["konveyor.apps.search.services.search_service"] = MagicMock()
+sys.modules[
+    "konveyor.apps.search.services.search_service"
+].SearchService = MockSearchService
+
 
 # Mock the Semantic Kernel
 class MockKernel:
@@ -64,18 +73,19 @@ class MockKernel:
     async def invoke(self, function, **kwargs):
         return "Mock response from DocumentationNavigatorSkill"
 
+
 # Mock the create_kernel function
 def mock_create_kernel():
     return MockKernel()
 
-# Now import the required modules
-from konveyor.skills.documentation_navigator.DocumentationNavigatorSkill import DocumentationNavigatorSkill
-from konveyor.skills.agent_orchestrator.AgentOrchestratorSkill import AgentOrchestratorSkill
-from konveyor.skills.agent_orchestrator.registry import SkillRegistry
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from konveyor.skills.agent_orchestrator.AgentOrchestratorSkill import (
+    AgentOrchestratorSkill,
+)
+from konveyor.skills.agent_orchestrator.registry import SkillRegistry
+from konveyor.skills.documentation_navigator.DocumentationNavigatorSkill import (
+    DocumentationNavigatorSkill,
+)
 
 
 async def register_documentation_navigator():
@@ -97,10 +107,25 @@ async def register_documentation_navigator():
         doc_skill,
         description="A skill for searching and navigating documentation",
         keywords=[
-            "documentation", "docs", "search", "find", "information", "help",
-            "guide", "manual", "reference", "lookup", "document", "article",
-            "tutorial", "how-to", "faq", "question", "answer", "onboarding"
-        ]
+            "documentation",
+            "docs",
+            "search",
+            "find",
+            "information",
+            "help",
+            "guide",
+            "manual",
+            "reference",
+            "lookup",
+            "document",
+            "article",
+            "tutorial",
+            "how-to",
+            "faq",
+            "question",
+            "answer",
+            "onboarding",
+        ],
     )
 
     logger.info(f"Registered DocumentationNavigatorSkill as '{skill_name}'")
@@ -113,10 +138,7 @@ async def register_documentation_navigator():
     response = await orchestrator.process_request(test_request)
     logger.info(f"Response: {response}")
 
-    return {
-        "skill_name": skill_name,
-        "response": response
-    }
+    return {"skill_name": skill_name, "response": response}
 
 
 def main():

@@ -18,26 +18,39 @@ Example:
 """
 
 import json
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple  # noqa: F401
 
 # Removed django.conf settings
-from azure.core.exceptions import \
-    AzureError  # Keep for potential specific error handling
+from azure.core.exceptions import (  # Keep for potential specific error handling  # noqa: E501, F401
+    AzureError,
+)
+
 # Removed tenacity, azure.core.credentials, azure.search.documents.SearchClient
 # Keep SearchIndexClient for index management if needed by create_search_index
 # Removed: from azure.search.documents.indexes import SearchIndexClient
-from azure.search.documents.indexes.models import (
-    HnswAlgorithmConfiguration, SearchableField, SearchField,
-    SearchFieldDataType, SearchIndex, SimpleField, VectorSearch,
-    VectorSearchAlgorithmConfiguration, VectorSearchAlgorithmKind,
-    VectorSearchAlgorithmMetric, VectorSearchProfile)
-from openai import \
-    AzureOpenAI  # Keep for type hinting if needed, though client comes from manager
+from azure.search.documents.indexes.models import (  # noqa: E501, F401
+    HnswAlgorithmConfiguration,
+    SearchableField,
+    SearchField,
+    SearchFieldDataType,
+    SearchIndex,
+    SimpleField,
+    VectorSearch,
+    VectorSearchAlgorithmConfiguration,
+    VectorSearchAlgorithmKind,
+    VectorSearchAlgorithmMetric,
+    VectorSearchProfile,
+)
+from openai import (  # Keep for type hinting if needed, though client comes from manager  # noqa: E501, F401
+    AzureOpenAI,
+)
 
 from konveyor.apps.documents.models import DocumentChunk
-from konveyor.core.azure_utils.mixins import (AzureClientMixin,
-                                              AzureServiceConfig,
-                                              ServiceLoggingMixin)
+from konveyor.core.azure_utils.mixins import (  # noqa: F401, F401, F401
+    AzureClientMixin,
+    AzureServiceConfig,
+    ServiceLoggingMixin,
+)
 from konveyor.core.azure_utils.retry import azure_retry
 from konveyor.core.azure_utils.service import AzureService
 from konveyor.core.documents.document_service import DocumentService
@@ -103,7 +116,7 @@ class SearchService(AzureService):
             # Test embedding generation
             test_embedding = self.generate_embedding("test")
             self.log_info(
-                f"Test embedding generation successful: {len(test_embedding)} dimensions"
+                f"Test embedding generation successful: {len(test_embedding)} dimensions"  # noqa: E501
             )
 
             # Initialize document service
@@ -147,7 +160,7 @@ class SearchService(AzureService):
 
         self.log_info("Defining vector search configuration...")
         try:
-            # Define vector search algorithm with explicit parameters to avoid SDK version issues
+            # Define vector search algorithm with explicit parameters to avoid SDK version issues  # noqa: E501
             algorithm_config = {
                 "name": "default-algorithm-config",
                 "kind": "hnsw",  # Explicitly set kind as a string
@@ -160,7 +173,7 @@ class SearchService(AzureService):
             }
 
             self.log_info(
-                f"Defined algorithm config: {algorithm_config['name']}, kind: {algorithm_config['kind']}"
+                f"Defined algorithm config: {algorithm_config['name']}, kind: {algorithm_config['kind']}"  # noqa: E501
             )
 
             # Create vector search configuration with profiles
@@ -177,7 +190,7 @@ class SearchService(AzureService):
             }
 
             self.log_info(
-                f"Defined vector search profile: 'embedding-profile', algorithm: {vector_search['profiles'][0]['algorithm_configuration_name']}"
+                f"Defined vector search profile: 'embedding-profile', algorithm: {vector_search['profiles'][0]['algorithm_configuration_name']}"  # noqa: E501
             )
 
         except Exception as e:
@@ -256,10 +269,10 @@ class SearchService(AzureService):
                 from azure.search.documents.indexes.models import SearchIndex
 
                 index = SearchIndex.deserialize(index_definition)
-                # Use create_or_update_index for idempotency, but with the SearchIndex object
+                # Use create_or_update_index for idempotency, but with the SearchIndex object  # noqa: E501
                 self.index_client.create_or_update_index(index)
                 self.log_success(
-                    f"Successfully created/updated index '{index_name}' using SearchIndex object."
+                    f"Successfully created/updated index '{index_name}' using SearchIndex object."  # noqa: E501
                 )
             except Exception as e:
                 self.log_error(
@@ -281,14 +294,14 @@ class SearchService(AzureService):
             self.log_error(f"Failed to create index '{index_name}'", exc_info=e)
             if "vectorSearch.algorithms[0].kind" in str(e):
                 self.log_error(
-                    "Potential SDK version issue: 'kind' field might be missing or invalid in vectorSearch config."
+                    "Potential SDK version issue: 'kind' field might be missing or invalid in vectorSearch config."  # noqa: E501
                 )
             raise
 
     @azure_retry()
-    def generate_embedding(self, text: str) -> List[float]:
+    def generate_embedding(self, text: str) -> list[float]:
         """
-        Generate an embedding for the given text using LangChain's AzureOpenAIEmbeddings.
+        Generate an embedding for the given text using LangChain's AzureOpenAIEmbeddings.  # noqa: E501
         Includes retry logic for resilience and detailed logging.
 
         Args:
@@ -324,12 +337,12 @@ class SearchService(AzureService):
             truncated_text = text[:8191]  # Max tokens for ada-002 is 8191
             if len(truncated_text) < len(text):
                 self.log_info(
-                    f"Truncated text from {len(text)} to {len(truncated_text)} chars for embedding"
+                    f"Truncated text from {len(text)} to {len(truncated_text)} chars for embedding"  # noqa: E501
                 )
 
             self.log_info(
-                f"Calling OpenAI Embeddings API: Endpoint='{self.openai_client.base_url}', "
-                f"API Version='{self.openai_client._api_version}', Deployment='{embedding_deployment}'"  # Use private _api_version
+                f"Calling OpenAI Embeddings API: Endpoint='{self.openai_client.base_url}', "  # noqa: E501
+                f"API Version='{self.openai_client._api_version}', Deployment='{embedding_deployment}'"  # Use private _api_version  # noqa: E501
             )
 
             response = self.openai_client.embeddings.create(
@@ -344,11 +357,11 @@ class SearchService(AzureService):
             # Log specific details for 404 errors
             if hasattr(e, "status_code") and e.status_code == 404:
                 self.log_error(
-                    f"404 error generating embedding. Check Azure OpenAI deployment '{embedding_deployment}'. "
-                    f"Verify endpoint, key, and deployment name/status in Azure portal.",
-                    exc_info=False,  # Don't need full stack trace for this specific message
+                    f"404 error generating embedding. Check Azure OpenAI deployment '{embedding_deployment}'. "  # noqa: E501
+                    f"Verify endpoint, key, and deployment name/status in Azure portal.",  # noqa: E501
+                    exc_info=False,  # Don't need full stack trace for this specific message  # noqa: E501
                 )
-            # Removed redundant logger.error call, self.log_error below captures the full exception
+            # Removed redundant logger.error call, self.log_error below captures the full exception  # noqa: E501
             self.log_error(
                 "Failed to generate embedding with Azure OpenAI client", exc_info=e
             )  # Add exc_info=e
@@ -377,8 +390,8 @@ class SearchService(AzureService):
             )  # Keep as error
             raise
 
-    # Removed tenacity @retry decorator. Rely on core retry mechanisms or add @azure_retry if needed.
-    # Consider adding @azure_retry() here if the upload_documents call itself doesn't handle retries sufficiently.
+    # Removed tenacity @retry decorator. Rely on core retry mechanisms or add @azure_retry if needed.  # noqa: E501
+    # Consider adding @azure_retry() here if the upload_documents call itself doesn't handle retries sufficiently.  # noqa: E501
     # For now, assuming the underlying SDK call or core client handles retries.
     def index_document_chunk(
         self,
@@ -386,8 +399,8 @@ class SearchService(AzureService):
         document_id: str,
         content: str,
         chunk_index: int,
-        metadata: Dict[str, Any],
-        embedding: Optional[List[float]] = None,
+        metadata: dict[str, Any],
+        embedding: list[float] | None = None,
     ) -> bool:
         """
         Index a document chunk in Azure Cognitive Search.
@@ -399,7 +412,7 @@ class SearchService(AzureService):
             content: Text content to index
             chunk_index: Index of this chunk within the document
             metadata: Additional metadata to store
-            embedding: Optional pre-computed embedding. If None, will be generated from content.
+            embedding: Optional pre-computed embedding. If None, will be generated from content.  # noqa: E501
 
         Returns:
             bool: True if indexing was successful
@@ -411,7 +424,7 @@ class SearchService(AzureService):
                     embedding = self.generate_embedding(content)
                 except Exception as e:
                     self.log_warning(
-                        f"Failed to generate embedding for chunk {chunk_id}, proceeding without embedding.",
+                        f"Failed to generate embedding for chunk {chunk_id}, proceeding without embedding.",  # noqa: E501
                         exc_info=e,
                     )  # Keep as warning
                     embedding = None
@@ -461,8 +474,8 @@ class SearchService(AzureService):
     # and was marked for removal in the modernization plan.
     @azure_retry()
     def vector_similarity_search(
-        self, query: str, top: int = 5, filter_expr: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        self, query: str, top: int = 5, filter_expr: str | None = None
+    ) -> list[dict[str, Any]]:
         """
         Perform pure vector similarity search.
 
@@ -524,8 +537,8 @@ class SearchService(AzureService):
         query: str,
         top: int = 5,
         load_full_content: bool = False,
-        filter_expr: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        filter_expr: str | None = None,
+    ) -> list[dict[str, Any]]:
         """
         Perform hybrid search using both vector embeddings and text similarity.
 

@@ -2,7 +2,7 @@
 
 # Development tools
 django-debug-toolbar>=4.3.0
-django-extensions>=3.2.3 
+django-extensions>=3.2.3
 
 # Create requirements.txt for bot framework emulator
 botbuilder-core

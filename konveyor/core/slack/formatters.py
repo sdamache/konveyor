@@ -6,12 +6,12 @@ including Markdown conversion, block creation, and other formatting operations.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
 
-def format_for_slack(text: str, include_blocks: bool = True) -> Dict[str, Any]:
+def format_for_slack(text: str, include_blocks: bool = True) -> dict[str, Any]:
     """
     Format a response for Slack, handling Markdown conversion and creating blocks.
 
@@ -110,7 +110,7 @@ def format_as_bullet_list(text: str) -> str:
     return "\n".join([f"• {line.strip()}" for line in lines if line.strip()])
 
 
-def create_error_blocks(error_message: str) -> List[Dict[str, Any]]:
+def create_error_blocks(error_message: str) -> list[dict[str, Any]]:
     """
     Create error message blocks for Slack.
 

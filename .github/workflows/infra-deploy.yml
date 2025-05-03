@@ -43,7 +43,7 @@ jobs:
     name: Deploy Infrastructure (${{ inputs.environment || github.event.inputs.environment || 'test' }})
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || github.event.inputs.environment || 'test' }}
-    
+
     outputs:
       cognitive_search_endpoint: ${{ steps.terraform-outputs.outputs.cognitive_search_endpoint }}
       openai_endpoint: ${{ steps.terraform-outputs.outputs.openai_endpoint }}
@@ -94,7 +94,7 @@ jobs:
           echo "document_intelligence_endpoint=$(terraform output -raw document_intelligence_endpoint)" >> $GITHUB_OUTPUT
           echo "app_service_name=$(terraform output -raw app_service_name)" >> $GITHUB_OUTPUT
           echo "app_service_default_site_hostname=$(terraform output -raw app_service_default_site_hostname)" >> $GITHUB_OUTPUT
-          
+
           # Extract sensitive outputs to GitHub environment variables
           echo "AZURE_SEARCH_API_KEY=$(terraform output -raw cognitive_search_primary_key)" >> $GITHUB_ENV
           echo "AZURE_OPENAI_API_KEY=$(terraform output -raw openai_primary_key)" >> $GITHUB_ENV
@@ -142,7 +142,7 @@ jobs:
               [`APP_SERVICE_NAME_${environment}`]: '${{ steps.terraform-outputs.outputs.app_service_name }}',
               [`APP_SERVICE_HOSTNAME_${environment}`]: '${{ steps.terraform-outputs.outputs.app_service_default_site_hostname }}'
             };
-            
+
             for (const [name, value] of Object.entries(variables)) {
               await github.rest.actions.createOrUpdateRepoVariable({
                 owner: context.repo.owner,

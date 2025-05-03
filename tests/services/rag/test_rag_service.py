@@ -7,7 +7,7 @@ from konveyor.core.rag.context_service import ContextService
 from konveyor.core.rag.rag_service import RAGService
 
 
-@pytest.fixture
+@pytest.fixture()
 async def rag_service():
     context_service = AsyncMock(spec=ContextService)
     storage_manager = AsyncMock(spec=AzureClientManager)
@@ -16,13 +16,13 @@ async def rag_service():
     return service
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_generate_response_kubernetes_concepts(rag_service):
     """Test response generation for Kubernetes conceptual questions"""
     # Mock context retrieval
     rag_service.context_service.retrieve_context.return_value = [
         {
-            "content": "A Pod is the smallest deployable unit in Kubernetes that can be created and managed.",
+            "content": "A Pod is the smallest deployable unit in Kubernetes that can be created and managed.",  # noqa: E501
             "source": "kubernetes/docs/concepts/workloads/pods/pod-overview.md",
             "score": 0.95,
         }
@@ -47,12 +47,12 @@ async def test_generate_response_kubernetes_concepts(rag_service):
     assert response["sources"][0]["source"].endswith("pod-overview.md")
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_generate_response_linux_kernel(rag_service):
     """Test response generation for Linux kernel questions"""
     rag_service.context_service.retrieve_context.return_value = [
         {
-            "content": "System calls are the fundamental interface between applications and the Linux kernel.",
+            "content": "System calls are the fundamental interface between applications and the Linux kernel.",  # noqa: E501
             "source": "linux/Documentation/admin-guide/syscalls.rst",
             "score": 0.92,
         }
@@ -72,12 +72,12 @@ async def test_generate_response_linux_kernel(rag_service):
     assert response["sources"][0]["source"].endswith("syscalls.rst")
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_generate_response_with_code_examples(rag_service):
     """Test response generation with code examples"""
     rag_service.context_service.retrieve_context.return_value = [
         {
-            "content": "```yaml\napiVersion: v1\nkind: Pod\nmetadata:\n  name: example\nspec:\n  containers:\n  - name: web\n    image: nginx\n```",
+            "content": "```yaml\napiVersion: v1\nkind: Pod\nmetadata:\n  name: example\nspec:\n  containers:\n  - name: web\n    image: nginx\n```",  # noqa: E501
             "source": "kubernetes/docs/concepts/workloads/pods/pod-yaml.md",
             "score": 0.90,
         }
@@ -87,7 +87,7 @@ async def test_generate_response_with_code_examples(rag_service):
         choices=[
             AsyncMock(
                 message=AsyncMock(
-                    content="Here's an example of a Pod YAML:\n```yaml\napiVersion: v1..."
+                    content="Here's an example of a Pod YAML:\n```yaml\napiVersion: v1..."  # noqa: E501
                 )
             )
         ]
@@ -101,7 +101,7 @@ async def test_generate_response_with_code_examples(rag_service):
     assert response["sources"][0]["source"].endswith("pod-yaml.md")
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_generate_response_with_multiple_sources(rag_service):
     """Test response generation combining multiple documentation sources"""
     rag_service.context_service.retrieve_context.return_value = [
@@ -121,7 +121,7 @@ async def test_generate_response_with_multiple_sources(rag_service):
         choices=[
             AsyncMock(
                 message=AsyncMock(
-                    content="Kubernetes containers use Linux namespaces for isolation..."
+                    content="Kubernetes containers use Linux namespaces for isolation..."  # noqa: E501
                 )
             )
         ]

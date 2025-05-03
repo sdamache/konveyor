@@ -159,7 +159,7 @@ def setup_environment(env):
 
         django.setup()
         logger.info(
-            f"Django set up with settings module: {os.environ['DJANGO_SETTINGS_MODULE']}"
+            f"Django set up with settings module: {os.environ['DJANGO_SETTINGS_MODULE']}"  # noqa: E501
         )
     except Exception as e:
         logger.error(f"Failed to set up Django: {e}")
@@ -217,7 +217,7 @@ def run_test_file(test_file, verbose=False):
     if test_file.endswith(".py"):
         # Check if the file uses pytest
         try:
-            with open(test_file, "r") as f:
+            with open(test_file) as f:
                 content = f.read()
                 uses_pytest = "import pytest" in content or "pytest" in content
         except Exception as e:
@@ -231,9 +231,12 @@ def run_test_file(test_file, verbose=False):
             # Try to make the directory writable by all
             try:
                 import os
+
                 os.chmod(results_dir, 0o777)
             except Exception as chmod_err:
-                logger.warning(f"Could not set permissions on results directory: {chmod_err}")
+                logger.warning(
+                    f"Could not set permissions on results directory: {chmod_err}"
+                )
         except Exception as mkdir_err:
             logger.error(f"Error creating results directory: {mkdir_err}")
             # Try to use a fallback directory
@@ -241,7 +244,9 @@ def run_test_file(test_file, verbose=False):
             try:
                 results_dir.mkdir(exist_ok=True, parents=True)
             except Exception as fallback_err:
-                logger.error(f"Error creating fallback results directory: {fallback_err}")
+                logger.error(
+                    f"Error creating fallback results directory: {fallback_err}"
+                )
                 # Last resort: use current directory
                 results_dir = Path(".")
 
@@ -251,7 +256,14 @@ def run_test_file(test_file, verbose=False):
 
         if uses_pytest:
             # Run with pytest
-            cmd = [sys.executable, "-m", "pytest", test_file, "-v", f"--junitxml={xml_path}"]
+            cmd = [
+                sys.executable,
+                "-m",
+                "pytest",
+                test_file,
+                "-v",
+                f"--junitxml={xml_path}",
+            ]
         else:
             # Run with unittest but generate XML output
             cmd = [sys.executable, "-m", "unittest", test_file]
@@ -298,14 +310,29 @@ def run_test_file(test_file, verbose=False):
         logger.error(f"Unsupported test file format: {test_file}")
         return False
 
+
 def create_failure_xml(xml_path, test_file, error_message):
     """Create a failure XML file for tests that fail to run."""
     import xml.etree.ElementTree as ET
 
     root = ET.Element("testsuites")
-    testsuite = ET.SubElement(root, "testsuite", name=f"failed_{Path(test_file).stem}", tests="1", failures="1", errors="0")
-    testcase = ET.SubElement(testsuite, "testcase", classname="TestRunnerFailure", name="test_execution_failure")
-    failure = ET.SubElement(testcase, "failure", message="Test execution failed", type="RuntimeError")
+    testsuite = ET.SubElement(
+        root,
+        "testsuite",
+        name=f"failed_{Path(test_file).stem}",
+        tests="1",
+        failures="1",
+        errors="0",
+    )
+    testcase = ET.SubElement(
+        testsuite,
+        "testcase",
+        classname="TestRunnerFailure",
+        name="test_execution_failure",
+    )
+    failure = ET.SubElement(
+        testcase, "failure", message="Test execution failed", type="RuntimeError"
+    )
     failure.text = error_message
 
     tree = ET.ElementTree(root)
@@ -320,11 +347,16 @@ def create_failure_xml(xml_path, test_file, error_message):
         try:
             fallback_path = Path("/tmp") / f"test-{Path(test_file).stem}.xml"
             tree.write(str(fallback_path))
-            logger.info(f"Created failure XML file at fallback location: {fallback_path}")
+            logger.info(
+                f"Created failure XML file at fallback location: {fallback_path}"
+            )
         except Exception as fallback_err:
-            logger.error(f"Error writing failure XML to fallback location: {fallback_err}")
+            logger.error(
+                f"Error writing failure XML to fallback location: {fallback_err}"
+            )
             # Last resort: print the XML to the log
             from xml.dom import minidom
+
             xml_str = minidom.parseString(ET.tostring(root)).toprettyxml(indent="  ")
             logger.info(f"Failure XML content (could not write to file):\n{xml_str}")
 
@@ -344,7 +376,7 @@ def run_tests(args):
 
     if requires_real and not args.real and not args.mock:
         logger.warning(
-            f"Category '{args.category}' requires real services. Use --real to run these tests."
+            f"Category '{args.category}' requires real services. Use --real to run these tests."  # noqa: E501
         )
         logger.warning(
             "Defaulting to mock mode, but tests may fail if they require real services."

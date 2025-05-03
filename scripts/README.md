@@ -47,7 +47,7 @@ The script can be configured through environment variables in a `.env` file at t
    - Tasks can have `subtasks` for more detailed implementation steps.
    - Dependencies are displayed with status indicators (✅ for completed, ⏱️ for pending) to easily track progress.
 
-2. **CLI Commands**  
+2. **CLI Commands**
    You can run the commands via:
 
    ```bash

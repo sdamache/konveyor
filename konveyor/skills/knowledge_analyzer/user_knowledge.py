@@ -1,12 +1,12 @@
 """
 User Knowledge Store for Konveyor.
 
-This module provides functionality to store and retrieve user knowledge confidence scores
+This module provides functionality to store and retrieve user knowledge confidence scores  # noqa: E501
 for different knowledge domains.
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional  # noqa: F401, F401
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +72,7 @@ class UserKnowledgeStore:
             f"Set confidence for user {user_id}, domain {domain_id}: {confidence}"
         )
 
-    def get_user_knowledge(self, user_id: str) -> Dict[str, float]:
+    def get_user_knowledge(self, user_id: str) -> dict[str, float]:
         """
         Get all knowledge confidence scores for a user.
 

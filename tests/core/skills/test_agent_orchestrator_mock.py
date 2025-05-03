@@ -1,15 +1,15 @@
 """
 Mock tests for Agent Orchestrator Skill.
 
-These tests verify the functionality of the Agent Orchestrator Skill using mocked dependencies,
+These tests verify the functionality of the Agent Orchestrator Skill using mocked dependencies,  # noqa: E501
 including request routing, skill selection, and error handling.
 
 This file uses unittest.mock to mock the Semantic Kernel and its dependencies,
 allowing tests to run without requiring real Azure OpenAI credentials.
 """
 
-import logging
-from unittest.mock import AsyncMock, MagicMock, patch
+import logging  # noqa: F401
+from unittest.mock import AsyncMock, MagicMock, patch  # noqa: F401
 
 import pytest
 from semantic_kernel import Kernel
@@ -18,7 +18,7 @@ from konveyor.core.agent import AgentOrchestratorSkill, SkillRegistry
 from konveyor.core.chat import ChatSkill
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_kernel():
     """Mock Kernel for testing."""
     kernel = MagicMock(spec=Kernel)
@@ -33,7 +33,7 @@ def mock_kernel():
             elif function.name == "chat":
                 return {
                     "response": f"Chat response to: {kwargs.get('message', '')}",
-                    "history": f"User: {kwargs.get('message', '')}\nAssistant: Chat response",
+                    "history": f"User: {kwargs.get('message', '')}\nAssistant: Chat response",  # noqa: E501
                 }
             elif function.name == "greet":
                 return f"Hello, {kwargs.get('name', 'there')}!"
@@ -76,19 +76,19 @@ def mock_kernel():
     return kernel
 
 
-@pytest.fixture
+@pytest.fixture()
 def registry():
     """Create a SkillRegistry for testing."""
     return SkillRegistry()
 
 
-@pytest.fixture
+@pytest.fixture()
 def chat_skill():
     """Create a ChatSkill for testing."""
     return ChatSkill()
 
 
-@pytest.fixture
+@pytest.fixture()
 def orchestrator(mock_kernel, registry, chat_skill):
     """Create an AgentOrchestratorSkill for testing."""
     orchestrator = AgentOrchestratorSkill(mock_kernel, registry)
@@ -101,7 +101,7 @@ def orchestrator(mock_kernel, registry, chat_skill):
     return orchestrator
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_process_request_with_chat(orchestrator, mock_kernel):
     """Test processing a chat request."""
     # Process a chat request
@@ -124,7 +124,7 @@ async def test_process_request_with_chat(orchestrator, mock_kernel):
     assert result["success"] is True
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_process_request_with_question(orchestrator, mock_kernel):
     """Test processing a question request."""
     # Process a question request
@@ -140,7 +140,7 @@ async def test_process_request_with_question(orchestrator, mock_kernel):
     assert result["success"] is True
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_process_request_with_greeting(orchestrator, mock_kernel):
     """Test processing a greeting request."""
     # Process a greeting request
@@ -156,7 +156,7 @@ async def test_process_request_with_greeting(orchestrator, mock_kernel):
     assert result["success"] is True
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_process_request_with_formatting(orchestrator, mock_kernel):
     """Test processing a formatting request."""
     # Process a formatting request
@@ -172,7 +172,7 @@ async def test_process_request_with_formatting(orchestrator, mock_kernel):
     assert result["success"] is True
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_process_request_with_empty_request(orchestrator):
     """Test processing an empty request."""
     # Process an empty request
@@ -188,7 +188,7 @@ async def test_process_request_with_empty_request(orchestrator):
     assert result["success"] is False
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_process_request_with_error(orchestrator, mock_kernel):
     """Test processing a request that causes an error."""
     # Make the kernel.invoke method raise an exception

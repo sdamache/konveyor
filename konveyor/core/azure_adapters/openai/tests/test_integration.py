@@ -26,7 +26,7 @@ def test_embedding_generation():
     test_texts = [
         "This is a short test text.",
         "Azure OpenAI provides powerful embedding models for various NLP tasks.",
-        "This is a longer text that tests the embedding model's ability to handle more content.",
+        "This is a longer text that tests the embedding model's ability to handle more content.",  # noqa: E501
     ]
 
     # Generate embeddings for each test text
@@ -43,7 +43,7 @@ def test_embedding_generation():
             )
             logger.info(f"First 5 values: {embedding[:5]}")
             print(
-                f"Text {i+1}: Successfully generated embedding with {len(embedding)} dimensions"
+                f"Text {i+1}: Successfully generated embedding with {len(embedding)} dimensions"  # noqa: E501
             )
         except Exception as e:
             logger.error(f"Failed to generate embedding for text {i+1}: {str(e)}")
@@ -108,7 +108,7 @@ def verify_environment():
             logger.warning(f"Environment variable {var} is not set")
         else:
             logger.info(
-                f"Environment variable {var} is set to: {value if 'KEY' not in var else '****'}"
+                f"Environment variable {var} is set to: {value if 'KEY' not in var else '****'}"  # noqa: E501
             )
 
     if missing:

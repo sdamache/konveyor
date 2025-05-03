@@ -1,25 +1,32 @@
 """
 Mock integration tests for Agent Orchestration Layer.
 
-These tests verify the end-to-end functionality of the Agent Orchestration Layer using mocked dependencies,
+These tests verify the end-to-end functionality of the Agent Orchestration Layer using mocked dependencies,  # noqa: E501
 including integration with the Bot Framework and Semantic Kernel skills.
 
-This file uses unittest.mock to mock the Semantic Kernel, Bot Framework, and their dependencies,
-allowing tests to run without requiring real Azure OpenAI credentials or a real bot deployment.
+This file uses unittest.mock to mock the Semantic Kernel, Bot Framework, and their dependencies,  # noqa: E501
+allowing tests to run without requiring real Azure OpenAI credentials or a real bot deployment.  # noqa: E501
 """
 
-import asyncio
+import asyncio  # noqa: F401
 import logging
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from botbuilder.core import TurnContext
-from botbuilder.schema import (Activity, ActivityTypes, ChannelAccount,
-                               ConversationAccount)
+from botbuilder.schema import (
+    Activity,
+    ActivityTypes,
+    ChannelAccount,
+    ConversationAccount,
+)
 
 from konveyor.apps.bot.bot import KonveyorBot
-from konveyor.core.agent import AgentOrchestratorSkill, SkillRegistry
-from konveyor.core.chat import ChatSkill
+from konveyor.core.agent import (  # noqa: E501, F401
+    AgentOrchestratorSkill,
+    SkillRegistry,
+)
+from konveyor.core.chat import ChatSkill  # noqa: F401
 
 # Configure logging for tests
 logging.basicConfig(
@@ -28,7 +35,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_turn_context():
     """Create a mock TurnContext for testing."""
     context = MagicMock(spec=TurnContext)
@@ -49,7 +56,7 @@ def mock_turn_context():
     return context
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_kernel():
     """Mock Kernel for testing."""
     # Create a simple mock kernel
@@ -59,7 +66,7 @@ def mock_kernel():
     async def mock_invoke(function, **kwargs):
         # Return a mock response
         return {
-            "response": f"Mock response to: {kwargs.get('message', kwargs.get('question', 'No input'))}",
+            "response": f"Mock response to: {kwargs.get('message', kwargs.get('question', 'No input'))}",  # noqa: E501
             "history": "User: Test\nAssistant: Mock response",
             "success": True,
         }
@@ -99,7 +106,7 @@ def mock_kernel():
     return kernel
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_bot_initialization(mock_kernel):
     """Test that the bot initializes correctly."""
     # Patch the create_kernel function to avoid validation errors
@@ -114,7 +121,7 @@ async def test_bot_initialization(mock_kernel):
         assert hasattr(bot, "conversations")
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_bot_message_handling(mock_kernel, mock_turn_context):
     """Test that the bot handles messages correctly."""
     # Patch the create_kernel function to avoid validation errors
@@ -150,7 +157,7 @@ async def test_bot_message_handling(mock_kernel, mock_turn_context):
         assert activity.text == "Test response"
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_bot_error_handling(mock_kernel, mock_turn_context):
     """Test that the bot handles errors correctly."""
     # Patch the create_kernel function to avoid validation errors
@@ -179,7 +186,7 @@ async def test_bot_error_handling(mock_kernel, mock_turn_context):
         assert "Test error" in activity.text
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_bot_conversation_state(mock_kernel, mock_turn_context):
     """Test that the bot maintains conversation state."""
     # Patch the create_kernel function to avoid validation errors
@@ -210,7 +217,7 @@ async def test_bot_conversation_state(mock_kernel, mock_turn_context):
         )
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_bot_members_added(mock_kernel):
     """Test that the bot handles new members correctly."""
     # Patch the create_kernel function to avoid validation errors

@@ -89,7 +89,7 @@ To add a new slash command:
            "response_type": "ephemeral",  # or "in_channel" for public responses
            "text": "Command response"
        }
-   
+
    # Register the command
    register_command("new_command", handle_new_command, "Description of the new command")
    ```

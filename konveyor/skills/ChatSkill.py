@@ -5,7 +5,7 @@ This module provides a proxy import for the ChatSkill class,
 which has been moved to konveyor.core.chat.skill.
 
 **IMPORTANT: REDUNDANCY NOTICE**
-This implementation has some overlapping functionality with the existing RAG implementation
+This implementation has some overlapping functionality with the existing RAG implementation  # noqa: E501
 in konveyor/apps/rag/ and konveyor/core/rag/. Specifically:
 
 1. Conversation history management: Both this ChatSkill and the RAG implementation
@@ -21,7 +21,7 @@ implementations or clearly defining their boundaries.
 
 import logging
 
-from konveyor.core.chat.skill import ChatSkill
+from konveyor.core.chat.skill import ChatSkill  # noqa: F401
 
 # Configure logging
 logger = logging.getLogger(__name__)

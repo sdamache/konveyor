@@ -11,7 +11,7 @@ variable "resource_group_name" {
 variable "location" {
   description = "Azure region"
   type        = string
-  
+
 }
 
 variable "tags" {
@@ -31,7 +31,7 @@ variable "app_service_plan_sku" {
   type        = string
   default     = "B1"
 }
- 
+
 variable "docker_registry_url" {
   description = "The URL of the Docker registry (e.g., https://ghcr.io)."
   type        = string

@@ -15,7 +15,7 @@ import json
 import logging
 import ssl
 import traceback
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional  # noqa: F401
 
 # Removed: import certifi
 # Removed: from django.conf import settings
@@ -85,7 +85,7 @@ def root_handler(request):
     """
     Handle requests to the root URL.
 
-    This is a catch-all handler for the root URL to handle Slack's verification requests.
+    This is a catch-all handler for the root URL to handle Slack's verification requests.  # noqa: E501
 
     Args:
         request: The HTTP request
@@ -132,7 +132,7 @@ def root_handler(request):
 
     # For other requests, return a simple response
     return HttpResponse(
-        "Konveyor Slack Bot is running. Please use the /api/bot/slack/events/ endpoint for Slack events."
+        "Konveyor Slack Bot is running. Please use the /api/bot/slack/events/ endpoint for Slack events."  # noqa: E501
     )
 
 
@@ -237,7 +237,7 @@ def slack_webhook(request):
                     list(slack_webhook.processed_events)[-1000:]
                 )
                 logger.debug(
-                    f"Trimmed processed events to {len(slack_webhook.processed_events)} items"
+                    f"Trimmed processed events to {len(slack_webhook.processed_events)} items"  # noqa: E501
                 )
 
         # Process message events
@@ -276,7 +276,7 @@ def slack_webhook(request):
                     "response", "Sorry, I could not process your request."
                 )
                 skill_name = result.get("skill_name", "")
-                conversation_id = result.get("conversation_id", "")
+                conversation_id = result.get("conversation_id", "")  # noqa: F841
 
                 # Format the response with blocks
                 blocks = None
@@ -306,7 +306,7 @@ def slack_webhook(request):
                         )
                     else:
                         logger.info(f"Sending response to channel {channel}")
-                        response = slack_service.send_message(
+                        response = slack_service.send_message(  # noqa: F841
                             channel, response_text, blocks
                         )
 
@@ -358,7 +358,7 @@ def slack_webhook(request):
     return HttpResponse(status=200)
 
 
-def process_message(text: str, user_id: str, channel_id: str) -> Dict[str, Any]:
+def process_message(text: str, user_id: str, channel_id: str) -> dict[str, Any]:
     """
     Process a message using the Agent Orchestration Layer.
 
@@ -428,7 +428,7 @@ def process_message(text: str, user_id: str, channel_id: str) -> Dict[str, Any]:
             )
         else:
             logger.warning(
-                f"Request processing completed with success=False by {skill_name}.{function_name}"
+                f"Request processing completed with success=False by {skill_name}.{function_name}"  # noqa: E501
             )
 
         # Add the conversation ID to the result

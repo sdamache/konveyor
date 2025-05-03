@@ -1,7 +1,7 @@
 """Azure client initialization and management.
 
-This module provides a centralized manager for initializing and configuring Azure service clients.
-It handles client creation, configuration, and error handling for all Azure services used in the application.
+This module provides a centralized manager for initializing and configuring Azure service clients.  # noqa: E501
+It handles client creation, configuration, and error handling for all Azure services used in the application.  # noqa: E501
 
 The following clients are supported:
 - Azure Cognitive Search
@@ -24,12 +24,15 @@ Example:
 """
 
 import logging
-import os
-from typing import Any, Optional, Tuple
+import os  # noqa: F401
+from typing import Any, Optional, Tuple  # noqa: F401
 
 from azure.ai.documentintelligence import DocumentIntelligenceClient
-from azure.core.credentials import AzureKeyCredential, TokenCredential
-from azure.identity import AzureCliCredential, DefaultAzureCredential
+from azure.core.credentials import AzureKeyCredential, TokenCredential  # noqa: F401
+from azure.identity import (  # noqa: E501, F401
+    AzureCliCredential,
+    DefaultAzureCredential,
+)
 from azure.keyvault.secrets import SecretClient
 from azure.search.documents import SearchClient
 from azure.search.documents.indexes import SearchIndexClient
@@ -46,24 +49,24 @@ logger = logging.getLogger(__name__)
 class AzureClientManager:
     """Manages Azure client initialization and configuration.
 
-    This class provides methods to initialize and configure various Azure service clients.
-    It uses AzureConfig for configuration management and applies retry logic to client operations.
+    This class provides methods to initialize and configure various Azure service clients.  # noqa: E501
+    It uses AzureConfig for configuration management and applies retry logic to client operations.  # noqa: E501
 
-    Each get_* method initializes a specific Azure service client with proper configuration
+    Each get_* method initializes a specific Azure service client with proper configuration  # noqa: E501
     and error handling. All methods use the azure_retry decorator for resilience.
 
     Attributes:
         config (AzureConfig): Configuration instance for Azure services
     """
 
-    def __init__(self, config: Optional[AzureConfig] = None):
+    def __init__(self, config: AzureConfig | None = None):
         """Initialize with optional config."""
         self.config = config or AzureConfig()
 
     @azure_retry()
     def get_search_clients(
         self, index_name: str
-    ) -> Tuple[SearchIndexClient, SearchClient]:
+    ) -> tuple[SearchIndexClient, SearchClient]:
         """Initialize and return Azure Cognitive Search clients.
 
         Creates both an index client for managing search indexes and a search client

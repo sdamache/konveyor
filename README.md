@@ -113,4 +113,4 @@ konveyor/
 
 ## Environment Setup
 1. Copy `.env.example` to `.env`
-2. Update `.env` with your local values 
+2. Update `.env` with your local values

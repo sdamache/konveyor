@@ -8,7 +8,7 @@ Example:
     class SearchService(AzureService):
         def __init__(self):
             super().__init__('SEARCH')
-            self.index_client, self.search_client = self.client_manager.get_search_clients('my-index')
+            self.index_client, self.search_client = self.client_manager.get_search_clients('my-index')  # noqa: E501
 
         def search(self, query: str):
             try:
@@ -22,7 +22,7 @@ Example:
 """
 
 import logging
-from typing import Any, Optional
+from typing import Any, Optional  # noqa: F401
 
 from konveyor.core.azure_utils.clients import AzureClientManager
 from konveyor.core.azure_utils.config import AzureConfig
@@ -96,9 +96,9 @@ class AzureService:
         """
         Log an informational message for the service.
 
-        This method provides a standardized way to log informational events and status updates
-        for Azure services. All subclasses should use this method for non-error, non-warning
-        messages that are relevant for debugging, configuration, or operational transparency.
+        This method provides a standardized way to log informational events and status updates  # noqa: E501
+        for Azure services. All subclasses should use this method for non-error, non-warning  # noqa: E501
+        messages that are relevant for debugging, configuration, or operational transparency.  # noqa: E501
 
         Args:
             message (str): Informational message to log
@@ -113,8 +113,8 @@ class AzureService:
     def log_error(
         self,
         message: str,
-        error: Optional[Exception] = None,
-        exc_info: Optional[Exception] = None,
+        error: Exception | None = None,
+        exc_info: Exception | None = None,
     ) -> None:
         """
         Log an error message with optional exception and exc_info for stack trace.
@@ -130,7 +130,7 @@ class AzureService:
         else:
             logger.error(f"{self.service_name}: {message}", exc_info=exc_info)
 
-    def log_warning(self, message: str, exc_info: Optional[Exception] = None) -> None:
+    def log_warning(self, message: str, exc_info: Exception | None = None) -> None:
         """Log a warning message.
 
         Args:
@@ -148,7 +148,7 @@ class AzureService:
         else:
             logger.warning(f"{self.service_name}: {message}")
 
-    def log_debug(self, message: str, exc_info: Optional[Exception] = None) -> None:
+    def log_debug(self, message: str, exc_info: Exception | None = None) -> None:
         """Log a debug message.
 
         Args:
@@ -179,13 +179,13 @@ class AzureService:
         Example:
             ```python
             self.log_azure_credentials('Search', endpoint, api_key)
-            # Logs: Search credentials configured - Endpoint: https://..., Key: abcd...wxyz
+            # Logs: Search credentials configured - Endpoint: https://..., Key: abcd...wxyz  # noqa: E501
             ```
         """
         if endpoint and key:
             key_preview = f"{key[:4]}...{key[-4:]}" if len(key) > 8 else "****"
             self.log_success(
-                f"{service} credentials configured - Endpoint: {endpoint}, Key: {key_preview}"
+                f"{service} credentials configured - Endpoint: {endpoint}, Key: {key_preview}"  # noqa: E501
             )
         else:
             self.log_warning(f"{service} credentials missing")

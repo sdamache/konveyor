@@ -10,8 +10,8 @@ import os
 from unittest.mock import MagicMock, patch
 
 import pytest
-from semantic_kernel import Kernel
-from semantic_kernel.functions import KernelFunction
+from semantic_kernel import Kernel  # noqa: F401
+from semantic_kernel.functions import KernelFunction  # noqa: F401
 
 from konveyor.core.chat import ChatSkill
 from konveyor.core.kernel import create_kernel, get_kernel_settings
@@ -21,7 +21,7 @@ IN_CI = os.environ.get("CI") == "true"
 HAS_AZURE_CREDENTIALS = bool(os.environ.get("AZURE_OPENAI_ENDPOINT"))
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_kernel():
     """Mock Kernel for testing when real credentials aren't available."""
     with patch("konveyor.core.kernel.factory.Kernel") as mock_kernel_class:
@@ -85,7 +85,7 @@ def mock_kernel():
         yield kernel_instance
 
 
-@pytest.fixture
+@pytest.fixture()
 def real_or_mock_kernel(mock_kernel):
     """
     Return a real kernel if Azure credentials are available,
@@ -202,7 +202,7 @@ def test_chat_skill_format_as_bullet_list(real_or_mock_kernel):
     assert len(result.strip().split("\n")) == 3
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_azure_client_manager():
     """Mock AzureClientManager for testing."""
     with patch("konveyor.core.kernel.factory.AzureClientManager") as mock_manager:
@@ -216,7 +216,7 @@ def mock_azure_client_manager():
         yield mock_manager
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_azure_chat_completion():
     """Mock AzureChatCompletion for testing."""
     with patch("konveyor.core.kernel.factory.AzureChatCompletion") as mock_chat:
@@ -225,7 +225,7 @@ def mock_azure_chat_completion():
         yield mock_chat
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_volatile_memory_store():
     """Mock VolatileMemoryStore for testing."""
     with patch("konveyor.core.kernel.factory.VolatileMemoryStore") as mock_store:
@@ -242,7 +242,7 @@ def test_create_kernel_with_key_vault(
 ):
     """Test creating a kernel with Key Vault integration."""
     # Call the function
-    result = create_kernel()
+    result = create_kernel()  # noqa: F841
 
     # Verify Key Vault was used to get the API key
     mock_azure_client_manager.return_value.get_key_vault_client.assert_called_once()
@@ -254,14 +254,14 @@ def test_create_kernel_fallback_to_env_key(
     mock_azure_chat_completion,
     mock_volatile_memory_store,
 ):
-    """Test creating a kernel with fallback to environment variable when Key Vault fails."""
+    """Test creating a kernel with fallback to environment variable when Key Vault fails."""  # noqa: E501
     # Make Key Vault client raise an exception
     mock_azure_client_manager.return_value.get_key_vault_client.side_effect = Exception(
         "Key Vault error"
     )
 
     # Call the function
-    result = create_kernel()
+    result = create_kernel()  # noqa: F841
 
     # Verify Key Vault was attempted
     mock_azure_client_manager.return_value.get_key_vault_client.assert_called_once()

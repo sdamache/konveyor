@@ -67,4 +67,4 @@ Authenticate user.
 
 #### `GET /api/auth/me/`
 
-Get current user profile. 
+Get current user profile.

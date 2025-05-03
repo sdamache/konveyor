@@ -110,7 +110,7 @@ from botbuilder.core import TurnContext
 async def handle_turn(turn_context: TurnContext):
     # Access the activity
     activity = turn_context.activity
-    
+
     # Send a response
     await turn_context.send_activity("Hello, world!")
 ```

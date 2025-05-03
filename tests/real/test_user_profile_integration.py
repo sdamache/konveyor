@@ -9,7 +9,7 @@ import json
 import logging
 import os
 import sys
-from datetime import datetime
+from datetime import datetime  # noqa: F401
 
 # Add the project directory to the Python path
 project_dir = os.path.dirname(
@@ -20,7 +20,7 @@ sys.path.insert(0, project_dir)
 # Set up Django environment
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "konveyor.settings.development")
 
-import django
+import django  # noqa: E402
 
 django.setup()
 
@@ -30,13 +30,17 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-from konveyor.apps.bot.models import SlackUserProfile
-from konveyor.apps.bot.services.slack_service import SlackService
+from konveyor.apps.bot.models import SlackUserProfile  # noqa: E402
+from konveyor.apps.bot.services.slack_service import SlackService  # noqa: E402
+
 # Import after Django setup
-from konveyor.apps.bot.services.slack_user_profile_service import \
-    SlackUserProfileService
-from konveyor.apps.bot.slash_commands import (handle_preferences_command,
-                                              handle_profile_command)
+from konveyor.apps.bot.services.slack_user_profile_service import (  # noqa: E402
+    SlackUserProfileService,
+)
+from konveyor.apps.bot.slash_commands import (  # noqa: E402
+    handle_preferences_command,
+    handle_profile_command,
+)
 
 
 def test_slack_user_profile_service():
@@ -85,7 +89,7 @@ def test_slack_user_profile_service():
         # Update profile
         updated_profile = user_profile_service.update_profile(user_id)
         logger.info(
-            f"Updated profile: {updated_profile.slack_name} ({updated_profile.slack_id})"
+            f"Updated profile: {updated_profile.slack_name} ({updated_profile.slack_id})"  # noqa: E501
         )
 
         # Update preferences
@@ -156,7 +160,7 @@ def test_slash_commands():
         # Verify the preference was updated
         updated_profile = SlackUserProfile.objects.get(slack_id=user_id)
         logger.info(
-            f"Updated code language preference: {updated_profile.code_language_preference}"
+            f"Updated code language preference: {updated_profile.code_language_preference}"  # noqa: E501
         )
 
         return True
