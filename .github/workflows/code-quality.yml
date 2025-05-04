@@ -6,10 +6,6 @@ permissions:
   actions: read    # Required for workflow calls
 
 on:
-  pull_request:
-    branches: [ main, dev ]
-  push:
-    branches: [ main, dev ]
   workflow_dispatch:
     inputs:
       test_type:

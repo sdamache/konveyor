@@ -4,11 +4,12 @@ permissions:
   contents: read  # Required for checkout
 
 on:
-  pull_request:
-    types: [opened, edited, synchronize, reopened]
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to check (optional)'
+        required: false
+        type: string
   workflow_call:
 
 jobs:

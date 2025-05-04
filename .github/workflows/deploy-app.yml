@@ -6,9 +6,6 @@ permissions:
   packages: write  # Required for pushing to GHCR
 
 on:
-  push:
-    tags:
-      - 'v*' # Trigger on version tags like v1.0, v1.2.3
   workflow_dispatch:
     inputs:
       ref:
