@@ -47,6 +47,10 @@ on:
         required: false
         default: 'test'
         type: string
+    secrets:
+      AZURE_CREDENTIALS:
+        description: 'Azure credentials for authentication'
+        required: false
 
 jobs:
   lint:

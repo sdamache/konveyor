@@ -73,6 +73,8 @@ jobs:
     with:
       test_type: ${{ github.event.inputs.test_type || 'mock' }}
       environment: ${{ github.event.inputs.environment || 'test' }}
+    secrets:
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
 
   # Step 3: Run integration tests
   integration-tests:
@@ -85,6 +87,8 @@ jobs:
       environment: ${{ github.event.inputs.environment || 'dev' }}
       test_category: ${{ github.event.inputs.test_category || 'all' }}
       fast_track: ${{ github.event.inputs.fast_track || false }}
+    secrets:
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
 
   # Step 4: Deploy to Azure App Service (if requested or on tag)
   deploy:
@@ -98,6 +102,8 @@ jobs:
     with:
       ref: ${{ github.event.inputs.ref || github.ref }}
       environment: ${{ github.event.inputs.environment || 'test' }}
+    secrets:
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
 
   # Step 5: Deploy infrastructure (if needed)
   deploy-infra:
@@ -111,3 +117,5 @@ jobs:
     with:
       ref: ${{ github.event.inputs.ref || github.ref }}
       environment: ${{ github.event.inputs.environment || 'test' }}
+    secrets:
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
