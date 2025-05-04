@@ -15,7 +15,7 @@ from konveyor.core.rag.rag_service_updated import RAGService
 
 
 # Test the RAG service with mocked dependencies
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_rag_service_integration():
     """Test the RAG service integration with the new core components."""
     # Create a mock client manager

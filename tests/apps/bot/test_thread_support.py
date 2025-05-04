@@ -12,7 +12,7 @@ from django.test import RequestFactory
 from konveyor.apps.bot.views import process_message, slack_webhook
 
 
-@pytest.mark.django_db()
+@pytest.mark.django_db
 def test_thread_support():
     """Test that thread_ts is correctly extracted and used."""
     # Create a request factory

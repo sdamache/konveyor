@@ -35,7 +35,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_turn_context():
     """Create a mock TurnContext for testing."""
     context = MagicMock(spec=TurnContext)
@@ -56,7 +56,7 @@ def mock_turn_context():
     return context
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_kernel():
     """Mock Kernel for testing."""
     # Create a simple mock kernel
@@ -106,7 +106,7 @@ def mock_kernel():
     return kernel
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_bot_initialization(mock_kernel):
     """Test that the bot initializes correctly."""
     # Patch the create_kernel function to avoid validation errors
@@ -121,7 +121,7 @@ async def test_bot_initialization(mock_kernel):
         assert hasattr(bot, "conversations")
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_bot_message_handling(mock_kernel, mock_turn_context):
     """Test that the bot handles messages correctly."""
     # Patch the create_kernel function to avoid validation errors
@@ -157,7 +157,7 @@ async def test_bot_message_handling(mock_kernel, mock_turn_context):
         assert activity.text == "Test response"
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_bot_error_handling(mock_kernel, mock_turn_context):
     """Test that the bot handles errors correctly."""
     # Patch the create_kernel function to avoid validation errors
@@ -186,7 +186,7 @@ async def test_bot_error_handling(mock_kernel, mock_turn_context):
         assert "Test error" in activity.text
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_bot_conversation_state(mock_kernel, mock_turn_context):
     """Test that the bot maintains conversation state."""
     # Patch the create_kernel function to avoid validation errors
@@ -217,7 +217,7 @@ async def test_bot_conversation_state(mock_kernel, mock_turn_context):
         )
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_bot_members_added(mock_kernel):
     """Test that the bot handles new members correctly."""
     # Patch the create_kernel function to avoid validation errors

@@ -31,8 +31,8 @@ async def context_service(client_manager):
     return ContextService(client_manager)
 
 
-@pytest.mark.integration()
-@pytest.mark.asyncio()
+@pytest.mark.integration
+@pytest.mark.asyncio
 async def test_retrieve_context_integration(context_service, client_manager):
     """
     Indexes a test document and retrieves it via ContextService.retrieve_context

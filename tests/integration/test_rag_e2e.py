@@ -31,7 +31,7 @@ from konveyor.core.azure_utils.clients import AzureClientManager  # noqa: E402
 from konveyor.core.rag.rag_service import RAGService  # noqa: E402
 
 
-@pytest.mark.integration()
+@pytest.mark.integration
 class TestRAGIntegration:
     """End-to-end tests for RAG functionality using real Azure services"""
 
@@ -84,7 +84,7 @@ class TestRAGIntegration:
         self.storage_manager.mongo_client.close()
         await self.storage_manager.redis_client.aclose()
 
-    @pytest.mark.asyncio()
+    @pytest.mark.asyncio
     async def test_kubernetes_basic_concepts(self):
         """Test RAG with basic Kubernetes concepts"""
         queries = [
@@ -110,7 +110,7 @@ class TestRAGIntegration:
             assert len(messages) > 0
             assert any(m["content"] == query for m in messages)
 
-    @pytest.mark.asyncio()
+    @pytest.mark.asyncio
     async def test_linux_kernel_concepts(self):
         """Test RAG with Linux kernel concepts"""
         queries = [
@@ -128,7 +128,7 @@ class TestRAGIntegration:
             assert len(response["sources"]) >= 1
             assert all("linux" in s["source"].lower() for s in response["sources"])
 
-    @pytest.mark.asyncio()
+    @pytest.mark.asyncio
     async def test_container_runtime_interaction(self):
         """Test RAG with questions about container runtime and kernel interaction"""
         query = "How do Kubernetes containers interact with the Linux kernel?"
@@ -144,7 +144,7 @@ class TestRAGIntegration:
         assert "container" in response["answer"].lower()
         assert "kernel" in response["answer"].lower()
 
-    @pytest.mark.asyncio()
+    @pytest.mark.asyncio
     async def test_code_example_generation(self):
         """Test RAG's ability to provide code examples"""
         queries = [
@@ -167,7 +167,7 @@ class TestRAGIntegration:
             if "linux" in query.lower():
                 assert "#include" in response["answer"]
 
-    @pytest.mark.asyncio()
+    @pytest.mark.asyncio
     async def test_conversation_context(self):
         """Test RAG's ability to maintain context in a conversation"""
         queries = [

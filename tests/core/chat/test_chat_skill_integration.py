@@ -15,7 +15,7 @@ from konveyor.core.chat.skill_updated import ChatSkill
 
 
 # Test the ChatSkill with mocked dependencies
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_chat_skill_integration():
     """Test the ChatSkill integration with the new core components."""
     # Create a mock kernel

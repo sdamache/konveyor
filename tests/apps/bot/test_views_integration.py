@@ -60,7 +60,7 @@ def test_root_handler():
 
 
 # Test the slack_webhook function
-@pytest.mark.django_db()
+@pytest.mark.django_db
 def test_slack_webhook():
     """Test the slack_webhook function."""
     # Create a request factory

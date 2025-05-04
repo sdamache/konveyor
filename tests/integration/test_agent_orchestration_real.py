@@ -59,7 +59,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_turn_context():
     """Create a mock TurnContext for testing."""
     context = MagicMock(spec=TurnContext)
@@ -80,7 +80,7 @@ def mock_turn_context():
     return context
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_bot_initialization():
     """Test that the bot initializes correctly with real Azure OpenAI."""
     try:
@@ -97,7 +97,7 @@ async def test_bot_initialization():
         pytest.fail(f"Bot initialization failed: {str(e)}")
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_bot_message_handling(mock_turn_context):
     """Test that the bot handles messages correctly with real Azure OpenAI."""
     try:
@@ -122,7 +122,7 @@ async def test_bot_message_handling(mock_turn_context):
         pytest.fail(f"Message handling failed: {str(e)}")
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_bot_members_added():
     """Test that the bot handles new members correctly with real Azure OpenAI."""
     try:

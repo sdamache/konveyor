@@ -9,8 +9,8 @@ async def api_client():
     return AsyncClient()
 
 
-@pytest.mark.integration()
-@pytest.mark.asyncio()
+@pytest.mark.integration
+@pytest.mark.asyncio
 async def test_create_conversation(api_client):
     """Test creating a new conversation via API"""
     response = await api_client.post("/api/rag/conversations/")
@@ -19,8 +19,8 @@ async def test_create_conversation(api_client):
     assert "id" in data, f"Unexpected response payload: {data}"
 
 
-@pytest.mark.integration()
-@pytest.mark.asyncio()
+@pytest.mark.integration
+@pytest.mark.asyncio
 async def test_ask_and_history(api_client):
     """Test asking a question and retrieving conversation history"""
     # Create conversation
