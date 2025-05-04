@@ -172,6 +172,7 @@ jobs:
           echo "Test type: ${{ env.TEST_TYPE }}"
           echo "Environment: ${{ env.ENVIRONMENT }}"
           echo "Has AZURE_CREDENTIALS secret: ${{ secrets.AZURE_CREDENTIALS != '' }}"
+          echo "Has individual Azure credentials: ${{ secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_TENANT_ID != '' && secrets.AZURE_SUBSCRIPTION_ID != '' }}"
 
           # Print the structure of the AZURE_CREDENTIALS (without revealing sensitive values)
           if [[ "${{ secrets.AZURE_CREDENTIALS }}" != "" ]]; then
@@ -180,9 +181,9 @@ jobs:
             echo "${{ secrets.AZURE_CREDENTIALS }}" | grep -o '"[^"]*":' | tr -d '":' | sort
           fi
 
-      # Update Azure Login condition to use the environment variables
-      - name: Azure Login
-        id: azure-login
+      # Try Azure Login with the full AZURE_CREDENTIALS
+      - name: Azure Login (Full Credentials)
+        id: azure-login-full
         if: ${{ env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod' }}
         uses: azure/login@v2.1.0
         with:
@@ -190,21 +191,90 @@ jobs:
         continue-on-error: true
 
       # Report login status
-      - name: Report Azure Login Status
+      - name: Report Azure Login Status (Full Credentials)
         if: ${{ env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod' }}
         run: |
-          if [[ "${{ steps.azure-login.outcome }}" == "success" ]]; then
-            echo "✅ Azure login succeeded"
+          if [[ "${{ steps.azure-login-full.outcome }}" == "success" ]]; then
+            echo "✅ Azure login with full credentials succeeded"
           else
-            echo "❌ Azure login failed"
+            echo "❌ Azure login with full credentials failed"
+          fi
+
+      # Try Azure Login with simplified credentials if full login failed
+      - name: Create Simplified Credentials
+        if: ${{ (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod') && steps.azure-login-full.outcome != 'success' && secrets.AZURE_CREDENTIALS != '' }}
+        id: create-simplified-creds
+        run: |
+          # Extract the essential fields from the full credentials
+          CREDS=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | grep -o '"clientId":"[^"]*"' | tr -d '\n')
+          CREDS="${CREDS},$(echo '${{ secrets.AZURE_CREDENTIALS }}' | grep -o '"clientSecret":"[^"]*"' | tr -d '\n')"
+          CREDS="${CREDS},$(echo '${{ secrets.AZURE_CREDENTIALS }}' | grep -o '"subscriptionId":"[^"]*"' | tr -d '\n')"
+          CREDS="${CREDS},$(echo '${{ secrets.AZURE_CREDENTIALS }}' | grep -o '"tenantId":"[^"]*"' | tr -d '\n')"
+          echo "{${CREDS}}" > simplified-creds.json
+          echo "SIMPLIFIED_CREDS=$(cat simplified-creds.json)" >> $GITHUB_ENV
+          echo "has_simplified_creds=true" >> $GITHUB_OUTPUT
+
+      # Try Azure Login with simplified credentials
+      - name: Azure Login (Simplified Credentials)
+        if: ${{ (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod') && steps.azure-login-full.outcome != 'success' && steps.create-simplified-creds.outputs.has_simplified_creds == 'true' }}
+        id: azure-login-simplified
+        uses: azure/login@v2.1.0
+        with:
+          creds: ${{ env.SIMPLIFIED_CREDS }}
+        continue-on-error: true
+
+      # Check for individual Azure credentials
+      - name: Check Individual Azure Credentials
+        id: check-individual-creds
+        if: ${{ (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod') && steps.azure-login-full.outcome != 'success' }}
+        run: |
+          if [[ -n "${{ secrets.AZURE_CLIENT_ID }}" && -n "${{ secrets.AZURE_TENANT_ID }}" && -n "${{ secrets.AZURE_SUBSCRIPTION_ID }}" ]]; then
+            echo "has_individual_creds=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_individual_creds=false" >> $GITHUB_OUTPUT
+          fi
+
+      # Try Azure Login with individual credentials if both previous methods failed
+      - name: Azure Login (Individual Credentials)
+        if: ${{ (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod') && steps.azure-login-full.outcome != 'success' && (steps.azure-login-simplified.outcome != 'success' || steps.create-simplified-creds.outputs.has_simplified_creds != 'true') && steps.check-individual-creds.outputs.has_individual_creds == 'true' }}
+        id: azure-login-individual
+        uses: azure/login@v2.1.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        continue-on-error: true
+
+      # Report login status for individual credentials
+      - name: Report Azure Login Status (Individual Credentials)
+        if: ${{ (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod') && steps.azure-login-full.outcome != 'success' && (steps.azure-login-simplified.outcome != 'success' || steps.create-simplified-creds.outputs.has_simplified_creds != 'true') && steps.check-individual-creds.outputs.has_individual_creds == 'true' }}
+        run: |
+          if [[ "${{ steps.azure-login-individual.outcome }}" == "success" ]]; then
+            echo "✅ Azure login with individual credentials succeeded"
+          else
+            echo "❌ Azure login with individual credentials failed"
+          fi
+
+      # Set a variable to indicate if any login method succeeded
+      - name: Set Login Success Variable
+        if: ${{ env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod' }}
+        id: login-success
+        run: |
+          if [[ "${{ steps.azure-login-full.outcome }}" == "success" || "${{ steps.azure-login-simplified.outcome }}" == "success" || "${{ steps.azure-login-individual.outcome }}" == "success" ]]; then
+            echo "success=true" >> $GITHUB_OUTPUT
+            echo "✅ At least one Azure login method succeeded"
+          else
+            echo "success=false" >> $GITHUB_OUTPUT
+            echo "❌ All Azure login methods failed"
           fi
 
       # Update Terraform setup condition
       - name: Set up Terraform
         if: >-
           ${{
-            env.DEPLOY_INFRA == 'always' ||
-            (env.DEPLOY_INFRA == 'auto' && (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod'))
+            steps.login-success.outputs.success == 'true' &&
+            (env.DEPLOY_INFRA == 'always' ||
+            (env.DEPLOY_INFRA == 'auto' && (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod')))
           }}
         uses: hashicorp/setup-terraform@v3
         with:
@@ -214,8 +284,9 @@ jobs:
       - name: Deploy Infrastructure
         if: >-
           ${{
-            env.DEPLOY_INFRA == 'always' ||
-            (env.DEPLOY_INFRA == 'auto' && (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod'))
+            steps.login-success.outputs.success == 'true' &&
+            (env.DEPLOY_INFRA == 'always' ||
+            (env.DEPLOY_INFRA == 'auto' && (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod')))
           }}
         id: deploy-infra
         run: |
