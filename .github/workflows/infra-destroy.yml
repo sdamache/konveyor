@@ -1,0 +1,95 @@
+name: "Destroy Infrastructure"
+
+permissions:
+  contents: read
+  id-token: write # Required for GitHub OIDC token authentication
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to destroy (test, prod)'
+        required: true
+        default: 'test'
+        type: choice
+        options:
+          - test
+          - prod
+
+env:
+  TF_VERSION: '1.5.7'
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+jobs:
+  approval:
+    name: Manual Approval for Destruction
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}-destroy-approval
+    steps:
+      - name: Approval Check
+        run: echo "Destruction of ${{ github.event.inputs.environment }} environment approved"
+
+  terraform:
+    name: Destroy Infrastructure (${{ github.event.inputs.environment }})
+    needs: approval
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+
+    defaults:
+      run:
+        working-directory: Konveyor-infra/environments/${{ github.event.inputs.environment }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Azure Login
+        uses: azure/login@v2.1.0
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve
+
+      - name: Clean up GitHub Variables and Secrets
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const environment = '${{ github.event.inputs.environment }}'.toUpperCase();
+
+            // Delete environment variables
+            const variablesToDelete = [
+              `AZURE_SEARCH_ENDPOINT_${environment}`,
+              `AZURE_OPENAI_ENDPOINT_${environment}`,
+              `AZURE_OPENAI_EMBEDDING_DEPLOYMENT_${environment}`,
+              `AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT_${environment}`,
+              `APP_SERVICE_NAME_${environment}`,
+              `APP_SERVICE_HOSTNAME_${environment}`
+            ];
+
+            for (const name of variablesToDelete) {
+              try {
+                await github.rest.actions.deleteRepoVariable({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name
+                });
+                console.log(`Deleted variable: ${name}`);
+              } catch (error) {
+                console.log(`Error deleting variable ${name}: ${error.message}`);
+              }
+            }
+
+            // Note: We can't delete secrets via API, but we can update them to empty values
+            // This would require a PAT with appropriate permissions

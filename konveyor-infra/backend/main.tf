@@ -3,7 +3,7 @@
 provider "azurerm" {
   features {}
   subscription_id = "bc840b1a-fbd5-4e01-8fd0-2511dcfc85da"
-  
+
 }
 
 resource "azurerm_resource_group" "terraform_state" {
@@ -23,7 +23,7 @@ resource "azurerm_storage_container" "terraform_state" {
   name                  = "tfstate"
   storage_account_name  = azurerm_storage_account.terraform_state.name
   container_access_type = "private"
-      
+
   lifecycle {
     ignore_changes = [
       storage_account_name

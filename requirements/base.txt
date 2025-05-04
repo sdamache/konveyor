@@ -5,18 +5,25 @@ langchain>=0.1.0
 
 # Azure packages
 azure-identity>=1.15.0
-azure-core>=1.29.5
-azure-ai-documentintelligence>=1.0.0
-azure-ai-formrecognizer>=3.2.0
-azure-search-documents>=11.4.0
-azure-storage-blob>=12.19.0
-azure-keyvault-secrets>=4.7.0
+azure-core
+azure-ai-documentintelligence
+azure-ai-formrecognizer
+azure-search-documents
+azure-storage-blob
+azure-keyvault-secrets
 
 # OpenAI
 openai>=1.12.0
+
+# Semantic Kernel
+semantic-kernel>=0.9.0
 
 # Document processing
 beautifulsoup4>=4.12.0
 python-docx>=0.8.11
 PyPDF2>=3.0.0
 markdown>=3.5.0
+
+# Optional storage backends
+pymongo>=4.6.0
+redis>=5.0.0

@@ -2,12 +2,12 @@
 
 output "cognitive_search_endpoint" {
   description = "Test Azure Cognitive Search Service endpoint"
-  value       = module.cognitive_search.search_service_endpoint
+  value       = var.deploy_search_service ? module.cognitive_search[0].search_service_endpoint : "Search service not deployed"
 }
 
 output "cognitive_search_primary_key" {
   description = "Test Azure Cognitive Search Service primary key"
-  value       = module.cognitive_search.search_service_primary_key
+  value       = var.deploy_search_service ? module.cognitive_search[0].search_service_primary_key : "Search service not deployed"
   sensitive   = true
 }
 
@@ -57,12 +57,22 @@ output "bot_service_slack_channel_id" {
 # Optional: Add outputs for RAG module if/when uncommented
 # output "cosmos_connection_string" {
 #   description = "Test Cosmos DB connection string"
-#   value       = module.rag.cosmos_connection_string
+#   value       = module.rag.cosmos_connection_string"
 #   sensitive   = true
 # }
 #
 # output "redis_connection_string" {
 #   description = "Test Redis connection string"
-#   value       = module.rag.redis_connection_string
+#   value       = module.rag.redis_connection_string"
 #   sensitive   = true
 # }
+
+output "app_service_name" {
+  description = "Test Azure App Service name"
+  value       = module.app_service.name
+}
+
+output "app_service_default_site_hostname" {
+  description = "Test Azure App Service default site hostname"
+  value       = module.app_service.default_site_hostname
+}

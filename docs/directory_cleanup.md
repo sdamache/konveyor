@@ -37,10 +37,10 @@ konveyor/
    - We have two overlapping `services/` directories:
      ```
      ├── services/         # Core services
-     │   └── documents/    
+     │   └── documents/
      ├── services/         # Core business logic
-     │   ├── documents/    
-     │   └── rag/         
+     │   ├── documents/
+     │   └── rag/
      ```
    - This creates confusion about where to place new services
    - Duplicates document service code
@@ -367,11 +367,11 @@ from konveyor.services.documents.document_service import DocumentService
    ```python
    # apps/documents/services/document_adapter.py
    from konveyor.services.documents.document_service import DocumentService
-   
+
    class DjangoDocumentService:
        def __init__(self):
            self._service = DocumentService()
-           
+
        def process_document(self, file_obj, filename):
            # Django-specific processing
            pass

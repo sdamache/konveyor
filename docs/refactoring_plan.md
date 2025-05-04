@@ -250,9 +250,9 @@ With the core refactor and consolidation complete, the final phase focuses on:
 
 ---
 
-**Next Steps:**  
-1. Generate the architectural diagram for `core/` using CLI tools  
-2. Continue to keep modernization docs up to date in `docs/app_modernization/`  
+**Next Steps:**
+1. Generate the architectural diagram for `core/` using CLI tools
+2. Continue to keep modernization docs up to date in `docs/app_modernization/`
 3. Continue systematic cleanup and documentation as described above
 
 ---

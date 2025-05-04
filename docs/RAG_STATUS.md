@@ -112,7 +112,7 @@ Konveyor implements Retrieval-Augmented Generation (RAG) using Azure services to
 
 #### Document Processing Pipeline
 ```
-Document Upload → Document Intelligence → Text Extraction → 
+Document Upload → Document Intelligence → Text Extraction →
 Chunk Generation → Vector Embedding → Search Indexing
 ```
 
@@ -198,14 +198,14 @@ graph TD
    resource "azurerm_cosmosdb_account" "konveyor_db" {
      # Serverless mode for pay-per-use
      capabilities { name = "EnableServerless" }
-     
+
      # Minimal backup retention
      backup {
        type = "Periodic"
        interval_in_minutes = 1440
        retention_in_hours = 48
      }
-     
+
      # Eventual consistency for better performance
      consistency_policy {
        consistency_level = "Eventual"
@@ -220,7 +220,7 @@ graph TD
      capacity = 0
      family   = "C"
      sku_name = "Basic"
-     
+
      # Memory optimization
      redis_configuration {
        maxmemory_policy = "volatile-lru"
@@ -236,17 +236,17 @@ class DocumentProcessor:
     async def process(self, document: bytes) -> Dict[str, Any]:
         # Extract text using Document Intelligence
         extracted_text = await self.document_intelligence.analyze(document)
-        
+
         # Generate chunks with metadata
         chunks = self.chunker.split_text(
             text=extracted_text,
             chunk_size=1000,
             overlap=100
         )
-        
+
         # Generate embeddings
         embeddings = await self.openai.generate_embeddings(chunks)
-        
+
         # Index in Cognitive Search
         await self.search_client.index_documents(chunks, embeddings)
 ```
@@ -261,22 +261,22 @@ class StorageManager:
             conversation,
             ex=3600  # 1 hour TTL
         )
-        
+
         # Persist to Cosmos DB
         await self.cosmos.conversations.create_item(conversation)
-        
+
         return conversation['id']
-    
+
     async def get_conversation_context(self, conv_id: str) -> Dict:
         # Try cache first
         context = await self.redis.get(f"conv:{conv_id}")
         if context:
             return context
-            
+
         # Fallback to Cosmos DB
         context = await self.cosmos.conversations\
             .query_items(f"SELECT * FROM c WHERE c.id = '{conv_id}'")
-            
+
         # Update cache
         await self.redis.set(f"conv:{conv_id}", context, ex=3600)
         return context
@@ -288,7 +288,7 @@ class SearchManager:
     async def hybrid_search(self, query: str) -> List[Dict]:
         # Generate query embedding
         query_vector = await self.openai.embeddings.create(query)
-        
+
         # Hybrid search query
         search_query = {
             "vector": {
@@ -300,7 +300,7 @@ class SearchManager:
             "select": ["content", "source", "@search.score"],
             "orderby": "@search.score desc"
         }
-        
+
         return await self.search_client.search(search_query)
 ```
 

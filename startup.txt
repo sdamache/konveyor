@@ -1,0 +1,1 @@
+find /home/site/wwwroot/.python_packages -name asyncio -type d -exec rm -rf {} \; 2>/dev/null && find /home/site/wwwroot/.python_packages -name "asyncio*.egg-info" -type d -exec rm -rf {} \; 2>/dev/null && gunicorn --bind=0.0.0.0:8000 konveyor.wsgi:application

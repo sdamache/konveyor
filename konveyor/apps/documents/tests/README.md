@@ -79,4 +79,4 @@ See [README_DETAILED.md](./README_DETAILED.md) for detailed troubleshooting tips
 
 - These tests will incur Azure service usage costs
 - Tests may take significant time to run due to document processing and indexing delays
-- Never run these tests against production Azure resources unless you're absolutely sure of what you're doing 
+- Never run these tests against production Azure resources unless you're absolutely sure of what you're doing

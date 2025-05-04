@@ -1,0 +1,30 @@
+name: "Branch Naming Enforcement"
+
+permissions:
+  contents: read  # Required for checkout
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to check (optional)'
+        required: false
+        type: string
+  workflow_call:
+
+jobs:
+  branch-naming:
+    name: "Validate Branch Naming"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce Feature Branch Naming
+        if: startsWith(github.head_ref, 'feat/task-')
+        run: echo "Branch name follows the required pattern."
+      - name: Skip Check for Workflow Call
+        if: github.event_name == 'workflow_call'
+        run: echo "Skipping branch naming check for workflow_call event."
+      - name: Fail if Branch Name Does Not Match
+        if: ${{ !startsWith(github.head_ref, 'feat/task-') && github.event_name != 'workflow_call' }}
+        run: |
+          echo "Branch name must start with 'feat/task-<id>-<desc>'"
+          exit 1

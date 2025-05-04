@@ -236,7 +236,7 @@ class ContextAwarePromptSkill:
     def __init__(self, kernel):
         self.kernel = kernel
         self.org_context = self._load_org_context()
-    
+
     def enhance_prompt(self, query, user_role, team):
         # Enhance the prompt with organizational context
         enhanced_prompt = f"""
@@ -262,20 +262,20 @@ class KnowledgeGapDetectorSkill:
         self.kernel = kernel
         self.knowledge_taxonomy = self._load_taxonomy()
         self.user_knowledge = {}
-    
+
     def detect_gaps(self, query, user_id):
         # Analyze query to identify knowledge areas
         relevant_areas = self._map_query_to_areas(query)
-        
+
         # Update confidence scores
         for area in relevant_areas:
             if area not in self.user_knowledge.get(user_id, {}):
                 self.user_knowledge.setdefault(user_id, {})[area] = 0.2  # Initial low confidence
-        
+
         # Identify gaps (areas with low confidence)
-        gaps = [area for area, confidence in self.user_knowledge.get(user_id, {}).items() 
+        gaps = [area for area, confidence in self.user_knowledge.get(user_id, {}).items()
                 if confidence < 0.6]
-        
+
         return gaps
 ```
 
@@ -292,17 +292,17 @@ class CodeContextExtractorSkill:
     def __init__(self, kernel):
         self.kernel = kernel
         self.code_patterns = self._load_code_patterns()
-    
+
     def extract_context(self, code_snippet, language):
         # Parse code to identify structures
         parsed_code = self._parse_code(code_snippet, language)
-        
+
         # Identify organizational patterns
         patterns_found = self._identify_patterns(parsed_code)
-        
+
         # Extract architectural context
         arch_context = self._extract_architectural_context(patterns_found)
-        
+
         return {
             "patterns": patterns_found,
             "architectural_context": arch_context,

@@ -2,12 +2,15 @@
 
 # Development tools
 django-debug-toolbar>=4.3.0
-django-extensions>=3.2.3 
+django-extensions>=3.2.3
 
 # Create requirements.txt for bot framework emulator
-botbuilder-core>=4.14.0
-aiohttp>=3.7.4
+botbuilder-core
+aiohttp
 
 # Slack Integration
 slack-sdk>=3.19.5
 slack-bolt>=1.16.1
+
+# Note: asyncio should not be installed from PyPI as it's part of the standard library
+# and causes syntax errors with Python 3.11

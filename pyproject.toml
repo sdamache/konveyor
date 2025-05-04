@@ -1,0 +1,90 @@
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+exclude = [
+    ".git",
+    "__pycache__",
+    "docs/source/conf.py",
+    "old",
+    "build",
+    "dist",
+    "migrations",
+    "backups",
+    "backups/**",
+    ".cursor",
+    ".cursor/**",
+    ".devcontainer",
+    ".devcontainer/**",
+    "**/*.md",
+    ".windsurfrules",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "C90", "N", "B", "UP", "C4", "DTZ", "T10", "PIE", "PT", "RET", "SIM", "ERA"]
+ignore = [
+    "E203",  # Whitespace before ':'
+    "E402",  # Module level import not at top of file
+    "E501",  # Line too long
+    # Docstring related - can be enabled later
+    "D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107",
+    "D200", "D202", "D205", "D400", "D401", "D402",
+    # Temporarily ignore these to make the migration easier
+    "C901",  # Function is too complex
+    "UP035", # Deprecated typing imports
+    "DTZ005", # datetime.now() without tzinfo
+    "RET505", # Unnecessary else after return
+    "RET504", # Unnecessary assignment before return
+    "RET508", # Unnecessary else after break
+    "PT009",  # Use assert instead of unittest-style assertions
+    "PT011",  # pytest.raises is too broad
+    "B904",   # Raise from in except blocks
+    "ERA001", # Found commented-out code
+    "SIM105", # Use contextlib.suppress
+    "N999",   # Invalid module name
+    "B017",   # pytest.raises(Exception) is too broad
+    "SIM108", # Use ternary operator
+    "SIM401", # Use dict.get instead of if-else
+    "PIE810", # Call startswith once with tuple
+    "B007",   # Unused loop control variable
+    "N806",   # Variable in function should be lowercase
+    "PT018",  # Assertion should be broken down
+    "N817",   # CamelCase imported as acronym
+    "RET503", # Missing explicit return
+    "DTZ003", # Use of datetime.utcnow()
+    "F405",   # May be undefined from star imports
+    "SIM116", # Use dictionary instead of consecutive if statements
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["konveyor"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+skip-magic-trailing-comma = false
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = false
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = false
+disallow_untyped_decorators = false
+no_implicit_optional = false
+strict_optional = false
+ignore_missing_imports = true
+follow_imports = "skip"
+exclude = ["backups/"]
+disable_error_code = [
+    "attr-defined", "union-attr", "valid-type", "var-annotated",
+    "operator", "index", "assignment", "return-value", "arg-type",
+    "call-arg", "return", "has-type", "name-defined", "import-untyped",
+    "list-item", "dict-item", "used-before-def", "override",
+    "annotation-unchecked"
+]
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+ignore_errors = true
