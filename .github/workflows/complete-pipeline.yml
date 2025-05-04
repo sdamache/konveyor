@@ -3,7 +3,7 @@ permissions:
   id-token: write  # Required for Azure login
   contents: read   # Required for checkout
   packages: write  # Required for pushing to GHCR
-  actions: read    # Required for workflow calls
+  actions: write   # Required for workflow calls and creating GitHub variables
 on:
   pull_request:
     branches: [ main, dev ]
