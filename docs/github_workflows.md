@@ -24,45 +24,36 @@ graph TD
         branch --> |if success/skipped| quality[code-quality.yml]
         quality --> |if success/skipped| tests[integration-tests.yml]
         tests --> |if tests pass| deploy[deploy-app.yml]
-        tests --> |if tests pass| infra[infra-test.yml]
+        tests --> |if tests pass| infra[infra-deploy.yml]
     end
 
-    subgraph "Independent Workflows"
-        branch_ind[commit-conventions.yml] --> |PR/Push| validate[Validate Branch Naming]
+    subgraph "Individual Workflows (Manual Only)"
+        branch_ind[commit-conventions.yml] --> |workflow_dispatch| validate[Validate Branch Naming]
 
-        quality_ind[code-quality.yml] --> |PR/Push| lint[Lint Python Code]
-        quality_ind --> |PR/Push| coverage[Test Coverage]
+        quality_ind[code-quality.yml] --> |workflow_dispatch| lint[Lint Python Code]
+        quality_ind --> |workflow_dispatch| coverage[Test Coverage]
 
-        tests_ind[integration-tests.yml] --> |PR/Push/Manual| run_tests[Run Tests]
+        tests_ind[integration-tests.yml] --> |workflow_dispatch| run_tests[Run Tests]
         tests_ind --> |workflow_dispatch| test_options[Test Options]
         test_options --> run_tests
 
-        deploy_ind[deploy-app.yml] --> |Tag/Manual| build[Build Docker Image]
+        deploy_ind[deploy-app.yml] --> |workflow_dispatch| build[Build Docker Image]
         build --> push[Push to GHCR]
         push --> deploy_app[Deploy to Azure App Service]
 
-        infra_ind[infra-test.yml] --> |Tag/Manual| plan[Terraform Plan]
+        infra_ind[infra-deploy.yml] --> |workflow_dispatch| plan[Terraform Plan]
         plan --> apply[Terraform Apply]
     end
 
     subgraph "Triggers"
-        pr[Pull Request] --> branch_ind
-        pr --> quality_ind
-        pr --> tests_ind
-        pr --> pipeline
-
-        push_main[Push to main/dev] --> branch_ind
-        push_main --> quality_ind
-        push_main --> tests_ind
-        push_main --> pipeline
-
-        tag_version[Version Tag] --> deploy_ind
-        tag_infra[Infra Tag] --> infra_ind
-
+        pr[Pull Request] --> pipeline
+        push_main[Push to main/dev] --> pipeline
         manual[Manual Workflow Dispatch] --> pipeline
-        manual --> tests_ind
-        manual --> deploy_ind
-        manual --> infra_ind
+        manual2[Manual Workflow Dispatch] --> branch_ind
+        manual3[Manual Workflow Dispatch] --> quality_ind
+        manual4[Manual Workflow Dispatch] --> tests_ind
+        manual5[Manual Workflow Dispatch] --> deploy_ind
+        manual6[Manual Workflow Dispatch] --> infra_ind
     end
 ```
 
@@ -93,6 +84,22 @@ The connected workflow structure has been implemented with the following feature
 4. **Conditional Execution**: Steps are executed conditionally based on the type of change
 5. **Environment Support**: Workflows support deploying to different environments (dev, test, prod)
 6. **Test Flexibility**: Integration tests support different test types, categories, and environments
+7. **Centralized Triggers**: Only the complete-pipeline.yml workflow is triggered by push/PR events, preventing duplicate workflow execution
+
+### Workflow Trigger Design
+
+To prevent duplicate workflow execution, the CI/CD pipeline has been designed with the following trigger pattern:
+
+1. **complete-pipeline.yml**: Triggered by:
+   - Pull requests to `main` and `dev` branches
+   - Pushes to `main` and `dev` branches
+   - Manual workflow dispatch
+
+2. **Individual Workflows**: Only triggered by:
+   - Being called by the complete-pipeline.yml workflow (`workflow_call`)
+   - Manual workflow dispatch for direct execution (`workflow_dispatch`)
+
+This design ensures that when a PR is created or a push is made to main/dev branches, only the complete-pipeline.yml workflow is triggered, which then calls the individual workflows in sequence. This prevents the same workflow from being executed twice for the same event.
 
 ## Best Practices
 
