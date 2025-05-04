@@ -60,6 +60,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for all branches and tags
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -99,6 +101,18 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for all branches and tags
+
+      - name: Debug repository contents
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Repository contents:"
+          ls -la
+          echo "Konveyor-infra directory:"
+          ls -la Konveyor-infra || echo "Konveyor-infra directory not found"
+          echo "Git status:"
+          git status
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -299,9 +313,12 @@ jobs:
           }}
         id: deploy-infra
         run: |
-          # Check if Konveyor-infra directory exists
-          if [ ! -d "Konveyor-infra" ]; then
-            echo "::warning::Konveyor-infra directory not found. Skipping infrastructure deployment."
+          # Check if Konveyor-infra directory exists (case-insensitive)
+          if [ ! -d "Konveyor-infra" ] && [ ! -d "konveyor-infra" ]; then
+            echo "::warning::Konveyor-infra directory not found (checked both cases). Skipping infrastructure deployment."
+            # Debug: List all directories to see what's available
+            echo "Available directories:"
+            ls -la
             # Set mock values for Azure services
             echo "AZURE_SEARCH_ENDPOINT=https://mock-search-endpoint.search.windows.net" >> $GITHUB_ENV
             echo "AZURE_COGNITIVE_SEARCH_ENDPOINT=https://mock-search-endpoint.search.windows.net" >> $GITHUB_ENV
@@ -315,10 +332,17 @@ jobs:
             exit 0
           fi
 
-          # Check if the environment directory exists
-          ENV_DIR="Konveyor-infra/environments/${{ github.event.inputs.environment || 'test' }}"
+          # Check if the environment directory exists (case-insensitive)
+          INFRA_DIR="Konveyor-infra"
+          if [ ! -d "$INFRA_DIR" ] && [ -d "konveyor-infra" ]; then
+            INFRA_DIR="konveyor-infra"
+          fi
+          ENV_DIR="$INFRA_DIR/environments/${{ github.event.inputs.environment || 'test' }}"
           if [ ! -d "$ENV_DIR" ]; then
             echo "::warning::Environment directory $ENV_DIR not found. Skipping infrastructure deployment."
+            # Debug: List available environments
+            echo "Available environments:"
+            ls -la $INFRA_DIR/environments/ || echo "No environments directory found"
             # Set mock values for Azure services
             echo "AZURE_SEARCH_ENDPOINT=https://mock-search-endpoint.search.windows.net" >> $GITHUB_ENV
             echo "AZURE_COGNITIVE_SEARCH_ENDPOINT=https://mock-search-endpoint.search.windows.net" >> $GITHUB_ENV
@@ -333,6 +357,8 @@ jobs:
           fi
 
           # Try to deploy infrastructure
+          echo "Using infrastructure directory: $INFRA_DIR"
+          echo "Using environment directory: $ENV_DIR"
           cd $ENV_DIR
           terraform init
 

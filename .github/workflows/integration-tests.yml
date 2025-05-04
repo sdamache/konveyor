@@ -113,6 +113,18 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for all branches and tags
+
+      - name: Debug repository contents
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Repository contents:"
+          ls -la
+          echo "Konveyor-infra directory:"
+          ls -la Konveyor-infra || echo "Konveyor-infra directory not found"
+          echo "Git status:"
+          git status
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -481,16 +493,28 @@ jobs:
             (env.DEPLOY_INFRA == 'auto' && (env.TEST_TYPE == 'real' || (github.event_name == 'pull_request' && github.base_ref == 'main'))))
           }}
         run: |
-          # Check if Konveyor-infra directory exists
-          if [ ! -d "Konveyor-infra" ]; then
-            echo "::warning::Konveyor-infra directory not found. Skipping infrastructure cleanup."
+          # Check if Konveyor-infra directory exists (case-insensitive)
+          if [ ! -d "Konveyor-infra" ] && [ ! -d "konveyor-infra" ]; then
+            echo "::warning::Konveyor-infra directory not found (checked both cases). Skipping infrastructure cleanup."
+            # Debug: List all directories to see what's available
+            echo "Available directories:"
+            ls -la
             exit 0
           fi
 
+          # Set the correct infrastructure directory
+          INFRA_DIR="Konveyor-infra"
+          if [ ! -d "$INFRA_DIR" ] && [ -d "konveyor-infra" ]; then
+            INFRA_DIR="konveyor-infra"
+          fi
+
           # Check if the environment directory exists
-          ENV_DIR="Konveyor-infra/environments/${{ env.ENVIRONMENT }}"
+          ENV_DIR="$INFRA_DIR/environments/${{ env.ENVIRONMENT }}"
           if [ ! -d "$ENV_DIR" ]; then
             echo "::warning::Environment directory $ENV_DIR not found. Skipping infrastructure cleanup."
+            # Debug: List available environments
+            echo "Available environments:"
+            ls -la $INFRA_DIR/environments/ || echo "No environments directory found"
             exit 0
           fi
 
