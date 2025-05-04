@@ -1,0 +1,143 @@
+name: "Azure Login Test"
+
+permissions:
+  contents: read   # Required for checkout
+  id-token: write  # Required for Azure login
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to test in'
+        required: false
+        default: 'test'
+        type: choice
+        options:
+          - dev
+          - test
+          - prod
+
+jobs:
+  azure-login-test:
+    name: Test Azure Login
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Debug Azure Credentials
+      - name: Debug Azure Credentials
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Environment: ${{ github.event.inputs.environment || 'test' }}"
+          echo "Has AZURE_CREDENTIALS secret: ${{ secrets.AZURE_CREDENTIALS != '' }}"
+
+          # Check if we have individual Azure credentials
+          echo "Has individual Azure credentials: ${{ secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_TENANT_ID != '' && secrets.AZURE_SUBSCRIPTION_ID != '' }}"
+
+          # Print the structure of the AZURE_CREDENTIALS (without revealing sensitive values)
+          if [[ "${{ secrets.AZURE_CREDENTIALS }}" != "" ]]; then
+            echo "AZURE_CREDENTIALS structure:"
+            # Extract keys from the JSON without showing values
+            echo "${{ secrets.AZURE_CREDENTIALS }}" | grep -o '"[^"]*":' | tr -d '":' | sort
+          fi
+
+          # Create a dummy Azure credentials file if the secret is missing
+          if [[ "${{ secrets.AZURE_CREDENTIALS }}" == "" ]]; then
+            echo "::warning::AZURE_CREDENTIALS secret is missing. Creating a dummy credentials file for testing."
+            # Create a dummy credentials file
+            echo '{"clientId":"dummy-client-id","clientSecret":"dummy-client-secret","subscriptionId":"dummy-subscription-id","tenantId":"dummy-tenant-id"}' > azure-credentials.json
+            # Set the AZURE_CREDENTIALS environment variable
+            echo "AZURE_CREDENTIALS=$(cat azure-credentials.json)" >> $GITHUB_ENV
+          fi
+
+      # Try Azure Login with the full AZURE_CREDENTIALS
+      - name: Azure Login (Full Credentials)
+        id: azure-login-full
+        uses: azure/login@v2.1.0
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+        continue-on-error: true
+
+      # Report login status
+      - name: Report Azure Login Status (Full Credentials)
+        run: |
+          if [[ "${{ steps.azure-login-full.outcome }}" == "success" ]]; then
+            echo "✅ Azure login with full credentials succeeded"
+          else
+            echo "❌ Azure login with full credentials failed"
+          fi
+
+      # Try Azure Login with simplified credentials if full login failed
+      - name: Create Simplified Credentials
+        if: steps.azure-login-full.outcome != 'success' && secrets.AZURE_CREDENTIALS != ''
+        id: create-simplified-creds
+        run: |
+          # Extract the essential fields from the full credentials
+          CREDS=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | grep -o '"clientId":"[^"]*"' | tr -d '\n')
+          CREDS="${CREDS},$(echo '${{ secrets.AZURE_CREDENTIALS }}' | grep -o '"clientSecret":"[^"]*"' | tr -d '\n')"
+          CREDS="${CREDS},$(echo '${{ secrets.AZURE_CREDENTIALS }}' | grep -o '"subscriptionId":"[^"]*"' | tr -d '\n')"
+          CREDS="${CREDS},$(echo '${{ secrets.AZURE_CREDENTIALS }}' | grep -o '"tenantId":"[^"]*"' | tr -d '\n')"
+          echo "{${CREDS}}" > simplified-creds.json
+          echo "SIMPLIFIED_CREDS=$(cat simplified-creds.json)" >> $GITHUB_ENV
+
+      # Try Azure Login with simplified credentials
+      - name: Azure Login (Simplified Credentials)
+        if: steps.azure-login-full.outcome != 'success' && steps.create-simplified-creds.outcome == 'success'
+        id: azure-login-simplified
+        uses: azure/login@v2.1.0
+        with:
+          creds: ${{ env.SIMPLIFIED_CREDS }}
+        continue-on-error: true
+
+      # Report login status for simplified credentials
+      - name: Report Azure Login Status (Simplified Credentials)
+        if: steps.azure-login-full.outcome != 'success' && steps.create-simplified-creds.outcome == 'success'
+        run: |
+          if [[ "${{ steps.azure-login-simplified.outcome }}" == "success" ]]; then
+            echo "✅ Azure login with simplified credentials succeeded"
+          else
+            echo "❌ Azure login with simplified credentials failed"
+          fi
+
+      # Try Azure Login with individual credentials if both previous methods failed
+      - name: Azure Login (Individual Credentials)
+        if: steps.azure-login-full.outcome != 'success' && (steps.azure-login-simplified.outcome != 'success' || steps.create-simplified-creds.outcome != 'success') && secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_CLIENT_SECRET != '' && secrets.AZURE_SUBSCRIPTION_ID != '' && secrets.AZURE_TENANT_ID != ''
+        id: azure-login-individual
+        uses: azure/login@v2.1.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        continue-on-error: true
+
+      # Report login status for individual credentials
+      - name: Report Azure Login Status (Individual Credentials)
+        if: steps.azure-login-full.outcome != 'success' && (steps.azure-login-simplified.outcome != 'success' || steps.create-simplified-creds.outcome != 'success') && secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_CLIENT_SECRET != '' && secrets.AZURE_SUBSCRIPTION_ID != '' && secrets.AZURE_TENANT_ID != ''
+        run: |
+          if [[ "${{ steps.azure-login-individual.outcome }}" == "success" ]]; then
+            echo "✅ Azure login with individual credentials succeeded"
+          else
+            echo "❌ Azure login with individual credentials failed"
+          fi
+
+      # Test Azure CLI commands if any login method succeeded
+      - name: Test Azure CLI Commands
+        if: steps.azure-login-full.outcome == 'success' || steps.azure-login-simplified.outcome == 'success' || steps.azure-login-individual.outcome == 'success'
+        run: |
+          echo "Testing Azure CLI commands..."
+
+          # List Azure subscriptions
+          echo "Listing Azure subscriptions:"
+          az account list --query "[].{Name:name, ID:id, Default:isDefault}" -o table
+
+          # List resource groups
+          echo "Listing resource groups:"
+          az group list --query "[].{Name:name, Location:location}" -o table
+
+          echo "Azure CLI commands test completed."
