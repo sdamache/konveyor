@@ -75,20 +75,26 @@ jobs:
 
       # Try Azure Login with simplified credentials if full login failed
       - name: Create Simplified Credentials
-        if: steps.azure-login-full.outcome != 'success' && secrets.AZURE_CREDENTIALS != ''
+        if: steps.azure-login-full.outcome != 'success'
         id: create-simplified-creds
         run: |
-          # Extract the essential fields from the full credentials
-          CREDS=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | grep -o '"clientId":"[^"]*"' | tr -d '\n')
-          CREDS="${CREDS},$(echo '${{ secrets.AZURE_CREDENTIALS }}' | grep -o '"clientSecret":"[^"]*"' | tr -d '\n')"
-          CREDS="${CREDS},$(echo '${{ secrets.AZURE_CREDENTIALS }}' | grep -o '"subscriptionId":"[^"]*"' | tr -d '\n')"
-          CREDS="${CREDS},$(echo '${{ secrets.AZURE_CREDENTIALS }}' | grep -o '"tenantId":"[^"]*"' | tr -d '\n')"
-          echo "{${CREDS}}" > simplified-creds.json
-          echo "SIMPLIFIED_CREDS=$(cat simplified-creds.json)" >> $GITHUB_ENV
+          # Check if AZURE_CREDENTIALS secret exists
+          if [[ -n "${{ secrets.AZURE_CREDENTIALS }}" ]]; then
+            # Extract the essential fields from the full credentials
+            CREDS=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | grep -o '"clientId":"[^"]*"' | tr -d '\n')
+            CREDS="${CREDS},$(echo '${{ secrets.AZURE_CREDENTIALS }}' | grep -o '"clientSecret":"[^"]*"' | tr -d '\n')"
+            CREDS="${CREDS},$(echo '${{ secrets.AZURE_CREDENTIALS }}' | grep -o '"subscriptionId":"[^"]*"' | tr -d '\n')"
+            CREDS="${CREDS},$(echo '${{ secrets.AZURE_CREDENTIALS }}' | grep -o '"tenantId":"[^"]*"' | tr -d '\n')"
+            echo "{${CREDS}}" > simplified-creds.json
+            echo "SIMPLIFIED_CREDS=$(cat simplified-creds.json)" >> $GITHUB_ENV
+            echo "has_simplified_creds=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_simplified_creds=false" >> $GITHUB_OUTPUT
+          fi
 
       # Try Azure Login with simplified credentials
       - name: Azure Login (Simplified Credentials)
-        if: steps.azure-login-full.outcome != 'success' && steps.create-simplified-creds.outcome == 'success'
+        if: steps.azure-login-full.outcome != 'success' && steps.create-simplified-creds.outputs.has_simplified_creds == 'true'
         id: azure-login-simplified
         uses: azure/login@v2.1.0
         with:
@@ -97,7 +103,7 @@ jobs:
 
       # Report login status for simplified credentials
       - name: Report Azure Login Status (Simplified Credentials)
-        if: steps.azure-login-full.outcome != 'success' && steps.create-simplified-creds.outcome == 'success'
+        if: steps.azure-login-full.outcome != 'success' && steps.create-simplified-creds.outputs.has_simplified_creds == 'true'
         run: |
           if [[ "${{ steps.azure-login-simplified.outcome }}" == "success" ]]; then
             echo "✅ Azure login with simplified credentials succeeded"
@@ -105,9 +111,19 @@ jobs:
             echo "❌ Azure login with simplified credentials failed"
           fi
 
+      # Check for individual Azure credentials
+      - name: Check Individual Azure Credentials
+        id: check-individual-creds
+        run: |
+          if [[ -n "${{ secrets.AZURE_CLIENT_ID }}" && -n "${{ secrets.AZURE_TENANT_ID }}" && -n "${{ secrets.AZURE_SUBSCRIPTION_ID }}" ]]; then
+            echo "has_individual_creds=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_individual_creds=false" >> $GITHUB_OUTPUT
+          fi
+
       # Try Azure Login with individual credentials if both previous methods failed
       - name: Azure Login (Individual Credentials)
-        if: steps.azure-login-full.outcome != 'success' && (steps.azure-login-simplified.outcome != 'success' || steps.create-simplified-creds.outcome != 'success') && secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_CLIENT_SECRET != '' && secrets.AZURE_SUBSCRIPTION_ID != '' && secrets.AZURE_TENANT_ID != ''
+        if: steps.azure-login-full.outcome != 'success' && (steps.azure-login-simplified.outcome != 'success' || steps.create-simplified-creds.outputs.has_simplified_creds != 'true') && steps.check-individual-creds.outputs.has_individual_creds == 'true'
         id: azure-login-individual
         uses: azure/login@v2.1.0
         with:
@@ -118,7 +134,7 @@ jobs:
 
       # Report login status for individual credentials
       - name: Report Azure Login Status (Individual Credentials)
-        if: steps.azure-login-full.outcome != 'success' && (steps.azure-login-simplified.outcome != 'success' || steps.create-simplified-creds.outcome != 'success') && secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_CLIENT_SECRET != '' && secrets.AZURE_SUBSCRIPTION_ID != '' && secrets.AZURE_TENANT_ID != ''
+        if: steps.azure-login-full.outcome != 'success' && (steps.azure-login-simplified.outcome != 'success' || steps.create-simplified-creds.outputs.has_simplified_creds != 'true') && steps.check-individual-creds.outputs.has_individual_creds == 'true'
         run: |
           if [[ "${{ steps.azure-login-individual.outcome }}" == "success" ]]; then
             echo "✅ Azure login with individual credentials succeeded"
@@ -139,5 +155,24 @@ jobs:
           # List resource groups
           echo "Listing resource groups:"
           az group list --query "[].{Name:name, Location:location}" -o table
+
+          # Check if Konveyor-infra directory exists
+          if [ -d "Konveyor-infra" ]; then
+            echo "Konveyor-infra directory found. Checking Terraform state..."
+
+            # Find available environment directories
+            echo "Available environments:"
+            ls -la Konveyor-infra/environments/
+
+            # Try to initialize Terraform in the test environment
+            if [ -d "Konveyor-infra/environments/test" ]; then
+              cd Konveyor-infra/environments/test
+              echo "Initializing Terraform in test environment..."
+              terraform init -backend=false
+              echo "Terraform initialization completed."
+            fi
+          else
+            echo "Konveyor-infra directory not found. Skipping Terraform checks."
+          fi
 
           echo "Azure CLI commands test completed."
