@@ -3,7 +3,7 @@ Tests for improved error handling in the Slack webhook handler.
 """
 
 import json
-from unittest.mock import AsyncMock, MagicMock, patch  # noqa: F401, F401
+from unittest.mock import AsyncMock, MagicMock, patch  # noqa: F401
 
 import pytest
 from django.http import HttpResponse, JsonResponse  # noqa: F401

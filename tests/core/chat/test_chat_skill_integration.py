@@ -6,7 +6,7 @@ verifying that it works correctly with the new core components.
 """
 
 import asyncio
-from typing import Any, Dict, List  # noqa: F401, F401, F401
+from typing import Any, Dict, List  # noqa: F401
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest

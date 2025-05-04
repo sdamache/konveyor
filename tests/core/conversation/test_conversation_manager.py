@@ -7,7 +7,7 @@ including the InMemoryConversationManager and the ConversationManagerFactory.
 
 import asyncio
 import os  # noqa: F401
-from typing import Any, Dict, List  # noqa: F401, F401, F401
+from typing import Any, Dict, List  # noqa: F401
 
 import pytest
 

@@ -1,6 +1,6 @@
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v5.0.0
     hooks:
     -   id: trailing-whitespace
         exclude: "backups/|backups/.*|.cursor/|.cursor/.*|.devcontainer/|.devcontainer/.*|.*.md|.windsurfrules"
@@ -12,7 +12,7 @@ repos:
         exclude: "backups/|backups/.*|.cursor/|.cursor/.*|.devcontainer/|.devcontainer/.*"
 
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.3
+    rev: v0.11.8
     hooks:
     -   id: ruff
         args: [--fix]
@@ -21,7 +21,7 @@ repos:
         exclude: "backups/|backups/.*|.cursor/|.cursor/.*|.devcontainer/|.devcontainer/.*|.*.md|.windsurfrules"
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.9.0
+    rev: v1.15.0
     hooks:
     -   id: mypy
         additional_dependencies: [types-requests, types-setuptools, types-pyyaml]

@@ -9,8 +9,8 @@ import asyncio  # noqa: F401
 
 # Mock the Django models and SearchService before importing DocumentationNavigatorSkill
 import sys
-from typing import Any, Dict, List  # noqa: F401, F401, F401
-from unittest.mock import AsyncMock, MagicMock, patch  # noqa: F401, F401
+from typing import Any, Dict, List  # noqa: F401
+from unittest.mock import AsyncMock, MagicMock, patch  # noqa: F401
 
 import pytest
 
