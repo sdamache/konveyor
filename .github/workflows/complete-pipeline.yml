@@ -1,5 +1,6 @@
 name: "Complete CI/CD Pipeline"
-
+permissions:
+  id-token: write
 on:
   pull_request:
     branches: [ main, dev ]
@@ -91,6 +92,8 @@ jobs:
       needs.integration-tests.outputs.success == 'true' &&
       (github.event.inputs.deploy == 'true' || github.ref_type == 'tag' || startsWith(github.ref, 'refs/tags/v'))
     uses: ./.github/workflows/deploy-app.yml
+    permissions:
+      id-token: write
     with:
       ref: ${{ github.event.inputs.ref || github.ref }}
       environment: ${{ github.event.inputs.environment || 'test' }}
@@ -104,6 +107,8 @@ jobs:
       needs.integration-tests.outputs.success == 'true' &&
       (github.event.inputs.deploy == 'true' || github.ref_type == 'tag' || contains(github.ref, 'infra'))
     uses: ./.github/workflows/infra-deploy.yml
+    permissions:
+      id-token: write
     with:
       ref: ${{ github.event.inputs.ref || github.ref }}
       environment: ${{ github.event.inputs.environment || 'test' }}
