@@ -218,14 +218,20 @@ jobs:
           fi
 
       # Create a dummy Azure credentials file if the secret is missing
-      - name: Create Dummy Azure Credentials
-        if: ${{ (github.event_name == 'push' || github.event_name == 'pull_request' || env.TEST_TYPE == 'real' || contains(env.TEST_TYPE, 'both')) && secrets.AZURE_CREDENTIALS == '' }}
+      - name: Check Azure Credentials
+        if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || env.TEST_TYPE == 'real' || contains(env.TEST_TYPE, 'both') }}
+        id: check-azure-creds
         run: |
-          echo "::warning::AZURE_CREDENTIALS secret is missing. Creating a dummy credentials file for testing."
-          # Create a dummy credentials file
-          echo '{"clientId":"dummy-client-id","clientSecret":"dummy-client-secret","subscriptionId":"dummy-subscription-id","tenantId":"dummy-tenant-id"}' > azure-credentials.json
-          # Set the AZURE_CREDENTIALS environment variable
-          echo "AZURE_CREDENTIALS_JSON=$(cat azure-credentials.json)" >> $GITHUB_ENV
+          if [[ -n "${{ secrets.AZURE_CREDENTIALS }}" ]]; then
+            echo "has_credentials=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_credentials=false" >> $GITHUB_OUTPUT
+            echo "::warning::AZURE_CREDENTIALS secret is missing. Creating a dummy credentials file for testing."
+            # Create a dummy credentials file
+            echo '{"clientId":"dummy-client-id","clientSecret":"dummy-client-secret","subscriptionId":"dummy-subscription-id","tenantId":"dummy-tenant-id"}' > azure-credentials.json
+            # Set the AZURE_CREDENTIALS environment variable
+            echo "AZURE_CREDENTIALS_JSON=$(cat azure-credentials.json)" >> $GITHUB_ENV
+          fi
 
       - name: Azure Login
         # Always run Azure login for PR and push events, or when real tests are specified
@@ -233,7 +239,7 @@ jobs:
         if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || env.TEST_TYPE == 'real' || contains(env.TEST_TYPE, 'both') }}
         uses: azure/login@v2.1.0
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS != '' && secrets.AZURE_CREDENTIALS || env.AZURE_CREDENTIALS_JSON }}
+          creds: ${{ steps.check-azure-creds.outputs.has_credentials == 'true' && secrets.AZURE_CREDENTIALS || env.AZURE_CREDENTIALS_JSON }}
         continue-on-error: true
 
       # Report login status
@@ -443,7 +449,7 @@ jobs:
         if: ${{ always() && (github.event_name == 'push' || github.event_name == 'pull_request' || env.TEST_TYPE == 'real' || contains(env.TEST_TYPE, 'both')) }}
         uses: azure/login@v2.1.0
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS != '' && secrets.AZURE_CREDENTIALS || env.AZURE_CREDENTIALS_JSON }}
+          creds: ${{ steps.check-azure-creds.outputs.has_credentials == 'true' && secrets.AZURE_CREDENTIALS || env.AZURE_CREDENTIALS_JSON }}
         continue-on-error: true
 
       # Report cleanup login status
