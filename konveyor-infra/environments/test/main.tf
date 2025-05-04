@@ -88,7 +88,7 @@ module "app_service" {
   app_settings = merge(
     {
       DJANGO_SECRET_KEY        = "${var.DJANGO_SECRET_KEY}" # Should be stored in Key Vault and referenced securely
-      DJANGO_SETTINGS_MODULE   = "konveyor.settings.production"
+      DJANGO_SETTINGS_MODULE   = "konveyor.settings.testing"
       DATABASE_URL             = "REPLACE_WITH_DB_URL" # Should be set to your Azure Database connection string
       AZURE_STORAGE_CONNECTION_STRING = module.storage.storage_connection_string
       AZURE_OPENAI_ENDPOINT    = module.openai.cognitive_account_endpoint
@@ -109,20 +109,20 @@ module "app_service" {
   )
 }
 
-module "bot_service" {
-  source              = "../../modules/bot-service"
-  name                = "${var.prefix}-test-bot"
-  prefix              = var.prefix
-  resource_group_name = module.resource_group.name
-  location            = "global"
-  sku                 = "F0"
-  microsoft_app_id    = var.microsoft_app_id
-  microsoft_app_password = var.microsoft_app_password
-  slack_client_id     = var.slack_client_id
-  slack_client_secret = var.slack_client_secret
-  slack_signing_secret = var.slack_signing_secret
-  tags                = var.tags
-}
+# module "bot_service" {
+#   source              = "../../modules/bot-service"
+#   name                = "${var.prefix}-test-bot"
+#   prefix              = var.prefix
+#   resource_group_name = module.resource_group.name
+#   location            = "global"
+#   sku                 = "F0"
+#   microsoft_app_id    = var.microsoft_app_id
+#   microsoft_app_password = var.microsoft_app_password
+#   slack_client_id     = var.slack_client_id
+#   slack_client_secret = var.slack_client_secret
+#   slack_signing_secret = var.slack_signing_secret
+#   tags                = var.tags
+# }
 
 # RAG infrastructure (includes Redis Cache) - Temporarily commented out for faster testing
 # module "rag" {

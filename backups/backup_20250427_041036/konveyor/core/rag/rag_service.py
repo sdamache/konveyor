@@ -14,11 +14,15 @@ implementation in konveyor/skills/. Specifically:
 Future work in Task #3 (Agent Orchestration) should consider consolidating these
 implementations or clearly defining their boundaries.
 """
+
 import os
-from typing import List, Dict, Optional
-from konveyor.core.rag.templates import RAGPromptManager
+from typing import Dict, List, Optional
+
 from konveyor.core.azure_utils.clients import AzureClientManager
+from konveyor.core.rag.templates import RAGPromptManager
+
 from .context_service import ContextService
+
 
 class RAGService:
     """Main service for RAG operations."""
@@ -35,7 +39,7 @@ class RAGService:
         conversation_id: Optional[str] = None,
         template_type: str = "knowledge",
         max_context_chunks: int = 3,
-        temperature: float = 0.7
+        temperature: float = 0.7,
     ) -> Dict[str, any]:
         """
         Generate a response using RAG pipeline.
@@ -51,8 +55,7 @@ class RAGService:
         """
         # Retrieve relevant context
         context_chunks = await self.context_service.retrieve_context(
-            query=query,
-            max_chunks=max_context_chunks
+            query=query, max_chunks=max_context_chunks
         )
 
         # Format context into prompt
@@ -60,27 +63,28 @@ class RAGService:
 
         # Get and format prompt template
         prompt = self.prompt_manager.format_prompt(
-            template_type,
-            context=formatted_context,
-            query=query
+            template_type, context=formatted_context, query=query
         )
 
         # Generate response using Azure OpenAI
         completion = self.openai_client.chat.completions.create(
-            model=os.environ.get('AZURE_OPENAI_CHAT_DEPLOYMENT', 'gpt-deployment'),
+            model=os.environ.get("AZURE_OPENAI_CHAT_DEPLOYMENT", "gpt-deployment"),
             messages=[
                 {"role": "system", "content": prompt["system"]},
-                {"role": "user", "content": prompt["user"]}
+                {"role": "user", "content": prompt["user"]},
             ],
-            temperature=temperature
+            temperature=temperature,
         )
 
         # Extract sources from context chunks
-        sources = [{
-            "source": chunk["source"],
-            "page": chunk.get("page"),
-            "relevance_score": chunk["relevance_score"]
-        } for chunk in context_chunks]
+        sources = [
+            {
+                "source": chunk["source"],
+                "page": chunk.get("page"),
+                "relevance_score": chunk["relevance_score"],
+            }
+            for chunk in context_chunks
+        ]
 
         # Store conversation messages if conversation_id provided
         if conversation_id:
@@ -88,9 +92,7 @@ class RAGService:
 
             # Store user query
             await storage_manager.add_message(
-                conversation_id=conversation_id,
-                message_type="user",
-                content=query
+                conversation_id=conversation_id, message_type="user", content=query
             )
 
             # Store assistant response
@@ -99,15 +101,12 @@ class RAGService:
                 message_type="assistant",
                 content=completion.choices[0].message.content,
                 metadata={
-                    "context_chunks": [{
-                        "source": chunk["source"],
-                        "content": chunk["content"]
-                    } for chunk in context_chunks],
-                    "prompt_template": template_type
-                }
+                    "context_chunks": [
+                        {"source": chunk["source"], "content": chunk["content"]}
+                        for chunk in context_chunks
+                    ],
+                    "prompt_template": template_type,
+                },
             )
 
-        return {
-            "answer": completion.choices[0].message.content,
-            "sources": sources
-        }
+        return {"answer": completion.choices[0].message.content, "sources": sources}

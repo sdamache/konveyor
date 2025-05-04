@@ -4,16 +4,23 @@ Slash command handlers for the Slack bot.
 This module contains handlers for Slack slash commands.
 """
 
+# Removed: import json
 import logging
-import json
-from typing import Dict, Any, List, Optional, Callable
+from collections.abc import Callable
+from typing import Any
+
 from django.conf import settings
+
+from konveyor.apps.bot.services.slack_user_profile_service import (
+    SlackUserProfileService,
+)
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
 # Command registry
 command_registry = {}
+
 
 def register_command(command_name: str, handler: Callable, description: str):
     """
@@ -24,13 +31,11 @@ def register_command(command_name: str, handler: Callable, description: str):
         handler: The function to handle the command
         description: A description of what the command does
     """
-    command_registry[command_name] = {
-        "handler": handler,
-        "description": description
-    }
+    command_registry[command_name] = {"handler": handler, "description": description}
     logger.info(f"Registered slash command: /{command_name}")
 
-def get_command_handler(command_name: str) -> Optional[Dict[str, Any]]:
+
+def get_command_handler(command_name: str) -> dict[str, Any] | None:
     """
     Get a command handler by name.
 
@@ -42,7 +47,8 @@ def get_command_handler(command_name: str) -> Optional[Dict[str, Any]]:
     """
     return command_registry.get(command_name)
 
-def get_all_commands() -> List[Dict[str, str]]:
+
+def get_all_commands() -> list[dict[str, str]]:
     """
     Get all registered commands.
 
@@ -54,9 +60,13 @@ def get_all_commands() -> List[Dict[str, str]]:
         for name, info in command_registry.items()
     ]
 
+
 # Command handlers
 
-def handle_help_command(command_text: str, user_id: str, channel_id: str, response_url: str) -> Dict[str, Any]:
+
+def handle_help_command(
+    command_text: str, user_id: str, channel_id: str, response_url: str
+) -> dict[str, Any]:
     """
     Handle the /help command.
 
@@ -75,38 +85,39 @@ def handle_help_command(command_text: str, user_id: str, channel_id: str, respon
     blocks = [
         {
             "type": "header",
-            "text": {
-                "type": "plain_text",
-                "text": "Available Commands",
-                "emoji": True
-            }
+            "text": {"type": "plain_text", "text": "Available Commands", "emoji": True},
         },
         {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": "Here are the commands you can use with this bot:"
-            }
-        }
+                "text": "Here are the commands you can use with this bot:",
+            },
+        },
     ]
 
     # Add each command to the blocks
     for command in commands:
-        blocks.append({
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": f"*/{command['name']}*: {command['description']}"
+        blocks.append(
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"*/{command['name']}*: {command['description']}",
+                },
             }
-        })
+        )
 
     return {
         "response_type": "ephemeral",  # Only visible to the user who triggered it
         "text": "Available Commands",
-        "blocks": blocks
+        "blocks": blocks,
     }
 
-def handle_status_command(command_text: str, user_id: str, channel_id: str, response_url: str) -> Dict[str, Any]:
+
+def handle_status_command(
+    command_text: str, user_id: str, channel_id: str, response_url: str
+) -> dict[str, Any]:
     """
     Handle the /status command.
 
@@ -123,51 +134,41 @@ def handle_status_command(command_text: str, user_id: str, channel_id: str, resp
     blocks = [
         {
             "type": "header",
-            "text": {
-                "type": "plain_text",
-                "text": "System Status",
-                "emoji": True
-            }
+            "text": {"type": "plain_text", "text": "System Status", "emoji": True},
         },
         {
             "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": "✅ *Bot Service*: Online"
-            }
+            "text": {"type": "mrkdwn", "text": "✅ *Bot Service*: Online"},
         },
         {
             "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": "✅ *Conversation Service*: Online"
-            }
+            "text": {"type": "mrkdwn", "text": "✅ *Conversation Service*: Online"},
         },
         {
             "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": "✅ *AI Service*: Online"
-            }
+            "text": {"type": "mrkdwn", "text": "✅ *AI Service*: Online"},
         },
         {
             "type": "context",
             "elements": [
                 {
                     "type": "mrkdwn",
-                    "text": f"Environment: {getattr(settings, 'ENVIRONMENT', 'development')}"
+                    "text": f"Environment: {getattr(settings, 'ENVIRONMENT', 'development')}",  # noqa: E501
                 }
-            ]
-        }
+            ],
+        },
     ]
 
     return {
         "response_type": "ephemeral",  # Only visible to the user who triggered it
         "text": "System Status",
-        "blocks": blocks
+        "blocks": blocks,
     }
 
-def handle_info_command(command_text: str, user_id: str, channel_id: str, response_url: str) -> Dict[str, Any]:
+
+def handle_info_command(
+    command_text: str, user_id: str, channel_id: str, response_url: str
+) -> dict[str, Any]:
     """
     Handle the /info command.
 
@@ -184,42 +185,41 @@ def handle_info_command(command_text: str, user_id: str, channel_id: str, respon
     blocks = [
         {
             "type": "header",
-            "text": {
-                "type": "plain_text",
-                "text": "About Konveyor",
-                "emoji": True
-            }
+            "text": {"type": "plain_text", "text": "About Konveyor", "emoji": True},
         },
         {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": "Konveyor is an intelligent onboarding solution for software engineers. It helps new team members get up to speed quickly by providing context-aware answers about your codebase and development processes."
-            }
+                "text": "Konveyor is an intelligent onboarding solution for software engineers. It helps new team members get up to speed quickly by providing context-aware answers about your codebase and development processes.",  # noqa: E501
+            },
         },
         {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": "*Key Features:*\n• Contextual code understanding\n• RAG-powered knowledge retrieval\n• Conversation memory\n• Multi-channel support"
-            }
+                "text": "*Key Features:*\n• Contextual code understanding\n• RAG-powered knowledge retrieval\n• Conversation memory\n• Multi-channel support",  # noqa: E501
+            },
         },
         {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": "For more information, visit our documentation or contact the development team."
-            }
-        }
+                "text": "For more information, visit our documentation or contact the development team.",  # noqa: E501
+            },
+        },
     ]
 
     return {
         "response_type": "ephemeral",  # Only visible to the user who triggered it
         "text": "About Konveyor",
-        "blocks": blocks
+        "blocks": blocks,
     }
 
-def handle_code_command(command_text: str, user_id: str, channel_id: str, response_url: str) -> Dict[str, Any]:
+
+def handle_code_command(
+    command_text: str, user_id: str, channel_id: str, response_url: str
+) -> dict[str, Any]:
     """
     Handle the /code command for code formatting examples.
 
@@ -239,91 +239,82 @@ def handle_code_command(command_text: str, user_id: str, channel_id: str, respon
             "text": {
                 "type": "plain_text",
                 "text": "Code Formatting Examples",
-                "emoji": True
-            }
+                "emoji": True,
+            },
         },
         {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": "Here are examples of how to format code in messages:"
-            }
+                "text": "Here are examples of how to format code in messages:",
+            },
         },
         {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": "*Inline Code:*\n`const example = 'inline code';`"
-            }
+                "text": "*Inline Code:*\n`const example = 'inline code';`",
+            },
         },
         {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": "*Basic Code Block:*\n```\nfunction example() {\n  return 'Hello, world!';\n}\n```"
-            }
+                "text": "*Basic Code Block:*\n```\nfunction example() {\n  return 'Hello, world!';\n}\n```",  # noqa: E501
+            },
         },
         {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": "*Python Syntax Highlighting:*\n```python\ndef example():\n    return \"Hello, world!\"\n```"
-            }
+                "text": '*Python Syntax Highlighting:*\n```python\ndef example():\n    return "Hello, world!"\n```',  # noqa: E501
+            },
         },
         {
             "type": "context",
-            "elements": [
-                {
-                    "type": "mrkdwn",
-                    "text": "*Language:* Python"
-                }
-            ]
+            "elements": [{"type": "mrkdwn", "text": "*Language:* Python"}],
         },
         {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": "*JavaScript Syntax Highlighting:*\n```javascript\nconst getData = async () => {\n  try {\n    const response = await fetch('/api/data');\n    return await response.json();\n  } catch (error) {\n    console.error('Error fetching data:', error);\n  }\n};\n```"
-            }
+                "text": "*JavaScript Syntax Highlighting:*\n```javascript\nconst getData = async () => {\n  try {\n    const response = await fetch('/api/data');\n    return await response.json();\n  } catch (error) {\n    console.error('Error fetching data:', error);\n  }\n};\n```",  # noqa: E501
+            },
         },
         {
             "type": "context",
-            "elements": [
-                {
-                    "type": "mrkdwn",
-                    "text": "*Language:* JavaScript"
-                }
-            ]
+            "elements": [{"type": "mrkdwn", "text": "*Language:* JavaScript"}],
         },
         {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": "*Supported Languages:*\nPython, JavaScript, TypeScript, Java, C#, C++, Go, Ruby, Rust, PHP, HTML, CSS, SQL, Shell/Bash, JSON, XML, YAML, and more."
-            }
+                "text": "*Supported Languages:*\nPython, JavaScript, TypeScript, Java, C#, C++, Go, Ruby, Rust, PHP, HTML, CSS, SQL, Shell/Bash, JSON, XML, YAML, and more.",  # noqa: E501
+            },
         },
         {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": "*How to Use:*\nWrap your code in triple backticks and specify the language:\n\\```python\nyour code here\n\\```"
-            }
-        }
+                "text": "*How to Use:*\nWrap your code in triple backticks and specify the language:\n\\```python\nyour code here\n\\```",  # noqa: E501
+            },
+        },
     ]
 
     return {
         "response_type": "ephemeral",  # Only visible to the user who triggered it
         "text": "Code Formatting Examples",
-        "blocks": blocks
+        "blocks": blocks,
     }
 
-# Import the SlackUserProfileService
-from konveyor.apps.bot.services.slack_user_profile_service import SlackUserProfileService
 
 # Initialize the service
 slack_user_profile_service = SlackUserProfileService()
 
-def handle_preferences_command(command_text: str, user_id: str, channel_id: str, response_url: str) -> Dict[str, Any]:
+
+def handle_preferences_command(
+    command_text: str, user_id: str, channel_id: str, response_url: str
+) -> dict[str, Any]:
     """
     Handle the /preferences command for viewing and setting user preferences.
 
@@ -351,42 +342,42 @@ def handle_preferences_command(command_text: str, user_id: str, channel_id: str,
                 "text": {
                     "type": "plain_text",
                     "text": "Your Preferences",
-                    "emoji": True
-                }
+                    "emoji": True,
+                },
             },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "Here are your current preferences:"
-                }
+                    "text": "Here are your current preferences:",
+                },
             },
             {
                 "type": "section",
                 "fields": [
                     {
                         "type": "mrkdwn",
-                        "text": f"*Code Language:* {profile.code_language_preference or 'Not set'}"
+                        "text": f"*Code Language:* {profile.code_language_preference or 'Not set'}",  # noqa: E501
                     },
                     {
                         "type": "mrkdwn",
-                        "text": f"*Response Format:* {profile.response_format_preference or 'concise'}"
-                    }
-                ]
+                        "text": f"*Response Format:* {profile.response_format_preference or 'concise'}",  # noqa: E501
+                    },
+                ],
             },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "To set a preference, use:\n`/preferences set code_language python`\n`/preferences set response_format [concise|detailed|technical]`"
-                }
-            }
+                    "text": "To set a preference, use:\n`/preferences set code_language python`\n`/preferences set response_format [concise|detailed|technical]`",  # noqa: E501
+                },
+            },
         ]
 
         return {
             "response_type": "ephemeral",  # Only visible to the user who triggered it
             "text": "Your Preferences",
-            "blocks": blocks
+            "blocks": blocks,
         }
 
     # Handle setting preferences
@@ -395,7 +386,7 @@ def handle_preferences_command(command_text: str, user_id: str, channel_id: str,
         if len(parts) < 3:
             return {
                 "response_type": "ephemeral",
-                "text": "Please specify both the preference name and value. Example: `/preferences set code_language python`"
+                "text": "Please specify both the preference name and value. Example: `/preferences set code_language python`",  # noqa: E501
             }
 
         preference_name = parts[1].lower()
@@ -405,37 +396,46 @@ def handle_preferences_command(command_text: str, user_id: str, channel_id: str,
         if preference_name not in ["code_language", "response_format"]:
             return {
                 "response_type": "ephemeral",
-                "text": f"Unknown preference: {preference_name}. Available preferences: code_language, response_format"
+                "text": f"Unknown preference: {preference_name}. Available preferences: code_language, response_format",  # noqa: E501
             }
 
         # Validate response_format value
-        if preference_name == "response_format" and preference_value not in ["concise", "detailed", "technical"]:
+        if preference_name == "response_format" and preference_value not in [
+            "concise",
+            "detailed",
+            "technical",
+        ]:
             return {
                 "response_type": "ephemeral",
-                "text": f"Invalid value for response_format: {preference_value}. Available options: concise, detailed, technical"
+                "text": f"Invalid value for response_format: {preference_value}. Available options: concise, detailed, technical",  # noqa: E501
             }
 
         # Update the preference
-        updated_profile = slack_user_profile_service.update_preference(user_id, preference_name, preference_value)
+        updated_profile = slack_user_profile_service.update_preference(
+            user_id, preference_name, preference_value
+        )
 
         if updated_profile:
             return {
                 "response_type": "ephemeral",
-                "text": f"Your {preference_name} preference has been set to {preference_value}."
+                "text": f"Your {preference_name} preference has been set to {preference_value}.",  # noqa: E501
             }
         else:
             return {
                 "response_type": "ephemeral",
-                "text": "There was an error updating your preference. Please try again."
+                "text": "There was an error updating your preference. Please try again.",  # noqa: E501
             }
 
     # Handle unknown action
     return {
         "response_type": "ephemeral",
-        "text": f"Unknown action: {action}. Available actions: set"
+        "text": f"Unknown action: {action}. Available actions: set",
     }
 
-def handle_profile_command(command_text: str, user_id: str, channel_id: str, response_url: str) -> Dict[str, Any]:
+
+def handle_profile_command(
+    command_text: str, user_id: str, channel_id: str, response_url: str
+) -> dict[str, Any]:
     """
     Handle the /profile command for viewing user profile information.
 
@@ -455,70 +455,66 @@ def handle_profile_command(command_text: str, user_id: str, channel_id: str, res
     blocks = [
         {
             "type": "header",
-            "text": {
-                "type": "plain_text",
-                "text": "Your Profile",
-                "emoji": True
-            }
+            "text": {"type": "plain_text", "text": "Your Profile", "emoji": True},
         },
         {
             "type": "section",
             "fields": [
                 {
                     "type": "mrkdwn",
-                    "text": f"*Name:* {profile.slack_real_name or profile.slack_name}"
+                    "text": f"*Name:* {profile.slack_real_name or profile.slack_name}",
                 },
                 {
                     "type": "mrkdwn",
-                    "text": f"*Display Name:* {profile.slack_display_name or 'Not set'}"
-                }
-            ]
+                    "text": f"*Display Name:* {profile.slack_display_name or 'Not set'}",  # noqa: E501
+                },
+            ],
         },
         {
             "type": "section",
             "fields": [
                 {
                     "type": "mrkdwn",
-                    "text": f"*Email:* {profile.slack_email or 'Not available'}"
+                    "text": f"*Email:* {profile.slack_email or 'Not available'}",
                 },
-                {
-                    "type": "mrkdwn",
-                    "text": f"*Slack ID:* {profile.slack_id}"
-                }
-            ]
+                {"type": "mrkdwn", "text": f"*Slack ID:* {profile.slack_id}"},
+            ],
         },
         {
             "type": "section",
             "fields": [
                 {
                     "type": "mrkdwn",
-                    "text": f"*Interactions:* {profile.interaction_count}"
+                    "text": f"*Interactions:* {profile.interaction_count}",
                 },
                 {
                     "type": "mrkdwn",
-                    "text": f"*Last Interaction:* {profile.last_interaction.strftime('%Y-%m-%d %H:%M:%S') if profile.last_interaction else 'Never'}"
-                }
-            ]
+                    "text": f"*Last Interaction:* {profile.last_interaction.strftime('%Y-%m-%d %H:%M:%S') if profile.last_interaction else 'Never'}",  # noqa: E501
+                },
+            ],
         },
         {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": "To update your profile information, use `/preferences` to set your preferences."
-            }
-        }
+                "text": "To update your profile information, use `/preferences` to set your preferences.",  # noqa: E501
+            },
+        },
     ]
 
     return {
         "response_type": "ephemeral",  # Only visible to the user who triggered it
         "text": "Your Profile",
-        "blocks": blocks
+        "blocks": blocks,
     }
+
 
 # Register commands
 register_command("help", handle_help_command, "Show available commands")
 register_command("status", handle_status_command, "Check system status")
 register_command("info", handle_info_command, "Get information about Konveyor")
 register_command("code", handle_code_command, "Show code formatting examples")
-register_command("preferences", handle_preferences_command, "View and set your preferences")
+register_command(
+    "preferences", handle_preferences_command, "View and set your preferences"
+)
 register_command("profile", handle_profile_command, "View your profile information")

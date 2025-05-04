@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('konveyor_documents', '0001_initial'),
+        ("konveyor_documents", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='document',
-            name='filename',
+            model_name="document",
+            name="filename",
             field=models.CharField(blank=True, max_length=255, null=True),
         ),
         migrations.AddField(
-            model_name='document',
-            name='size',
+            model_name="document",
+            name="size",
             field=models.IntegerField(blank=True, null=True),
         ),
     ]

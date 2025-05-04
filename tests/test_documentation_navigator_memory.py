@@ -5,21 +5,28 @@ This module tests the conversation memory features of the DocumentationNavigator
 including creating conversations, adding messages, and handling follow-up questions.
 """
 
-import pytest
-import asyncio
-import uuid
-from datetime import datetime
-from typing import Dict, Any, List, Optional
-from unittest.mock import MagicMock, patch
-
+# Removed: import asyncio
 # Mock the necessary modules before importing DocumentationNavigatorSkill
 import sys
-sys.modules['konveyor.apps.documents.models'] = MagicMock()
-sys.modules['konveyor.apps.search.services.search_service'] = MagicMock()
-sys.modules['konveyor.core.documents.document_service'] = MagicMock()
-sys.modules['konveyor.core.azure_utils.service'] = MagicMock()
-sys.modules['konveyor.core.azure_utils.retry'] = MagicMock()
-sys.modules['konveyor.core.azure_utils.mixins'] = MagicMock()
+import uuid
+from datetime import datetime
+
+# Removed: from typing import Any, Dict, List, Optional
+from unittest.mock import MagicMock, patch  # noqa: F401
+
+import pytest
+
+from konveyor.skills.documentation_navigator.DocumentationNavigatorSkill import (
+    DocumentationNavigatorSkill,
+)
+
+sys.modules["konveyor.apps.documents.models"] = MagicMock()
+sys.modules["konveyor.apps.search.services.search_service"] = MagicMock()
+sys.modules["konveyor.core.documents.document_service"] = MagicMock()
+sys.modules["konveyor.core.azure_utils.service"] = MagicMock()
+sys.modules["konveyor.core.azure_utils.retry"] = MagicMock()
+sys.modules["konveyor.core.azure_utils.mixins"] = MagicMock()
+
 
 # Create a mock ConversationManager class
 class MockConversationManager:
@@ -37,7 +44,7 @@ class MockConversationManager:
             "id": conversation_id,
             "user_id": user_id,
             "created_at": datetime.now().isoformat(),
-            "metadata": metadata or {}
+            "metadata": metadata or {},
         }
         self.messages[conversation_id] = []
         return self.conversations[conversation_id]
@@ -53,13 +60,15 @@ class MockConversationManager:
             "content": content,
             "type": message_type,
             "created_at": datetime.now().isoformat(),
-            "metadata": metadata or {}
+            "metadata": metadata or {},
         }
 
         self.messages[conversation_id].append(message)
         return message
 
-    async def get_conversation_messages(self, conversation_id, limit=50, skip=0, include_metadata=True):
+    async def get_conversation_messages(
+        self, conversation_id, limit=50, skip=0, include_metadata=True
+    ):
         """Get messages for a conversation."""
         if conversation_id not in self.conversations:
             return []
@@ -67,7 +76,9 @@ class MockConversationManager:
         messages = self.messages.get(conversation_id, [])
         return messages[-limit:] if limit else messages
 
-    async def get_conversation_context(self, conversation_id, format="string", max_messages=None):
+    async def get_conversation_context(
+        self, conversation_id, format="string", max_messages=None
+    ):
         """Get the conversation context in the specified format."""
         if conversation_id not in self.conversations:
             return "" if format == "string" else []
@@ -104,17 +115,20 @@ class MockConversationManager:
     async def get_user_conversations(self, user_id, limit=10, skip=0):
         """Get conversations for a user."""
         user_conversations = [
-            conv for conv in self.conversations.values()
+            conv
+            for conv in self.conversations.values()
             if conv.get("user_id") == user_id
         ]
 
-        return user_conversations[skip:skip + limit]
+        return user_conversations[skip : skip + limit]
+
 
 # Create a mock ConversationManagerFactory
 class MockConversationManagerFactory:
     @staticmethod
     async def create_manager():
         return MockConversationManager()
+
 
 # Create a mock SearchService class
 class MockSearchService:
@@ -127,38 +141,38 @@ class MockSearchService:
             {
                 "id": "doc1-chunk1",
                 "document_id": "doc1",
-                "content": "Onboarding is the process of integrating new employees into the company. It includes orientation, training, and introduction to company culture.",
+                "content": "Onboarding is the process of integrating new employees into the company. It includes orientation, training, and introduction to company culture.",  # noqa: E501
                 "metadata": {"title": "Onboarding Guide"},
-                "@search.score": 0.95
+                "@search.score": 0.95,
             },
             {
                 "id": "doc1-chunk2",
                 "document_id": "doc1",
-                "content": "On your first day, you should complete the HR paperwork, set up your workstation, and meet with your manager and team members.",
+                "content": "On your first day, you should complete the HR paperwork, set up your workstation, and meet with your manager and team members.",  # noqa: E501
                 "metadata": {"title": "Onboarding Guide - First Day"},
-                "@search.score": 0.9
+                "@search.score": 0.9,
             },
             {
                 "id": "doc2-chunk1",
                 "document_id": "doc2",
-                "content": "The IT department will help you set up your computer, email, and access to company systems. Contact the IT helpdesk at it@example.com.",
+                "content": "The IT department will help you set up your computer, email, and access to company systems. Contact the IT helpdesk at it@example.com.",  # noqa: E501
                 "metadata": {"title": "IT Setup Guide"},
-                "@search.score": 0.85
+                "@search.score": 0.85,
             },
             {
                 "id": "doc3-chunk1",
                 "document_id": "doc3",
-                "content": "Company policies include guidelines for remote work, time off, and expense reimbursement. All policies are available in the employee handbook.",
+                "content": "Company policies include guidelines for remote work, time off, and expense reimbursement. All policies are available in the employee handbook.",  # noqa: E501
                 "metadata": {"title": "Company Policies"},
-                "@search.score": 0.8
+                "@search.score": 0.8,
             },
             {
                 "id": "doc4-chunk1",
                 "document_id": "doc4",
-                "content": "The development environment setup includes installing Git, Docker, and VS Code. Follow the instructions in the README file.",
+                "content": "The development environment setup includes installing Git, Docker, and VS Code. Follow the instructions in the README file.",  # noqa: E501
                 "metadata": {"title": "Development Environment Setup"},
-                "@search.score": 0.75
-            }
+                "@search.score": 0.75,
+            },
         ]
 
     def hybrid_search(self, query, top=5, load_full_content=True, filter_expr=None):
@@ -183,20 +197,26 @@ class MockSearchService:
             if score > 0:
                 # Create a copy of the document with the calculated score
                 result = doc.copy()
-                result["@search.score"] = min(0.95, score + doc["@search.score"] * 0.5)  # Blend with original score
+                result["@search.score"] = min(
+                    0.95, score + doc["@search.score"] * 0.5
+                )  # Blend with original score
                 results.append(result)
 
         # Sort by score and limit to top results
         results.sort(key=lambda x: x["@search.score"], reverse=True)
         return results[:top]
 
-# Mock the necessary modules
-sys.modules['konveyor.apps.search.services.search_service'].SearchService = MockSearchService
-sys.modules['konveyor.core.conversation.factory'] = MagicMock()
-sys.modules['konveyor.core.conversation.factory'].ConversationManagerFactory = MockConversationManagerFactory
 
-# Now import the DocumentationNavigatorSkill
-from konveyor.skills.documentation_navigator.DocumentationNavigatorSkill import DocumentationNavigatorSkill
+# Mock the necessary modules
+sys.modules[
+    "konveyor.apps.search.services.search_service"
+].SearchService = MockSearchService
+sys.modules["konveyor.core.conversation.factory"] = MagicMock()
+sys.modules[
+    "konveyor.core.conversation.factory"
+].ConversationManagerFactory = MockConversationManagerFactory
+
+# DocumentationNavigatorSkill is imported at the top of the file
 
 
 class TestDocumentationNavigatorMemory:
@@ -227,8 +247,7 @@ class TestDocumentationNavigatorMemory:
 
         # Answer a question
         answer = await skill.answer_question(
-            question="What is the onboarding process?",
-            conversation_id=conversation_id
+            question="What is the onboarding process?", conversation_id=conversation_id
         )
 
         # Check that the answer contains expected elements
@@ -255,19 +274,21 @@ class TestDocumentationNavigatorMemory:
 
         # Answer an initial question
         await skill.answer_question(
-            question="What is the onboarding process?",
-            conversation_id=conversation_id
+            question="What is the onboarding process?", conversation_id=conversation_id
         )
 
         # Ask a follow-up question
         follow_up_answer = await skill.continue_conversation(
             follow_up_question="What should I do on my first day?",
-            conversation_id=conversation_id
+            conversation_id=conversation_id,
         )
 
         # Check that the answer contains expected elements
         assert "Based on the documentation" in follow_up_answer
-        assert "onboarding" in follow_up_answer.lower() or "process" in follow_up_answer.lower()
+        assert (
+            "onboarding" in follow_up_answer.lower()
+            or "process" in follow_up_answer.lower()
+        )
         assert "Sources:" in follow_up_answer
 
         # Get the conversation manager
@@ -283,12 +304,15 @@ class TestDocumentationNavigatorMemory:
         # Ask another follow-up question
         second_follow_up_answer = await skill.continue_conversation(
             follow_up_question="Who can help me with IT setup?",
-            conversation_id=conversation_id
+            conversation_id=conversation_id,
         )
 
         # Check that the answer contains expected elements
         assert "Based on the documentation" in second_follow_up_answer
-        assert "onboarding" in second_follow_up_answer.lower() or "process" in second_follow_up_answer.lower()
+        assert (
+            "onboarding" in second_follow_up_answer.lower()
+            or "process" in second_follow_up_answer.lower()
+        )
         assert "Sources:" in second_follow_up_answer
 
         # Check that the conversation was updated again
@@ -307,8 +331,7 @@ class TestDocumentationNavigatorMemory:
 
         # Format search results for Slack
         slack_format = await skill.format_for_slack(
-            query="company policies",
-            conversation_id=conversation_id
+            query="company policies", conversation_id=conversation_id
         )
 
         # Check that the format contains expected elements
@@ -335,17 +358,19 @@ class TestDocumentationNavigatorMemory:
 
         # Answer an initial question about onboarding
         await skill.answer_question(
-            question="What is the onboarding process?",
-            conversation_id=conversation_id
+            question="What is the onboarding process?", conversation_id=conversation_id
         )
 
         # Ask a follow-up question specifically about IT
         follow_up_answer = await skill.continue_conversation(
-            follow_up_question="Tell me about IT setup",
-            conversation_id=conversation_id
+            follow_up_question="Tell me about IT setup", conversation_id=conversation_id
         )
 
         # The answer should contain information enhanced by the context
         assert "Based on the documentation" in follow_up_answer
-        assert "onboarding" in follow_up_answer.lower() or "process" in follow_up_answer.lower() or "setup" in follow_up_answer.lower()
+        assert (
+            "onboarding" in follow_up_answer.lower()
+            or "process" in follow_up_answer.lower()
+            or "setup" in follow_up_answer.lower()
+        )
         assert "Sources:" in follow_up_answer

@@ -68,4 +68,8 @@ node_modules/
 *.sw?
 # Task files
 tasks.json
-tasks/ 
+tasks/
+
+# Utility scripts
+fix_*.py
+tests/results/

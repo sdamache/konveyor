@@ -11,9 +11,10 @@ message formatting, and response generation.
 
 import logging
 import traceback
-from typing import List, Dict, Any, Optional
-from semantic_kernel.functions import kernel_function
+from typing import Any, Dict, List, Optional  # noqa: F401
+
 from semantic_kernel import Kernel
+from semantic_kernel.functions import kernel_function
 
 from konveyor.core.conversation.factory import ConversationManagerFactory
 from konveyor.core.formatters.factory import FormatterFactory
@@ -31,31 +32,31 @@ class ChatSkill:
     conversation context, and basic utility functions. It's designed to be
     used with Slack or other chat interfaces and includes demonstration
     functions that show how Semantic Kernel skills work.
-    
+
     This updated version uses the new core components for conversation management,
     message formatting, and response generation.
     """
 
-    def __init__(self, kernel: Optional[Kernel] = None):
+    def __init__(self, kernel: Kernel | None = None):
         """
         Initialize the ChatSkill.
 
         Args:
-            kernel: Optional Semantic Kernel instance. If not provided, one will be created.
+            kernel: Optional Semantic Kernel instance. If not provided, one will be created.  # noqa: E501
         """
         self.kernel = kernel if kernel is not None else self._create_kernel()
-        
+
         # Initialize the conversation manager
         self.conversation_manager = None
         self._init_conversation_manager()
-        
+
         # Initialize the formatter
         self.formatter = FormatterFactory.get_formatter("slack")
-        
+
         # Initialize the response generator
         self.response_generator = None
         self._init_response_generator()
-        
+
         logger.info("ChatSkill initialized with new core components")
 
     def _create_kernel(self) -> Kernel:
@@ -66,7 +67,7 @@ class ChatSkill:
             Kernel: A configured Semantic Kernel instance
         """
         try:
-            # Create a kernel with validation disabled to prevent errors during initialization
+            # Create a kernel with validation disabled to prevent errors during initialization  # noqa: E501
             kernel = create_kernel(validate=False)
             logger.info("Created new kernel instance for ChatSkill")
             return kernel
@@ -75,34 +76,40 @@ class ChatSkill:
             logger.error(traceback.format_exc())
             # Return a minimal kernel without services as a fallback
             return Kernel()
-    
+
     async def _init_conversation_manager(self):
         """Initialize the conversation manager."""
         try:
-            self.conversation_manager = await ConversationManagerFactory.create_manager("memory")
+            self.conversation_manager = await ConversationManagerFactory.create_manager(
+                "memory"
+            )
             logger.info("Initialized conversation manager")
         except Exception as e:
             logger.error(f"Failed to initialize conversation manager: {str(e)}")
             logger.error(traceback.format_exc())
-    
+
     def _init_response_generator(self):
         """Initialize the response generator."""
         try:
             # Configure the response generator with the conversation manager
-            config = {
-                "conversation_service": self.conversation_manager
-            }
-            self.response_generator = ResponseGeneratorFactory.get_generator("chat", config)
+            config = {"conversation_service": self.conversation_manager}
+            self.response_generator = ResponseGeneratorFactory.get_generator(
+                "chat", config
+            )
             logger.info("Initialized response generator")
         except Exception as e:
             logger.error(f"Failed to initialize response generator: {str(e)}")
             logger.error(traceback.format_exc())
 
     @kernel_function(
-        description="Answer a question using Azure OpenAI",
-        name="answer_question"
+        description="Answer a question using Azure OpenAI", name="answer_question"
     )
-    async def answer_question(self, question: str, context: Optional[str] = None, system_message: Optional[str] = None) -> str:
+    async def answer_question(
+        self,
+        question: str,
+        context: str | None = None,
+        system_message: str | None = None,
+    ) -> str:
         """
         Answer a question using Azure OpenAI.
 
@@ -130,26 +137,25 @@ class ChatSkill:
                 options = {}
                 if system_message:
                     options["system_message"] = system_message
-                
+
                 # Generate the response
                 response_data = await self.response_generator.generate_response(
-                    query=question,
-                    context=context,
-                    use_rag=False,
-                    **options
+                    query=question, context=context, use_rag=False, **options
                 )
-                
-                return response_data.get("response", "I'm sorry, I couldn't generate a response.")
-            
+
+                return response_data.get(
+                    "response", "I'm sorry, I couldn't generate a response."
+                )
+
             # Fall back to the kernel if the response generator is not available
             logger.warning("Response generator not available, falling back to kernel")
-            
+
             # Get the chat service from the kernel
             chat_service = self.kernel.get_service("chat")
 
             if not chat_service:
                 logger.warning("No chat service available in kernel")
-                return "I'm sorry, I'm currently experiencing connectivity issues with my AI backend. The team is working on resolving this. Please try again later."
+                return "I'm sorry, I'm currently experiencing connectivity issues with my AI backend. The team is working on resolving this. Please try again later."  # noqa: E501
 
             # Prepare messages for the chat service
             messages = []
@@ -159,14 +165,18 @@ class ChatSkill:
                 messages.append({"role": "system", "content": system_message})
             else:
                 # Default system message
-                messages.append({
-                    "role": "system",
-                    "content": "You are a helpful assistant for the Konveyor project. Provide clear, concise, and accurate responses."
-                })
+                messages.append(
+                    {
+                        "role": "system",
+                        "content": "You are a helpful assistant for the Konveyor project. Provide clear, concise, and accurate responses.",  # noqa: E501
+                    }
+                )
 
             # Add context as a system message if provided
             if context:
-                messages.append({"role": "system", "content": f"Previous conversation: {context}"})
+                messages.append(
+                    {"role": "system", "content": f"Previous conversation: {context}"}
+                )
 
             # Add the user's question
             messages.append({"role": "user", "content": question})
@@ -177,31 +187,42 @@ class ChatSkill:
                 # https://learn.microsoft.com/en-us/semantic-kernel/concepts/ai-services/chat-completion/?tabs=csharp-AzureOpenAI%2Cpython-AzureOpenAI%2Cjava-AzureOpenAI&pivots=programming-language-python
 
                 # Convert our messages to the proper format
-                from semantic_kernel.contents import ChatMessageContent, AuthorRole, ChatHistory
+                from semantic_kernel.contents import (
+                    AuthorRole,
+                    ChatHistory,
+                    ChatMessageContent,
+                )
 
                 # Create a ChatHistory object
                 chat_history = ChatHistory()
 
                 # Add messages to the chat history
                 for msg in messages:
-                    role = AuthorRole.USER if msg["role"] == "user" else AuthorRole.SYSTEM if msg["role"] == "system" else AuthorRole.ASSISTANT
-                    chat_message = ChatMessageContent(
-                        role=role,
-                        content=msg["content"]
+                    role = (
+                        AuthorRole.USER
+                        if msg["role"] == "user"
+                        else (
+                            AuthorRole.SYSTEM
+                            if msg["role"] == "system"
+                            else AuthorRole.ASSISTANT
+                        )
                     )
+                    chat_message = ChatMessageContent(role=role, content=msg["content"])
                     chat_history.add_message(chat_message)
 
                 # Create execution settings
                 settings = chat_service.get_prompt_execution_settings_class()()
 
                 # Use asyncio to run the async method in a synchronous context
-                import asyncio
+                # Removed: import asyncio
 
                 async def get_completion():
-                    result = await chat_service.get_chat_message_content(chat_history, settings)
+                    result = await chat_service.get_chat_message_content(
+                        chat_history, settings
+                    )
                     return result
 
-                # Since we're in an async function, we can just await the coroutine directly
+                # Since we're in an async function, we can just await the coroutine directly  # noqa: E501
                 response = await get_completion()
 
                 # Return the content
@@ -212,18 +233,19 @@ class ChatSkill:
                 logger.error(traceback.format_exc())
 
                 # Simple error message without hardcoded responses
-                return "I encountered an error while connecting to the AI service. Please try again later."
+                return "I encountered an error while connecting to the AI service. Please try again later."  # noqa: E501
 
         except Exception as e:
             logger.error(f"Error in answer_question: {str(e)}")
             logger.error(traceback.format_exc())
-            return f"I encountered an error while processing your question. Please try again later."
+            return f"I encountered an error while processing your question. Please try again later."  # noqa: E501, F541
 
     @kernel_function(
-        description="Process a message in the context of a conversation",
-        name="chat"
+        description="Process a message in the context of a conversation", name="chat"
     )
-    async def chat(self, message: str, conversation_id: Optional[str] = None) -> Dict[str, Any]:
+    async def chat(
+        self, message: str, conversation_id: str | None = None
+    ) -> dict[str, Any]:
         """
         Process a message in the context of a conversation.
 
@@ -242,19 +264,20 @@ class ChatSkill:
                 conversation = await self.conversation_manager.create_conversation()
                 conversation_id = conversation["id"]
                 logger.debug(f"Created new conversation: {conversation_id}")
-            
+
             # Get conversation context if available
             context = None
             if conversation_id and self.conversation_manager:
                 try:
                     context = await self.conversation_manager.get_conversation_context(
-                        conversation_id=conversation_id,
-                        format="string"
+                        conversation_id=conversation_id, format="string"
                     )
-                    logger.debug(f"Retrieved conversation context with length: {len(context) if context else 0}")
+                    logger.debug(
+                        f"Retrieved conversation context with length: {len(context) if context else 0}"  # noqa: E501
+                    )
                 except Exception as e:
                     logger.error(f"Error retrieving conversation context: {str(e)}")
-            
+
             # Use the response generator to generate a response
             if self.response_generator:
                 # Generate the response
@@ -263,15 +286,19 @@ class ChatSkill:
                     context=context,
                     conversation_id=conversation_id,
                     use_rag=False,
-                    template_type="chat"
+                    template_type="chat",
                 )
-                
-                response = response_data.get("response", "I'm sorry, I couldn't generate a response.")
+
+                response = response_data.get(
+                    "response", "I'm sorry, I couldn't generate a response."
+                )
             else:
                 # Fall back to the answer_question method
-                logger.warning("Response generator not available, falling back to answer_question")
+                logger.warning(
+                    "Response generator not available, falling back to answer_question"
+                )
                 response = await self.answer_question(message, context=context)
-                
+
                 # Store in conversation history if available
                 if conversation_id and self.conversation_manager:
                     try:
@@ -279,14 +306,14 @@ class ChatSkill:
                         await self.conversation_manager.add_message(
                             conversation_id=conversation_id,
                             content=message,
-                            message_type="user"
+                            message_type="user",
                         )
-                        
+
                         # Add assistant message
                         await self.conversation_manager.add_message(
                             conversation_id=conversation_id,
                             content=response,
-                            message_type="assistant"
+                            message_type="assistant",
                         )
                     except Exception as e:
                         logger.error(f"Error updating conversation history: {str(e)}")
@@ -296,11 +323,11 @@ class ChatSkill:
                 "conversation_id": conversation_id,
                 "skill_name": "ChatSkill",
                 "function_name": "chat",
-                "success": True
+                "success": True,
             }
         except Exception as e:
             logger.error(f"Error in chat function: {str(e)}")
-            error_response = "I encountered an error while processing your message. Please try again later."
+            error_response = "I encountered an error while processing your message. Please try again later."  # noqa: E501
 
             return {
                 "response": error_response,
@@ -308,10 +335,12 @@ class ChatSkill:
                 "skill_name": "ChatSkill",
                 "function_name": "chat",
                 "success": False,
-                "error": str(e)
+                "error": str(e),
             }
 
-    def format_for_slack(self, text: str, include_blocks: bool = True) -> Dict[str, Any]:
+    def format_for_slack(
+        self, text: str, include_blocks: bool = True
+    ) -> dict[str, Any]:
         """
         Format a response for Slack, handling Markdown conversion and creating blocks.
 
@@ -326,16 +355,17 @@ class ChatSkill:
         if self.formatter:
             try:
                 return self.formatter.format_message(
-                    text=text,
-                    include_blocks=include_blocks
+                    text=text, include_blocks=include_blocks
                 )
             except Exception as e:
                 logger.error(f"Error using formatter: {str(e)}")
                 logger.error(traceback.format_exc())
-        
+
         # Fall back to the original implementation if formatter is not available
-        logger.warning("Formatter not available, falling back to original implementation")
-        
+        logger.warning(
+            "Formatter not available, falling back to original implementation"
+        )
+
         # Basic text formatting
         formatted_text = text
 
@@ -346,16 +376,20 @@ class ChatSkill:
             sections = []
             current_section = ""
 
-            for line in text.split('\n'):
-                if line.startswith('# ') or line.startswith('## ') or line.startswith('### '):
+            for line in text.split("\n"):
+                if (
+                    line.startswith("# ")
+                    or line.startswith("## ")
+                    or line.startswith("### ")
+                ):
                     # If we have content in the current section, add it
                     if current_section.strip():
                         sections.append(current_section.strip())
                     # Start a new section with the header
-                    current_section = line + '\n'
+                    current_section = line + "\n"
                 else:
                     # Add line to current section
-                    current_section += line + '\n'
+                    current_section += line + "\n"
 
             # Add the last section if it has content
             if current_section.strip():
@@ -363,58 +397,48 @@ class ChatSkill:
 
             # Create blocks for each section
             for section in sections:
-                lines = section.split('\n')
+                lines = section.split("\n")
 
                 # Check if the first line is a header
-                if lines[0].startswith('# ') or lines[0].startswith('## ') or lines[0].startswith('### '):
+                if (
+                    lines[0].startswith("# ")
+                    or lines[0].startswith("## ")
+                    or lines[0].startswith("### ")
+                ):
                     # Add a header block
-                    header_text = lines[0].lstrip('#').strip()
-                    blocks.append({
-                        "type": "header",
-                        "text": {
-                            "type": "plain_text",
-                            "text": header_text
+                    header_text = lines[0].lstrip("#").strip()
+                    blocks.append(
+                        {
+                            "type": "header",
+                            "text": {"type": "plain_text", "text": header_text},
                         }
-                    })
+                    )
 
                     # Add the rest as a section
                     if len(lines) > 1:
-                        section_text = '\n'.join(lines[1:])
-                        blocks.append({
-                            "type": "section",
-                            "text": {
-                                "type": "mrkdwn",
-                                "text": section_text
+                        section_text = "\n".join(lines[1:])
+                        blocks.append(
+                            {
+                                "type": "section",
+                                "text": {"type": "mrkdwn", "text": section_text},
                             }
-                        })
+                        )
                 else:
                     # Add the whole section as a section block
-                    blocks.append({
-                        "type": "section",
-                        "text": {
-                            "type": "mrkdwn",
-                            "text": section
-                        }
-                    })
+                    blocks.append(
+                        {"type": "section", "text": {"type": "mrkdwn", "text": section}}
+                    )
 
                 # Add a divider between sections
-                blocks.append({
-                    "type": "divider"
-                })
+                blocks.append({"type": "divider"})
 
             # Remove the last divider
             if blocks and blocks[-1]["type"] == "divider":
                 blocks.pop()
 
-        return {
-            "text": formatted_text,
-            "blocks": blocks if include_blocks else None
-        }
+        return {"text": formatted_text, "blocks": blocks if include_blocks else None}
 
-    @kernel_function(
-        description="Greet a person by name",
-        name="greet"
-    )
+    @kernel_function(description="Greet a person by name", name="greet")
     async def greet(self, name: str = "there") -> str:
         """
         Greet a person by name.
@@ -443,5 +467,5 @@ class ChatSkill:
             A bullet point list
         """
         logger.info(f"Formatting text as bullet list: {text[:30]}...")
-        lines = text.strip().split('\n')
-        return '\n'.join([f"• {line.strip()}" for line in lines if line.strip()])
+        lines = text.strip().split("\n")
+        return "\n".join([f"• {line.strip()}" for line in lines if line.strip()])

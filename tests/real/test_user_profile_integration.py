@@ -5,36 +5,41 @@ Test script for user profile integration with Slack.
 This script tests the user profile integration with real Slack API calls.
 """
 
+import json
+import logging
 import os
 import sys
-import logging
-import json
-from datetime import datetime
+from datetime import datetime  # noqa: F401
 
 # Add the project directory to the Python path
-project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+project_dir = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
 sys.path.insert(0, project_dir)
 
 # Set up Django environment
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'konveyor.settings.development')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "konveyor.settings.development")
 
-import django
+import django  # noqa: E402
+
 django.setup()
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
+from konveyor.apps.bot.models import SlackUserProfile  # noqa: E402
+from konveyor.apps.bot.services.slack_service import SlackService  # noqa: E402
+
 # Import after Django setup
-from konveyor.apps.bot.services.slack_user_profile_service import SlackUserProfileService
-from konveyor.apps.bot.services.slack_service import SlackService
-from konveyor.apps.bot.models import SlackUserProfile
-from konveyor.apps.bot.slash_commands import (
+from konveyor.apps.bot.services.slack_user_profile_service import (  # noqa: E402
+    SlackUserProfileService,
+)
+from konveyor.apps.bot.slash_commands import (  # noqa: E402
+    handle_preferences_command,
     handle_profile_command,
-    handle_preferences_command
 )
 
 
@@ -53,16 +58,18 @@ def test_slack_user_profile_service():
     try:
         # List users to find your user ID
         response = slack_service.client.users_list()
-        if not response.get('ok', False):
-            logger.error(f"Error listing users: {response.get('error', 'Unknown error')}")
+        if not response.get("ok", False):
+            logger.error(
+                f"Error listing users: {response.get('error', 'Unknown error')}"
+            )
             return False
 
         # Find user by email
         user_id = None
-        for member in response.get('members', []):
-            profile = member.get('profile', {})
-            if profile.get('email') == test_email:
-                user_id = member.get('id')
+        for member in response.get("members", []):
+            profile = member.get("profile", {})
+            if profile.get("email") == test_email:
+                user_id = member.get("id")
                 break
 
         if not user_id:
@@ -81,21 +88,28 @@ def test_slack_user_profile_service():
 
         # Update profile
         updated_profile = user_profile_service.update_profile(user_id)
-        logger.info(f"Updated profile: {updated_profile.slack_name} ({updated_profile.slack_id})")
+        logger.info(
+            f"Updated profile: {updated_profile.slack_name} ({updated_profile.slack_id})"  # noqa: E501
+        )
 
         # Update preferences
-        user_profile_service.update_preference(user_id, 'code_language', 'python')
-        user_profile_service.update_preference(user_id, 'response_format', 'detailed')
+        user_profile_service.update_preference(user_id, "code_language", "python")
+        user_profile_service.update_preference(user_id, "response_format", "detailed")
 
         # Get updated profile
         final_profile = SlackUserProfile.objects.get(slack_id=user_id)
-        logger.info(f"Code language preference: {final_profile.code_language_preference}")
-        logger.info(f"Response format preference: {final_profile.response_format_preference}")
+        logger.info(
+            f"Code language preference: {final_profile.code_language_preference}"
+        )
+        logger.info(
+            f"Response format preference: {final_profile.response_format_preference}"
+        )
 
         return True
     except Exception as e:
         logger.error(f"Error testing SlackUserProfileService: {str(e)}")
         import traceback
+
         logger.error(traceback.format_exc())
         return False
 
@@ -108,32 +122,52 @@ def test_slash_commands():
         # Get a user profile
         profiles = SlackUserProfile.objects.all()
         if not profiles.exists():
-            logger.error("No user profiles found. Run test_slack_user_profile_service first.")
+            logger.error(
+                "No user profiles found. Run test_slack_user_profile_service first."
+            )
             return False
 
         profile = profiles.first()
         user_id = profile.slack_id
 
         # Test profile command
-        profile_response = handle_profile_command("", user_id, "test_channel", "http://example.com")
-        logger.info(f"Profile command response: {json.dumps(profile_response, indent=2)}")
+        profile_response = handle_profile_command(
+            "", user_id, "test_channel", "http://example.com"
+        )
+        logger.info(
+            f"Profile command response: {json.dumps(profile_response, indent=2)}"
+        )
 
         # Test preferences command (view)
-        prefs_view_response = handle_preferences_command("", user_id, "test_channel", "http://example.com")
-        logger.info(f"Preferences view response: {json.dumps(prefs_view_response, indent=2)}")
+        prefs_view_response = handle_preferences_command(
+            "", user_id, "test_channel", "http://example.com"
+        )
+        logger.info(
+            f"Preferences view response: {json.dumps(prefs_view_response, indent=2)}"
+        )
 
         # Test preferences command (set)
-        prefs_set_response = handle_preferences_command("set code_language javascript", user_id, "test_channel", "http://example.com")
-        logger.info(f"Preferences set response: {json.dumps(prefs_set_response, indent=2)}")
+        prefs_set_response = handle_preferences_command(
+            "set code_language javascript",
+            user_id,
+            "test_channel",
+            "http://example.com",
+        )
+        logger.info(
+            f"Preferences set response: {json.dumps(prefs_set_response, indent=2)}"
+        )
 
         # Verify the preference was updated
         updated_profile = SlackUserProfile.objects.get(slack_id=user_id)
-        logger.info(f"Updated code language preference: {updated_profile.code_language_preference}")
+        logger.info(
+            f"Updated code language preference: {updated_profile.code_language_preference}"  # noqa: E501
+        )
 
         return True
     except Exception as e:
         logger.error(f"Error testing slash commands: {str(e)}")
         import traceback
+
         logger.error(traceback.format_exc())
         return False
 
@@ -149,14 +183,18 @@ def test_webhook_integration():
         # Get a user profile
         profiles = SlackUserProfile.objects.all()
         if not profiles.exists():
-            logger.error("No user profiles found. Run test_slack_user_profile_service first.")
+            logger.error(
+                "No user profiles found. Run test_slack_user_profile_service first."
+            )
             return False
 
         profile = profiles.first()
         user_id = profile.slack_id
 
         # Call process_message
-        result = process_message("Hello, this is a test message", user_id, "test_channel")
+        result = process_message(
+            "Hello, this is a test message", user_id, "test_channel"
+        )
 
         # Log the result
         logger.info(f"Process message result: {result}")
@@ -169,6 +207,7 @@ def test_webhook_integration():
     except Exception as e:
         logger.error(f"Error testing webhook integration: {str(e)}")
         import traceback
+
         logger.error(traceback.format_exc())
         return False
 

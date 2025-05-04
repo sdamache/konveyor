@@ -1,7 +1,7 @@
 """
 Real integration tests for Agent Orchestration Layer.
 
-These tests verify the end-to-end functionality of the Agent Orchestration Layer with real Azure OpenAI credentials,
+These tests verify the end-to-end functionality of the Agent Orchestration Layer with real Azure OpenAI credentials,  # noqa: E501
 including integration with the Bot Framework and Semantic Kernel skills.
 
 This file requires the following environment variables to be set:
@@ -9,29 +9,39 @@ This file requires the following environment variables to be set:
 - AZURE_OPENAI_API_KEY: The Azure OpenAI API key
 
 Optional environment variables:
-- AZURE_OPENAI_CHAT_DEPLOYMENT: The name of the chat deployment (default: "gpt-35-turbo")
+- AZURE_OPENAI_CHAT_DEPLOYMENT: The name of the chat deployment (default: "gpt-35-turbo")  # noqa: E501
 - AZURE_OPENAI_API_VERSION: The API version (default: "2024-12-01-preview")
 
 Note: These tests use mocked Bot Framework components but real Azure OpenAI services.
 """
 
-import pytest
-import asyncio
+import asyncio  # noqa: F401
 import logging
 import os
-from dotenv import load_dotenv
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch  # noqa: F401
+
+import pytest
 from botbuilder.core import TurnContext
-from botbuilder.schema import Activity, ConversationAccount, ChannelAccount, ActivityTypes
+from botbuilder.schema import (
+    Activity,
+    ActivityTypes,
+    ChannelAccount,
+    ConversationAccount,
+)
+from dotenv import load_dotenv
 
 from konveyor.apps.bot.bot import KonveyorBot
-from konveyor.core.agent import AgentOrchestratorSkill, SkillRegistry
-from konveyor.core.chat import ChatSkill
-from konveyor.core.kernel import create_kernel
+from konveyor.core.agent import (  # noqa: E501, F401
+    AgentOrchestratorSkill,
+    SkillRegistry,
+)
+from konveyor.core.chat import ChatSkill  # noqa: F401
+from konveyor.core.kernel import create_kernel  # noqa: F401
 
 # Configure logging for tests
-logging.basicConfig(level=logging.INFO,
-                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 # Load environment variables
@@ -39,11 +49,13 @@ load_dotenv()
 
 # Skip all tests if required environment variables are not set
 pytestmark = pytest.mark.skipif(
-    not all([
-        os.environ.get('AZURE_OPENAI_ENDPOINT'),
-        os.environ.get('AZURE_OPENAI_API_KEY')
-    ]),
-    reason="Azure OpenAI credentials not found in environment variables"
+    not all(
+        [
+            os.environ.get("AZURE_OPENAI_ENDPOINT"),
+            os.environ.get("AZURE_OPENAI_API_KEY"),
+        ]
+    ),
+    reason="Azure OpenAI credentials not found in environment variables",
 )
 
 
@@ -61,7 +73,7 @@ def mock_turn_context():
         text="Hello, bot!",
         type="message",
         conversation=ConversationAccount(id="test-conversation"),
-        from_property=ChannelAccount(id="test-user")
+        from_property=ChannelAccount(id="test-user"),
     )
     context.activity = activity
 
@@ -76,10 +88,10 @@ async def test_bot_initialization():
         bot = KonveyorBot()
 
         # Check that the components were initialized
-        assert hasattr(bot, 'kernel')
-        assert hasattr(bot, 'registry')
-        assert hasattr(bot, 'orchestrator')
-        assert hasattr(bot, 'conversations')
+        assert hasattr(bot, "kernel")
+        assert hasattr(bot, "registry")
+        assert hasattr(bot, "orchestrator")
+        assert hasattr(bot, "conversations")
     except Exception as e:
         logger.error(f"Error initializing bot: {str(e)}")
         pytest.fail(f"Bot initialization failed: {str(e)}")
@@ -125,15 +137,12 @@ async def test_bot_members_added():
         activity = Activity(
             type="conversationUpdate",
             recipient=ChannelAccount(id="bot-id"),
-            conversation=ConversationAccount(id="test-conversation")
+            conversation=ConversationAccount(id="test-conversation"),
         )
         context.activity = activity
 
         # Create a list of members added
-        members_added = [
-            ChannelAccount(id="user-id"),
-            ChannelAccount(id="bot-id")
-        ]
+        members_added = [ChannelAccount(id="user-id"), ChannelAccount(id="bot-id")]
 
         # Process the members added event
         await bot.on_members_added_activity(members_added, context)

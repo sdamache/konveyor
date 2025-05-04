@@ -8,11 +8,17 @@ It combines both chat capabilities and basic demonstration functions.
 
 import logging
 import traceback
-from typing import List, Dict, Any, Optional
-from semantic_kernel.functions import kernel_function
+from typing import Any, Dict, List, Optional
+
 from semantic_kernel import Kernel
-from semantic_kernel.connectors.ai.open_ai.services.azure_chat_completion import AzureChatCompletion
-from semantic_kernel.connectors.ai.chat_completion_client_base import ChatCompletionClientBase
+from semantic_kernel.connectors.ai.chat_completion_client_base import (
+    ChatCompletionClientBase,
+)
+from semantic_kernel.connectors.ai.open_ai.services.azure_chat_completion import (
+    AzureChatCompletion,
+)
+from semantic_kernel.functions import kernel_function
+
 from konveyor.core.kernel import create_kernel
 
 logger = logging.getLogger(__name__)
@@ -57,10 +63,14 @@ class ChatSkill:
             return Kernel()
 
     @kernel_function(
-        description="Answer a question using Azure OpenAI",
-        name="answer_question"
+        description="Answer a question using Azure OpenAI", name="answer_question"
     )
-    async def answer_question(self, question: str, context: Optional[str] = None, system_message: Optional[str] = None) -> str:
+    async def answer_question(
+        self,
+        question: str,
+        context: Optional[str] = None,
+        system_message: Optional[str] = None,
+    ) -> str:
         """
         Answer a question using Azure OpenAI.
 
@@ -97,14 +107,18 @@ class ChatSkill:
                 messages.append({"role": "system", "content": system_message})
             else:
                 # Default system message
-                messages.append({
-                    "role": "system",
-                    "content": "You are a helpful assistant for the Konveyor project. Provide clear, concise, and accurate responses."
-                })
+                messages.append(
+                    {
+                        "role": "system",
+                        "content": "You are a helpful assistant for the Konveyor project. Provide clear, concise, and accurate responses.",
+                    }
+                )
 
             # Add context as a system message if provided
             if context:
-                messages.append({"role": "system", "content": f"Previous conversation: {context}"})
+                messages.append(
+                    {"role": "system", "content": f"Previous conversation: {context}"}
+                )
 
             # Add the user's question
             messages.append({"role": "user", "content": question})
@@ -115,18 +129,27 @@ class ChatSkill:
                 # https://learn.microsoft.com/en-us/semantic-kernel/concepts/ai-services/chat-completion/?tabs=csharp-AzureOpenAI%2Cpython-AzureOpenAI%2Cjava-AzureOpenAI&pivots=programming-language-python
 
                 # Convert our messages to the proper format
-                from semantic_kernel.contents import ChatMessageContent, AuthorRole, ChatHistory
+                from semantic_kernel.contents import (
+                    AuthorRole,
+                    ChatHistory,
+                    ChatMessageContent,
+                )
 
                 # Create a ChatHistory object
                 chat_history = ChatHistory()
 
                 # Add messages to the chat history
                 for msg in messages:
-                    role = AuthorRole.USER if msg["role"] == "user" else AuthorRole.SYSTEM if msg["role"] == "system" else AuthorRole.ASSISTANT
-                    chat_message = ChatMessageContent(
-                        role=role,
-                        content=msg["content"]
+                    role = (
+                        AuthorRole.USER
+                        if msg["role"] == "user"
+                        else (
+                            AuthorRole.SYSTEM
+                            if msg["role"] == "system"
+                            else AuthorRole.ASSISTANT
+                        )
                     )
+                    chat_message = ChatMessageContent(role=role, content=msg["content"])
                     chat_history.add_message(chat_message)
 
                 # Create execution settings
@@ -136,7 +159,9 @@ class ChatSkill:
                 import asyncio
 
                 async def get_completion():
-                    result = await chat_service.get_chat_message_content(chat_history, settings)
+                    result = await chat_service.get_chat_message_content(
+                        chat_history, settings
+                    )
                     return result
 
                 # Since we're in an async function, we can just await the coroutine directly
@@ -158,8 +183,7 @@ class ChatSkill:
             return f"I encountered an error while processing your question. Please try again later."
 
     @kernel_function(
-        description="Process a message in the context of a conversation",
-        name="chat"
+        description="Process a message in the context of a conversation", name="chat"
     )
     async def chat(self, message: str, history: str = "") -> Dict[str, Any]:
         """
@@ -190,7 +214,7 @@ class ChatSkill:
                 "history": updated_history,
                 "skill_name": "ChatSkill",
                 "function_name": "chat",
-                "success": True
+                "success": True,
             }
         except Exception as e:
             logger.error(f"Error in chat function: {str(e)}")
@@ -198,7 +222,9 @@ class ChatSkill:
 
             # Update history even in case of error
             if history:
-                updated_history = f"{history}\nUser: {message}\nAssistant: {error_response}"
+                updated_history = (
+                    f"{history}\nUser: {message}\nAssistant: {error_response}"
+                )
             else:
                 updated_history = f"User: {message}\nAssistant: {error_response}"
 
@@ -208,10 +234,12 @@ class ChatSkill:
                 "skill_name": "ChatSkill",
                 "function_name": "chat",
                 "success": False,
-                "error": str(e)
+                "error": str(e),
             }
 
-    def format_for_slack(self, text: str, include_blocks: bool = True) -> Dict[str, Any]:
+    def format_for_slack(
+        self, text: str, include_blocks: bool = True
+    ) -> Dict[str, Any]:
         """
         Format a response for Slack, handling Markdown conversion and creating blocks.
 
@@ -232,16 +260,20 @@ class ChatSkill:
             sections = []
             current_section = ""
 
-            for line in text.split('\n'):
-                if line.startswith('# ') or line.startswith('## ') or line.startswith('### '):
+            for line in text.split("\n"):
+                if (
+                    line.startswith("# ")
+                    or line.startswith("## ")
+                    or line.startswith("### ")
+                ):
                     # If we have content in the current section, add it
                     if current_section.strip():
                         sections.append(current_section.strip())
                     # Start a new section with the header
-                    current_section = line + '\n'
+                    current_section = line + "\n"
                 else:
                     # Add line to current section
-                    current_section += line + '\n'
+                    current_section += line + "\n"
 
             # Add the last section if it has content
             if current_section.strip():
@@ -249,58 +281,48 @@ class ChatSkill:
 
             # Create blocks for each section
             for section in sections:
-                lines = section.split('\n')
+                lines = section.split("\n")
 
                 # Check if the first line is a header
-                if lines[0].startswith('# ') or lines[0].startswith('## ') or lines[0].startswith('### '):
+                if (
+                    lines[0].startswith("# ")
+                    or lines[0].startswith("## ")
+                    or lines[0].startswith("### ")
+                ):
                     # Add a header block
-                    header_text = lines[0].lstrip('#').strip()
-                    blocks.append({
-                        "type": "header",
-                        "text": {
-                            "type": "plain_text",
-                            "text": header_text
+                    header_text = lines[0].lstrip("#").strip()
+                    blocks.append(
+                        {
+                            "type": "header",
+                            "text": {"type": "plain_text", "text": header_text},
                         }
-                    })
+                    )
 
                     # Add the rest as a section
                     if len(lines) > 1:
-                        section_text = '\n'.join(lines[1:])
-                        blocks.append({
-                            "type": "section",
-                            "text": {
-                                "type": "mrkdwn",
-                                "text": section_text
+                        section_text = "\n".join(lines[1:])
+                        blocks.append(
+                            {
+                                "type": "section",
+                                "text": {"type": "mrkdwn", "text": section_text},
                             }
-                        })
+                        )
                 else:
                     # Add the whole section as a section block
-                    blocks.append({
-                        "type": "section",
-                        "text": {
-                            "type": "mrkdwn",
-                            "text": section
-                        }
-                    })
+                    blocks.append(
+                        {"type": "section", "text": {"type": "mrkdwn", "text": section}}
+                    )
 
                 # Add a divider between sections
-                blocks.append({
-                    "type": "divider"
-                })
+                blocks.append({"type": "divider"})
 
             # Remove the last divider
             if blocks and blocks[-1]["type"] == "divider":
                 blocks.pop()
 
-        return {
-            "text": formatted_text,
-            "blocks": blocks if include_blocks else None
-        }
+        return {"text": formatted_text, "blocks": blocks if include_blocks else None}
 
-    @kernel_function(
-        description="Greet a person by name",
-        name="greet"
-    )
+    @kernel_function(description="Greet a person by name", name="greet")
     async def greet(self, name: str = "there") -> str:
         """
         Greet a person by name.
@@ -329,5 +351,5 @@ class ChatSkill:
             A bullet point list
         """
         logger.info(f"Formatting text as bullet list: {text[:30]}...")
-        lines = text.strip().split('\n')
-        return '\n'.join([f"• {line.strip()}" for line in lines if line.strip()])
+        lines = text.strip().split("\n")
+        return "\n".join([f"• {line.strip()}" for line in lines if line.strip()])

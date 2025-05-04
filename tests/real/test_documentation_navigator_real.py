@@ -13,27 +13,36 @@ import sys
 from unittest.mock import MagicMock
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 # Set Azure SDK logging to DEBUG level
-azure_logger = logging.getLogger('azure')
+azure_logger = logging.getLogger("azure")
 azure_logger.setLevel(logging.DEBUG)
 
 # Set Konveyor logging to DEBUG level
-konveyor_logger = logging.getLogger('konveyor')
+konveyor_logger = logging.getLogger("konveyor")
 konveyor_logger.setLevel(logging.DEBUG)
 
 # Add the project root to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 # Set environment variables for the real SearchService
-os.environ["AZURE_SEARCH_SERVICE_ENDPOINT"] = "https://konveyor-test-search-989f50a2.search.windows.net"
-os.environ["AZURE_SEARCH_ADMIN_KEY"] = "lKoRdIW78P9lIXyQLrKecZR9ZdJWgYwQ1tsEZLHMsSAzSeD1TpCO"
-os.environ["AZURE_SEARCH_INDEX_NAME"] = "konveyor-documents"  # Using the default index name from SearchService
+os.environ["AZURE_SEARCH_SERVICE_ENDPOINT"] = (
+    "https://konveyor-test-search-989f50a2.search.windows.net"
+)
+os.environ["AZURE_SEARCH_ADMIN_KEY"] = (
+    "lKoRdIW78P9lIXyQLrKecZR9ZdJWgYwQ1tsEZLHMsSAzSeD1TpCO"
+)
+os.environ["AZURE_SEARCH_INDEX_NAME"] = (
+    "konveyor-documents"  # Using the default index name from SearchService
+)
 
 # We'll use the real ConversationManagerFactory and ConversationManager
 # No need for mock implementations
+
 
 # Create a custom SearchService class that uses the real Azure Cognitive Search
 class RealSearchService:
@@ -58,14 +67,20 @@ class RealSearchService:
 
         # Create the search client
         self.credential = AzureKeyCredential(key)
-        self.search_client = SearchClient(endpoint=endpoint, index_name=index_name, credential=self.credential)
+        self.search_client = SearchClient(
+            endpoint=endpoint, index_name=index_name, credential=self.credential
+        )
 
         # Verify the connection by listing indexes
         try:
-            index_client = SearchIndexClient(endpoint=endpoint, credential=self.credential)
+            index_client = SearchIndexClient(
+                endpoint=endpoint, credential=self.credential
+            )
             indexes = list(index_client.list_indexes())
             index_names = [idx.name for idx in indexes]
-            logger.info(f"Successfully connected to Azure Cognitive Search at {endpoint}")
+            logger.info(
+                f"Successfully connected to Azure Cognitive Search at {endpoint}"
+            )
             logger.info(f"Available indexes: {', '.join(index_names)}")
 
             if index_name in index_names:
@@ -91,21 +106,18 @@ class RealSearchService:
             # Perform the search
             logger.debug(f"Calling Azure Cognitive Search with search_text={query}")
             results = self.search_client.search(
-                search_text=query,
-                top=top,
-                include_total_count=True,
-                filter=filter_expr
+                search_text=query, top=top, include_total_count=True, filter=filter_expr
             )
 
             # Get total count if available
-            total_count = results.get_count() if hasattr(results, 'get_count') else None
+            total_count = results.get_count() if hasattr(results, "get_count") else None
             logger.info(f"Search returned total_count: {total_count}")
 
             # Convert the results to the expected format
             formatted_results = []
             for i, result in enumerate(results):
                 # Log the raw result for debugging
-                logger.debug(f"Raw result {i+1}: {result}")
+                logger.debug(f"Raw result {i + 1}: {result}")
 
                 # Extract fields
                 result_id = result.get("id", "")
@@ -117,7 +129,12 @@ class RealSearchService:
                 metadata_str = result.get("metadata", "{}")
                 try:
                     import json
-                    metadata_dict = json.loads(metadata_str) if isinstance(metadata_str, str) else {}
+
+                    metadata_dict = (
+                        json.loads(metadata_str)
+                        if isinstance(metadata_str, str)
+                        else {}
+                    )
                     title = metadata_dict.get("title", "")
                 except Exception as e:
                     logger.warning(f"Error parsing metadata: {str(e)}")
@@ -128,14 +145,14 @@ class RealSearchService:
                     "id": result_id,
                     "document_id": document_id,
                     "content": content,
-                    "metadata": {
-                        "title": title
-                    },
-                    "@search.score": score
+                    "metadata": {"title": title},
+                    "@search.score": score,
                 }
 
                 # Log the formatted result
-                logger.debug(f"Formatted result {i+1}: id={result_id}, document_id={document_id}, score={score}")
+                logger.debug(
+                    f"Formatted result {i + 1}: id={result_id}, document_id={document_id}, score={score}"  # noqa: E501
+                )
                 logger.debug(f"Content: {content[:100]}...")
 
                 formatted_results.append(formatted_result)
@@ -144,7 +161,9 @@ class RealSearchService:
 
             # Log a summary of the results
             for i, result in enumerate(formatted_results):
-                logger.info(f"Result {i+1}: id={result['id']}, document_id={result['document_id']}, score={result['@search.score']}")
+                logger.info(
+                    f"Result {i + 1}: id={result['id']}, document_id={result['document_id']}, score={result['@search.score']}"  # noqa: E501
+                )
                 logger.info(f"Title: {result['metadata']['title']}")
                 logger.info(f"Content preview: {result['content'][:100]}...")
 
@@ -154,6 +173,7 @@ class RealSearchService:
             # Return an empty list if there's an error
             return []
 
+
 async def test_documentation_navigator():
     """Test the DocumentationNavigatorSkill with conversation memory."""
     logger.info("=" * 80)
@@ -161,18 +181,17 @@ async def test_documentation_navigator():
     logger.info("=" * 80)
 
     try:
-        # Mock the necessary modules
-        logger.info("Mocking necessary modules for testing")
-        sys.modules['konveyor.apps.documents.models'] = MagicMock()
-        sys.modules['konveyor.core.documents.document_service'] = MagicMock()
-        sys.modules['konveyor.core.azure_utils.service'] = MagicMock()
-        sys.modules['konveyor.core.azure_utils.retry'] = MagicMock()
-        sys.modules['konveyor.core.azure_utils.mixins'] = MagicMock()
+        # Use the real services for testing
+        logger.info("Using real services for testing")
 
         # Use the real SearchService
-        logger.info("Setting up RealSearchService to connect to actual Azure Cognitive Search")
-        sys.modules['konveyor.apps.search.services.search_service'] = MagicMock()
-        sys.modules['konveyor.apps.search.services.search_service'].SearchService = RealSearchService
+        logger.info(
+            "Setting up RealSearchService to connect to actual Azure Cognitive Search"
+        )
+        sys.modules["konveyor.apps.search.services.search_service"] = MagicMock()
+        sys.modules[
+            "konveyor.apps.search.services.search_service"
+        ].SearchService = RealSearchService
 
         # No need to mock the ConversationManagerFactory
         # The DocumentationNavigatorSkill will use the real one
@@ -180,7 +199,9 @@ async def test_documentation_navigator():
 
         # Import the DocumentationNavigatorSkill
         logger.info("Importing DocumentationNavigatorSkill")
-        from konveyor.skills.documentation_navigator.DocumentationNavigatorSkill import DocumentationNavigatorSkill
+        from konveyor.skills.documentation_navigator.DocumentationNavigatorSkill import (  # noqa: E501
+            DocumentationNavigatorSkill,
+        )
 
         # Create the DocumentationNavigatorSkill directly without a kernel
         logger.info("Creating DocumentationNavigatorSkill instance")
@@ -192,7 +213,9 @@ async def test_documentation_navigator():
 
         # Log the skill's attributes
         for attr_name in dir(doc_skill):
-            if not attr_name.startswith('_') and not callable(getattr(doc_skill, attr_name)):
+            if not attr_name.startswith("_") and not callable(
+                getattr(doc_skill, attr_name)
+            ):
                 try:
                     attr_value = getattr(doc_skill, attr_name)
                     logger.info(f"  {attr_name}: {attr_value}")
@@ -220,7 +243,7 @@ async def test_documentation_navigator():
         # Log detailed search results
         logger.info("Search results details:")
         for i, result in enumerate(search_results["results"]):
-            logger.info(f"Result {i+1}:")
+            logger.info(f"Result {i + 1}:")
             logger.info(f"  Title: {result['title']}")
             logger.info(f"  Content: {result['content'][:150]}...")
             logger.info(f"  Score: {result['score']}")
@@ -233,7 +256,9 @@ async def test_documentation_navigator():
         question = "What is the onboarding process?"
         logger.info(f"Asking question: '{question}'")
         logger.info(f"Using conversation ID: {conversation_id}")
-        answer = await doc_skill.answer_question(question, conversation_id=conversation_id)
+        answer = await doc_skill.answer_question(
+            question, conversation_id=conversation_id
+        )
         logger.info(f"Received answer of length: {len(answer)}")
         logger.info("Answer:")
         logger.info(answer)
@@ -243,13 +268,19 @@ async def test_documentation_navigator():
         try:
             # Get the conversation manager
             conversation_manager = await doc_skill._get_conversation_manager()
-            messages = await conversation_manager.get_conversation_messages(conversation_id)
+            messages = await conversation_manager.get_conversation_messages(
+                conversation_id
+            )
             logger.info(f"Conversation has {len(messages)} messages")
             for i, msg in enumerate(messages):
-                logger.info(f"Message {i+1}: Type={msg['type']}, Length={len(msg['content'])}")
+                logger.info(
+                    f"Message {i + 1}: Type={msg['type']}, Length={len(msg['content'])}"
+                )
 
             # Get conversation context
-            context = await conversation_manager.get_conversation_context(conversation_id)
+            context = await conversation_manager.get_conversation_context(
+                conversation_id
+            )
             logger.info(f"Conversation context length: {len(context)}")
             logger.info(f"Context preview: {context[:200]}...")
         except Exception as e:
@@ -262,7 +293,9 @@ async def test_documentation_navigator():
         follow_up = "What should I do on my first day?"
         logger.info(f"Asking follow-up: '{follow_up}'")
         logger.info(f"Using conversation ID: {conversation_id}")
-        follow_up_answer = await doc_skill.continue_conversation(follow_up, conversation_id)
+        follow_up_answer = await doc_skill.continue_conversation(
+            follow_up, conversation_id
+        )
         logger.info(f"Received answer of length: {len(follow_up_answer)}")
         logger.info("Answer to follow-up:")
         logger.info(follow_up_answer)
@@ -272,13 +305,19 @@ async def test_documentation_navigator():
         try:
             # Get the conversation manager
             conversation_manager = await doc_skill._get_conversation_manager()
-            messages = await conversation_manager.get_conversation_messages(conversation_id)
+            messages = await conversation_manager.get_conversation_messages(
+                conversation_id
+            )
             logger.info(f"Conversation now has {len(messages)} messages")
             for i, msg in enumerate(messages):
-                logger.info(f"Message {i+1}: Type={msg['type']}, Length={len(msg['content'])}")
+                logger.info(
+                    f"Message {i + 1}: Type={msg['type']}, Length={len(msg['content'])}"
+                )
 
             # Get conversation context
-            context = await conversation_manager.get_conversation_context(conversation_id)
+            context = await conversation_manager.get_conversation_context(
+                conversation_id
+            )
             logger.info(f"Conversation context length: {len(context)}")
             logger.info(f"Context preview: {context[:200]}...")
         except Exception as e:
@@ -291,7 +330,9 @@ async def test_documentation_navigator():
         follow_up2 = "Who can help me with IT setup?"
         logger.info(f"Asking second follow-up: '{follow_up2}'")
         logger.info(f"Using conversation ID: {conversation_id}")
-        follow_up_answer2 = await doc_skill.continue_conversation(follow_up2, conversation_id)
+        follow_up_answer2 = await doc_skill.continue_conversation(
+            follow_up2, conversation_id
+        )
         logger.info(f"Received answer of length: {len(follow_up_answer2)}")
         logger.info("Answer to second follow-up:")
         logger.info(follow_up_answer2)
@@ -301,13 +342,19 @@ async def test_documentation_navigator():
         try:
             # Get the conversation manager
             conversation_manager = await doc_skill._get_conversation_manager()
-            messages = await conversation_manager.get_conversation_messages(conversation_id)
+            messages = await conversation_manager.get_conversation_messages(
+                conversation_id
+            )
             logger.info(f"Conversation now has {len(messages)} messages")
             for i, msg in enumerate(messages):
-                logger.info(f"Message {i+1}: Type={msg['type']}, Length={len(msg['content'])}")
+                logger.info(
+                    f"Message {i + 1}: Type={msg['type']}, Length={len(msg['content'])}"
+                )
 
             # Get conversation context
-            context = await conversation_manager.get_conversation_context(conversation_id)
+            context = await conversation_manager.get_conversation_context(
+                conversation_id
+            )
             logger.info(f"Conversation context length: {len(context)}")
             logger.info(f"Context preview: {context[:200]}...")
         except Exception as e:
@@ -320,10 +367,14 @@ async def test_documentation_navigator():
         slack_query = "company policies"
         logger.info(f"Formatting for Slack: '{slack_query}'")
         logger.info(f"Using conversation ID: {conversation_id}")
-        slack_format = await doc_skill.format_for_slack(slack_query, conversation_id=conversation_id)
+        slack_format = await doc_skill.format_for_slack(
+            slack_query, conversation_id=conversation_id
+        )
         logger.info(f"Received Slack format with {len(slack_format['blocks'])} blocks")
         logger.info(f"Text: {slack_format['text'][:150]}...")
-        logger.info(f"First block type: {slack_format['blocks'][0]['type'] if slack_format['blocks'] else 'N/A'}")
+        logger.info(
+            f"First block type: {slack_format['blocks'][0]['type'] if slack_format['blocks'] else 'N/A'}"  # noqa: E501
+        )
 
         logger.info("\n" + "=" * 50)
         logger.info("TEST COMPLETED SUCCESSFULLY")
@@ -331,6 +382,7 @@ async def test_documentation_navigator():
     except Exception as e:
         logger.error(f"Error during test: {str(e)}", exc_info=True)
         raise
+
 
 if __name__ == "__main__":
     asyncio.run(test_documentation_navigator())

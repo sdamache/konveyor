@@ -5,16 +5,18 @@ This module provides a Semantic Kernel skill to analyze user questions,
 map them to knowledge areas, and identify potential knowledge gaps.
 """
 
-import logging
 import json
-from typing import Dict, List, Any, Optional, Tuple
-from semantic_kernel.functions import kernel_function, KernelFunction
+import logging
+from typing import Any, Dict, List, Optional, Tuple  # noqa: F401
+
 from semantic_kernel import Kernel
+from semantic_kernel.functions import KernelFunction, kernel_function  # noqa: F401
 
 from konveyor.skills.knowledge_analyzer.taxonomy import KnowledgeTaxonomyLoader
 from konveyor.skills.knowledge_analyzer.user_knowledge import UserKnowledgeStore
 
 logger = logging.getLogger(__name__)
+
 
 class KnowledgeGapAnalyzerSkill:
     """
@@ -25,7 +27,7 @@ class KnowledgeGapAnalyzerSkill:
     knowledge gaps.
     """
 
-    def __init__(self, kernel: Optional[Kernel] = None):
+    def __init__(self, kernel: Kernel | None = None):
         """
         Initialize the KnowledgeGapAnalyzerSkill.
 
@@ -39,7 +41,7 @@ class KnowledgeGapAnalyzerSkill:
 
     @kernel_function(
         description="Analyze a user question and map it to knowledge areas",
-        name="analyze_question"
+        name="analyze_question",
     )
     def analyze_question(self, question: str, user_id: str = "anonymous") -> str:
         """
@@ -70,7 +72,9 @@ class KnowledgeGapAnalyzerSkill:
                 {
                     "id": domain.get("id"),
                     "name": domain.get("name"),
-                    "confidence": self.user_knowledge.get_confidence(user_id, domain.get("id"))
+                    "confidence": self.user_knowledge.get_confidence(
+                        user_id, domain.get("id")
+                    ),
                 }
                 for domain in relevant_domains
             ],
@@ -78,17 +82,18 @@ class KnowledgeGapAnalyzerSkill:
                 {
                     "id": gap.get("id"),
                     "name": gap.get("name"),
-                    "confidence": self.user_knowledge.get_confidence(user_id, gap.get("id"))
+                    "confidence": self.user_knowledge.get_confidence(
+                        user_id, gap.get("id")
+                    ),
                 }
                 for gap in gaps
-            ]
+            ],
         }
 
         return json.dumps(analysis, indent=2)
 
     @kernel_function(
-        description="Get a user's knowledge profile",
-        name="get_knowledge_profile"
+        description="Get a user's knowledge profile", name="get_knowledge_profile"
     )
     def get_knowledge_profile(self, user_id: str = "anonymous") -> str:
         """
@@ -112,17 +117,18 @@ class KnowledgeGapAnalyzerSkill:
                 {
                     "id": domain.get("id"),
                     "name": domain.get("name"),
-                    "confidence": self.user_knowledge.get_confidence(user_id, domain.get("id"))
+                    "confidence": self.user_knowledge.get_confidence(
+                        user_id, domain.get("id")
+                    ),
                 }
                 for domain in all_domains
-            ]
+            ],
         }
 
         return json.dumps(profile, indent=2)
 
     @kernel_function(
-        description="Identify knowledge gaps for a user",
-        name="identify_gaps"
+        description="Identify knowledge gaps for a user", name="identify_gaps"
     )
     def identify_gaps(self, user_id: str = "anonymous") -> str:
         """
@@ -146,22 +152,24 @@ class KnowledgeGapAnalyzerSkill:
                 {
                     "id": gap.get("id"),
                     "name": gap.get("name"),
-                    "confidence": self.user_knowledge.get_confidence(user_id, gap.get("id")),
-                    "suggested_resources": self._get_suggested_resources(gap.get("id"))
+                    "confidence": self.user_knowledge.get_confidence(
+                        user_id, gap.get("id")
+                    ),
+                    "suggested_resources": self._get_suggested_resources(gap.get("id")),
                 }
                 for gap in gaps
-            ]
+            ],
         }
 
         return json.dumps(gaps_response, indent=2)
 
     @kernel_function(
-        description="Get a learning path for a user based on their role and knowledge gaps",
-        name="get_learning_path"
+        description="Get a learning path for a user based on their role and knowledge gaps",  # noqa: E501
+        name="get_learning_path",
     )
     def get_learning_path(self, role: str, user_id: str = "anonymous") -> str:
         """
-        Get a personalized learning path for a user based on their role and knowledge gaps.
+        Get a personalized learning path for a user based on their role and knowledge gaps.  # noqa: E501
 
         Args:
             role: The user's role (e.g., "new_developer", "devops_engineer").
@@ -188,23 +196,31 @@ class KnowledgeGapAnalyzerSkill:
         for domain in standard_path.get("domains", []):
             domain_id = domain.get("id")
             if domain_id in gap_ids:
-                customized_domains.append({
-                    "id": domain_id,
-                    "priority": "high",
-                    "is_gap": True,
-                    "confidence": self.user_knowledge.get_confidence(user_id, domain_id)
-                })
+                customized_domains.append(
+                    {
+                        "id": domain_id,
+                        "priority": "high",
+                        "is_gap": True,
+                        "confidence": self.user_knowledge.get_confidence(
+                            user_id, domain_id
+                        ),
+                    }
+                )
 
         # Then, add remaining domains with their original priority
         for domain in standard_path.get("domains", []):
             domain_id = domain.get("id")
             if domain_id not in gap_ids:
-                customized_domains.append({
-                    "id": domain_id,
-                    "priority": domain.get("priority"),
-                    "is_gap": False,
-                    "confidence": self.user_knowledge.get_confidence(user_id, domain_id)
-                })
+                customized_domains.append(
+                    {
+                        "id": domain_id,
+                        "priority": domain.get("priority"),
+                        "is_gap": False,
+                        "confidence": self.user_knowledge.get_confidence(
+                            user_id, domain_id
+                        ),
+                    }
+                )
 
         # Prepare the learning path response
         learning_path = {
@@ -212,12 +228,14 @@ class KnowledgeGapAnalyzerSkill:
             "role": role,
             "path_name": standard_path.get("name"),
             "path_description": standard_path.get("description"),
-            "domains": customized_domains
+            "domains": customized_domains,
         }
 
         return json.dumps(learning_path, indent=2)
 
-    def _update_confidence_scores(self, user_id: str, question: str, relevant_domains: List[Dict[str, Any]]) -> None:
+    def _update_confidence_scores(
+        self, user_id: str, question: str, relevant_domains: list[dict[str, Any]]
+    ) -> None:
         """
         Update confidence scores based on the question and relevant domains.
 
@@ -247,9 +265,11 @@ class KnowledgeGapAnalyzerSkill:
 
             # Update the confidence score
             self.user_knowledge.set_confidence(user_id, domain_id, new_confidence)
-            logger.debug(f"Updated confidence for user {user_id}, domain {domain_id}: {current_confidence} -> {new_confidence}")
+            logger.debug(
+                f"Updated confidence for user {user_id}, domain {domain_id}: {current_confidence} -> {new_confidence}"  # noqa: E501
+            )
 
-    def _identify_knowledge_gaps(self, user_id: str) -> List[Dict[str, Any]]:
+    def _identify_knowledge_gaps(self, user_id: str) -> list[dict[str, Any]]:
         """
         Identify knowledge gaps for a user based on confidence scores.
 
@@ -274,7 +294,7 @@ class KnowledgeGapAnalyzerSkill:
 
         return gaps
 
-    def _get_suggested_resources(self, domain_id: str) -> List[Dict[str, str]]:
+    def _get_suggested_resources(self, domain_id: str) -> list[dict[str, str]]:
         """
         Get suggested resources for a knowledge domain.
 
@@ -301,65 +321,65 @@ class KnowledgeGapAnalyzerSkill:
                 {
                     "title": "System Architecture Overview",
                     "url": "/docs/architecture/overview.md",
-                    "type": "document"
+                    "type": "document",
                 },
                 {
                     "title": "Architecture Decision Records",
                     "url": "/docs/architecture/decisions/",
-                    "type": "directory"
-                }
+                    "type": "directory",
+                },
             ]
         elif domain_id == "development":
             resources = [
                 {
                     "title": "Development Guidelines",
                     "url": "/docs/development/guidelines.md",
-                    "type": "document"
+                    "type": "document",
                 },
                 {
                     "title": "Git Workflow",
                     "url": "/docs/development/git-workflow.md",
-                    "type": "document"
-                }
+                    "type": "document",
+                },
             ]
         elif domain_id == "deployment":
             resources = [
                 {
                     "title": "Deployment Guide",
                     "url": "/docs/deployment/guide.md",
-                    "type": "document"
+                    "type": "document",
                 },
                 {
                     "title": "CI/CD Pipeline",
                     "url": "/docs/deployment/ci-cd.md",
-                    "type": "document"
-                }
+                    "type": "document",
+                },
             ]
         elif domain_id == "domain_knowledge":
             resources = [
                 {
                     "title": "Domain Concepts",
                     "url": "/docs/domain/concepts.md",
-                    "type": "document"
+                    "type": "document",
                 },
                 {
                     "title": "Glossary",
                     "url": "/docs/domain/glossary.md",
-                    "type": "document"
-                }
+                    "type": "document",
+                },
             ]
         elif domain_id == "technologies":
             resources = [
                 {
                     "title": "Technology Stack",
                     "url": "/docs/technologies/stack.md",
-                    "type": "document"
+                    "type": "document",
                 },
                 {
                     "title": "Azure Services",
                     "url": "/docs/technologies/azure.md",
-                    "type": "document"
-                }
+                    "type": "document",
+                },
             ]
 
         return resources

@@ -20,19 +20,19 @@ module "openai" {
   resource_group_name = module.resource_group.name
   location            = var.location
   sku_name            = var.openai_sku_name
-  
+
   # GPT model configuration
   model_name          = var.openai_model_name
   model_version       = var.openai_model_version
   capacity            = var.openai_capacity
   deploy_model        = var.openai_deploy_model
-  
+
   # Embeddings model configuration
   deploy_embeddings        = var.openai_deploy_embeddings
   embeddings_model_name    = var.openai_embeddings_model_name
   embeddings_model_version = var.openai_embeddings_model_version
   embeddings_capacity      = var.openai_embeddings_capacity
-  
+
   tags                = var.tags
 }
 

@@ -1,15 +1,17 @@
+import asyncio  # noqa: F401
 import logging
 import traceback
-import asyncio
-from typing import Dict, Any, Optional
-from botbuilder.core import TurnContext, ActivityHandler
-from botbuilder.schema import ActivityTypes, Activity
+from typing import Any, Dict, Optional  # noqa: F401
 
-from konveyor.core.kernel import create_kernel
-from konveyor.core.chat import ChatSkill
+from botbuilder.core import ActivityHandler, TurnContext
+from botbuilder.schema import Activity, ActivityTypes
+
 from konveyor.core.agent import AgentOrchestratorSkill, SkillRegistry
+from konveyor.core.chat import ChatSkill
+from konveyor.core.kernel import create_kernel
 
 logger = logging.getLogger(__name__)
+
 
 class KonveyorBot(ActivityHandler):
     """
@@ -45,13 +47,16 @@ class KonveyorBot(ActivityHandler):
 
             # Register the ChatSkill
             chat_skill = ChatSkill()
-            self.orchestrator.register_skill(chat_skill, "ChatSkill",
-                                           "Handles general chat interactions and questions",
-                                           ["chat", "question", "answer", "help"])
+            self.orchestrator.register_skill(
+                chat_skill,
+                "ChatSkill",
+                "Handles general chat interactions and questions",
+                ["chat", "question", "answer", "help"],
+            )
             logger.info("Registered ChatSkill with orchestrator")
 
             # Initialize conversation state
-            self.conversations: Dict[str, Dict[str, Any]] = {}
+            self.conversations: dict[str, dict[str, Any]] = {}
             logger.info("Initialized conversation state")
 
         except Exception as e:
@@ -73,7 +78,7 @@ class KonveyorBot(ActivityHandler):
                 return await turn_context.send_activity(
                     Activity(
                         type=ActivityTypes.message,
-                        text="I received your message but it was empty. Please try again."
+                        text="I received your message but it was empty. Please try again.",  # noqa: E501
                     )
                 )
 
@@ -86,7 +91,7 @@ class KonveyorBot(ActivityHandler):
             context = {
                 "history": self.conversations[conversation_id].get("history", ""),
                 "user_id": turn_context.activity.from_property.id,
-                "conversation_id": conversation_id
+                "conversation_id": conversation_id,
             }
 
             # Process the request through the orchestrator
@@ -114,10 +119,7 @@ class KonveyorBot(ActivityHandler):
 
             # Send the response
             await turn_context.send_activity(
-                Activity(
-                    type=ActivityTypes.message,
-                    text=response_text
-                )
+                Activity(type=ActivityTypes.message, text=response_text)
             )
 
         except Exception as e:
@@ -126,7 +128,7 @@ class KonveyorBot(ActivityHandler):
             await turn_context.send_activity(
                 Activity(
                     type=ActivityTypes.message,
-                    text=f"I encountered an error while processing your request: {str(e)}"
+                    text=f"I encountered an error while processing your request: {str(e)}",  # noqa: E501
                 )
             )
 
@@ -143,6 +145,6 @@ class KonveyorBot(ActivityHandler):
                 await turn_context.send_activity(
                     Activity(
                         type=ActivityTypes.message,
-                        text="Welcome to Konveyor Bot! I can help you with questions, chat, and more. Type something to get started."
+                        text="Welcome to Konveyor Bot! I can help you with questions, chat, and more. Type something to get started.",  # noqa: E501
                     )
                 )

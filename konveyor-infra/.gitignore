@@ -18,4 +18,4 @@ crash.*.log
 terraform.rc
 
 # Ignore lock files (optional - can be committed if you want to ensure consistent dependency versions)
-# .terraform.lock.hcl 
+# .terraform.lock.hcl

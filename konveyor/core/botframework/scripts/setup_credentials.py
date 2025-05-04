@@ -1,5 +1,7 @@
 from konveyor.core.botframework.services.credentials import SecureCredentialService
+
 # Removed os and dotenv imports
+
 
 def main():
     """Initialize secure storage for bot credentials"""
@@ -26,6 +28,7 @@ def main():
 
     except Exception as e:
         print(f"⚠ Error during secure storage setup: {str(e)}")
+
 
 if __name__ == "__main__":
     main()

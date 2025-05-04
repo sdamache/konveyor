@@ -1,26 +1,26 @@
-from aiohttp import web
-from aiohttp.web import Request, Response
-from botbuilder.core import BotFrameworkAdapterSettings, BotFrameworkAdapter
-from botbuilder.schema import Activity
 import sys
 import traceback
-from konveyor.core.botframework.bot import KonveyorBot
+
+from aiohttp import web
+from aiohttp.web import Request, Response
+from botbuilder.core import BotFrameworkAdapter, BotFrameworkAdapterSettings
+from botbuilder.schema import Activity
+from django.conf import settings  # noqa: F401
+
 from konveyor.core.azure_utils.config import AzureConfig
-from django.conf import settings
-
-
+from konveyor.core.botframework.bot import KonveyorBot
 
 # Load configuration using AzureConfig
 config = AzureConfig()
 # Ensure required Bot Framework settings are present
-config.validate_required_config('BOT')
+config.validate_required_config("BOT")
 # Bot Framework setup
 SETTINGS = BotFrameworkAdapterSettings(
-    config.get_setting('MICROSOFT_APP_ID'),
-    config.get_setting('MICROSOFT_APP_PASSWORD')
+    config.get_setting("MICROSOFT_APP_ID"), config.get_setting("MICROSOFT_APP_PASSWORD")
 )
 ADAPTER = BotFrameworkAdapter(SETTINGS)
 BOT = KonveyorBot()
+
 
 # Error handling
 async def on_error(context, error):
@@ -28,7 +28,9 @@ async def on_error(context, error):
     traceback.print_exc()
     await context.send_activity("The bot encountered an error or bug.")
 
+
 ADAPTER.on_turn_error = on_error
+
 
 # Message handler
 async def messages(req: Request) -> Response:
@@ -47,6 +49,7 @@ async def messages(req: Request) -> Response:
     except Exception as e:
         print(f"Error processing message: {str(e)}")
         return Response(status=500)
+
 
 APP = web.Application()
 APP.router.add_post("/api/messages", messages)

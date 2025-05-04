@@ -64,7 +64,7 @@ variable "openai_capacity" {
   description = "Tokens-per-Minute (TPM) capacity in thousands for GPT model. Example: capacity = 300 means 300K TPM (300,000 tokens per minute)"
   type        = number
   default     = 30  # 300K TPM for GPT-4
-  
+
   validation {
     condition     = var.openai_capacity >= 1 && var.openai_capacity <= 500
     error_message = "Capacity must be between 1 and 500 (1K to 500K TPM). Each unit represents 1,000 tokens per minute."
@@ -99,7 +99,7 @@ variable "openai_embeddings_capacity" {
   description = "Tokens-per-Minute (TPM) capacity in thousands for embeddings model. Example: capacity = 1 means 1K TPM (1,000 tokens per minute)"
   type        = number
   default     = 10  # 10K TPM for embeddings
-  
+
   validation {
     condition     = var.openai_embeddings_capacity >= 1 && var.openai_embeddings_capacity <= 100
     error_message = "Embeddings capacity must be between 1 and 100 (1K to 100K TPM). Each unit represents 1,000 tokens per minute."

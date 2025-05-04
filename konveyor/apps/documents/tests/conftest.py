@@ -2,8 +2,10 @@
 
 import os
 import sys
-import django
 from pathlib import Path
+
+import django
+
 
 def pytest_configure():
     """Configure Django settings for tests."""
@@ -12,11 +14,12 @@ def pytest_configure():
     sys.path.insert(0, str(project_root))
 
     # Set Django settings module
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'konveyor.settings.development')
-    
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "konveyor.settings.development")
+
     # Load environment variables from .env file
     from dotenv import load_dotenv
-    env_path = project_root / '.env'
+
+    env_path = project_root / ".env"
     load_dotenv(env_path)
 
     django.setup()

@@ -7,4 +7,4 @@ whitenoise>=6.6.0
 # Azure integrations (commented out for future use)
 # azure-storage-blob>=12.19.0
 # azure-identity>=1.15.0
-# azure-keyvault-secrets>=4.7.0 
+# azure-keyvault-secrets>=4.7.0

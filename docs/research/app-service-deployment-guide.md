@@ -88,7 +88,7 @@ resource "azurerm_bot_channel_slack" "slack" {
 }
 ```
 
-> Note: Slack channel resource is in the Azurerm provider ≥ 3.71.0.  
+> Note: Slack channel resource is in the Azurerm provider ≥ 3.71.0.
 > Azure portal wiring steps are identical when provisioned manually.
 
 ### 1.3 Outputs

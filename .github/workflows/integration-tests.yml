@@ -1,0 +1,380 @@
+name: "Integration Tests"
+
+permissions:
+  contents: read   # Required for checkout
+  id-token: write  # Required for Azure login
+  actions: read    # Required for workflow calls
+  packages: read   # Required for pulling from GHCR
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of tests to run'
+        required: true
+        default: 'mock'
+        type: choice
+        options:
+          - mock
+          - real
+          - both
+      environment:
+        description: 'Environment to run tests in'
+        required: true
+        default: 'test'
+        type: choice
+        options:
+          - dev
+          - test
+          - prod
+      test_category:
+        description: 'Category of tests to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - unit
+          - integration
+          - real
+          - search
+          - document
+          - slack
+      fast_track:
+        description: 'Run only critical tests for quick deployment'
+        required: false
+        default: false
+        type: boolean
+      deploy_infrastructure:
+        description: 'Whether to deploy infrastructure'
+        required: false
+        default: 'auto'
+        type: choice
+        options:
+          - auto
+          - always
+          - never
+  workflow_call:
+    inputs:
+      test_type:
+        description: 'Type of tests to run'
+        required: false
+        default: 'real'
+        type: string
+      environment:
+        description: 'Environment to run tests in'
+        required: false
+        default: 'test'
+        type: string
+      test_category:
+        description: 'Category of tests to run'
+        required: false
+        default: 'all'
+        type: string
+      fast_track:
+        description: 'Run only critical tests for quick deployment'
+        required: false
+        default: false
+        type: boolean
+      deploy_infrastructure:
+        description: 'Whether to deploy infrastructure'
+        required: false
+        default: 'auto'
+        type: string
+    outputs:
+      success:
+        description: 'Whether all tests passed'
+        value: ${{ jobs.integration-tests.outputs.tests_passed }}
+
+jobs:
+  integration-tests:
+    name: Run Integration Tests
+    runs-on: ubuntu-latest
+    outputs:
+      tests_passed: ${{ steps.test-result.outputs.passed }}
+
+    env:
+      # Django settings
+      DJANGO_SETTINGS_MODULE: konveyor.settings.${{ inputs.environment || github.event.inputs.environment || 'testing' }}
+      DJANGO_ENV: ${{ inputs.environment || github.event.inputs.environment || 'test' }}
+      DJANGO_DEBUG: 'False'
+      DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY || 'django-insecure-test-key-for-ci' }}
+
+      # Database settings (for non-SQLite tests)
+      DB_USER: ${{ secrets.DB_USER || 'postgres' }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD || 'postgres' }}
+      DB_HOST: ${{ secrets.DB_HOST || 'localhost' }}
+      DB_PORT: ${{ secrets.DB_PORT || '5432' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      # Azure Login for real tests
+      - name: Debug Azure Credentials
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Test type: ${{ inputs.test_type || github.event.inputs.test_type || 'not specified' }}"
+          echo "Has AZURE_CREDENTIALS secret: ${{ secrets.AZURE_CREDENTIALS != '' }}"
+
+          # Create a dummy Azure credentials file if the secret is missing
+          if [[ "${{ secrets.AZURE_CREDENTIALS }}" == "" ]]; then
+            echo "::warning::AZURE_CREDENTIALS secret is missing. Creating a dummy credentials file for testing."
+            # Create a dummy credentials file
+            echo '{"clientId":"dummy-client-id","clientSecret":"dummy-client-secret","subscriptionId":"dummy-subscription-id","tenantId":"dummy-tenant-id"}' > azure-credentials.json
+            # Set the AZURE_CREDENTIALS environment variable
+            echo "AZURE_CREDENTIALS=$(cat azure-credentials.json)" >> $GITHUB_ENV
+          fi
+
+      - name: Azure Login
+        # Always run Azure login for PR and push events, or when real tests are specified
+        if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || inputs.test_type == 'real' || github.event.inputs.test_type == 'real' || contains(github.event.inputs.test_type, 'both') }}
+        uses: azure/login@v2.1.0
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS || env.AZURE_CREDENTIALS }}
+        continue-on-error: true
+
+      # Determine test parameters
+      - name: Determine test parameters
+        id: test-params
+        run: |
+          # Determine environment and test type from inputs
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" || "${{ github.event_name }}" == "workflow_call" ]]; then
+            # Use inputs for workflow_dispatch or workflow_call
+            TEST_TYPE="${{ inputs.test_type || github.event.inputs.test_type || 'real' }}"
+            ENVIRONMENT="${{ inputs.environment || github.event.inputs.environment || 'test' }}"
+            TEST_CATEGORY="${{ inputs.test_category || github.event.inputs.test_category || 'all' }}"
+            FAST_TRACK="${{ inputs.fast_track || github.event.inputs.fast_track || 'false' }}"
+          else
+            # Default for push/PR events
+            TEST_TYPE="real"
+            ENVIRONMENT="test"
+            TEST_CATEGORY="all"
+            FAST_TRACK="false"
+          fi
+
+          # Set command-line arguments for the test runner
+          ARGS="--category ${TEST_CATEGORY} --env ${ENVIRONMENT}"
+
+          if [[ "${TEST_TYPE}" == "mock" ]]; then
+            ARGS="${ARGS} --mock"
+          elif [[ "${TEST_TYPE}" == "real" ]]; then
+            ARGS="${ARGS} --real"
+          else
+            # Both mock and real
+            ARGS="${ARGS} --mock --real"
+          fi
+
+          if [[ "${FAST_TRACK}" == "true" ]]; then
+            # For fast track, only run critical tests
+            if [[ "${TEST_CATEGORY}" == "all" ]]; then
+              # Override category to unit for fast track
+              ARGS="--category unit --env ${ENVIRONMENT} --real"
+            fi
+          fi
+
+          echo "args=${ARGS}" >> $GITHUB_OUTPUT
+          echo "env=${ENVIRONMENT}" >> $GITHUB_OUTPUT
+          echo "Test parameters: ${ARGS}"
+
+      # Set up environment variables from GitHub secrets/variables based on environment
+      - name: Set up environment variables
+        id: env-vars
+        run: |
+          # Determine environment-specific variables
+          ENV_SUFFIX="${{ steps.test-params.outputs.env }}"
+          ENV_SUFFIX_UPPER=$(echo $ENV_SUFFIX | tr '[:lower:]' '[:upper:]')
+
+          # Use environment-specific secrets and variables
+          if [[ "${{ steps.test-params.outputs.args }}" == *"--real"* ]]; then
+            # For real tests, use the infrastructure-provided values
+            echo "Using real Azure services from environment: $ENV_SUFFIX"
+
+            # Search service
+            echo "AZURE_SEARCH_ENDPOINT=${{ vars[format('AZURE_SEARCH_ENDPOINT_{0}', env.ENV_SUFFIX_UPPER)] || vars.AZURE_SEARCH_ENDPOINT || secrets.AZURE_SEARCH_ENDPOINT }}" >> $GITHUB_ENV
+            echo "AZURE_COGNITIVE_SEARCH_ENDPOINT=${{ vars[format('AZURE_SEARCH_ENDPOINT_{0}', env.ENV_SUFFIX_UPPER)] || vars.AZURE_SEARCH_ENDPOINT || secrets.AZURE_SEARCH_ENDPOINT }}" >> $GITHUB_ENV
+            echo "AZURE_SEARCH_API_KEY=${{ secrets[format('AZURE_SEARCH_API_KEY_{0}', env.ENV_SUFFIX_UPPER)] || secrets.AZURE_SEARCH_API_KEY }}" >> $GITHUB_ENV
+            echo "AZURE_SEARCH_INDEX_NAME=konveyor-documents" >> $GITHUB_ENV
+
+            # OpenAI service
+            echo "AZURE_OPENAI_ENDPOINT=${{ vars[format('AZURE_OPENAI_ENDPOINT_{0}', env.ENV_SUFFIX_UPPER)] || vars.AZURE_OPENAI_ENDPOINT || secrets.AZURE_OPENAI_ENDPOINT }}" >> $GITHUB_ENV
+            echo "AZURE_OPENAI_API_KEY=${{ secrets[format('AZURE_OPENAI_API_KEY_{0}', env.ENV_SUFFIX_UPPER)] || secrets.AZURE_OPENAI_API_KEY }}" >> $GITHUB_ENV
+            echo "AZURE_OPENAI_API_VERSION=2024-02-01-preview" >> $GITHUB_ENV
+            echo "AZURE_OPENAI_CHAT_DEPLOYMENT=gpt-4o" >> $GITHUB_ENV
+            echo "AZURE_OPENAI_EMBEDDING_DEPLOYMENT=${{ vars[format('AZURE_OPENAI_EMBEDDING_DEPLOYMENT_{0}', env.ENV_SUFFIX_UPPER)] || vars.AZURE_OPENAI_EMBEDDING_DEPLOYMENT || 'text-embedding-ada-002' }}" >> $GITHUB_ENV
+
+            # Document Intelligence
+            echo "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT=${{ vars[format('AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT_{0}', env.ENV_SUFFIX_UPPER)] || vars.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT || secrets.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT }}" >> $GITHUB_ENV
+            echo "AZURE_DOCUMENT_INTELLIGENCE_API_KEY=${{ secrets[format('AZURE_DOCUMENT_INTELLIGENCE_API_KEY_{0}', env.ENV_SUFFIX_UPPER)] || secrets.AZURE_DOCUMENT_INTELLIGENCE_API_KEY }}" >> $GITHUB_ENV
+
+            # Storage
+            echo "AZURE_STORAGE_CONNECTION_STRING=${{ secrets[format('AZURE_STORAGE_CONNECTION_STRING_{0}', env.ENV_SUFFIX_UPPER)] || secrets.AZURE_STORAGE_CONNECTION_STRING }}" >> $GITHUB_ENV
+            echo "AZURE_STORAGE_CONTAINER_NAME=documents" >> $GITHUB_ENV
+
+            # Print debug info (without exposing secrets)
+            echo "Azure Search Endpoint: ${AZURE_SEARCH_ENDPOINT:-Not set}"
+            echo "Azure OpenAI Endpoint: ${AZURE_OPENAI_ENDPOINT:-Not set}"
+            echo "Azure Document Intelligence Endpoint: ${AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT:-Not set}"
+            echo "Azure Storage Container: ${AZURE_STORAGE_CONTAINER_NAME:-Not set}"
+
+            # Check if any required variables are missing
+            if [ -z "${AZURE_SEARCH_ENDPOINT}" ] || [ -z "${AZURE_SEARCH_API_KEY}" ] || \
+               [ -z "${AZURE_OPENAI_ENDPOINT}" ] || [ -z "${AZURE_OPENAI_API_KEY}" ] || \
+               [ -z "${AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT}" ] || [ -z "${AZURE_DOCUMENT_INTELLIGENCE_API_KEY}" ] || \
+               [ -z "${AZURE_STORAGE_CONNECTION_STRING}" ]; then
+              echo "::warning::Some Azure credentials are missing. Tests requiring real services may fail."
+              # Fall back to mock values for any missing credentials
+              [ -z "${AZURE_SEARCH_ENDPOINT}" ] && echo "AZURE_SEARCH_ENDPOINT=https://mock-search-endpoint.search.windows.net" >> $GITHUB_ENV
+              [ -z "${AZURE_COGNITIVE_SEARCH_ENDPOINT}" ] && echo "AZURE_COGNITIVE_SEARCH_ENDPOINT=https://mock-search-endpoint.search.windows.net" >> $GITHUB_ENV
+              [ -z "${AZURE_SEARCH_API_KEY}" ] && echo "AZURE_SEARCH_API_KEY=mock-search-api-key" >> $GITHUB_ENV
+              [ -z "${AZURE_OPENAI_ENDPOINT}" ] && echo "AZURE_OPENAI_ENDPOINT=https://mock-openai-endpoint.openai.azure.com" >> $GITHUB_ENV
+              [ -z "${AZURE_OPENAI_API_KEY}" ] && echo "AZURE_OPENAI_API_KEY=mock-openai-api-key" >> $GITHUB_ENV
+              [ -z "${AZURE_OPENAI_EMBEDDING_DEPLOYMENT}" ] && echo "AZURE_OPENAI_EMBEDDING_DEPLOYMENT=text-embedding-ada-002" >> $GITHUB_ENV
+              [ -z "${AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT}" ] && echo "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT=https://mock-docint-endpoint.cognitiveservices.azure.com" >> $GITHUB_ENV
+              [ -z "${AZURE_DOCUMENT_INTELLIGENCE_API_KEY}" ] && echo "AZURE_DOCUMENT_INTELLIGENCE_API_KEY=mock-docint-api-key" >> $GITHUB_ENV
+              [ -z "${AZURE_STORAGE_CONNECTION_STRING}" ] && echo "AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=https;AccountName=mockaccount;AccountKey=mock-key;EndpointSuffix=core.windows.net" >> $GITHUB_ENV
+            fi
+          else
+            # For mock tests, use dummy values
+            echo "Using mock Azure services"
+            echo "AZURE_SEARCH_ENDPOINT=https://mock-search-endpoint.search.windows.net" >> $GITHUB_ENV
+            echo "AZURE_COGNITIVE_SEARCH_ENDPOINT=https://mock-search-endpoint.search.windows.net" >> $GITHUB_ENV
+            echo "AZURE_SEARCH_API_KEY=mock-search-api-key" >> $GITHUB_ENV
+            echo "AZURE_SEARCH_INDEX_NAME=konveyor-documents" >> $GITHUB_ENV
+
+            echo "AZURE_OPENAI_ENDPOINT=https://mock-openai-endpoint.openai.azure.com" >> $GITHUB_ENV
+            echo "AZURE_OPENAI_API_KEY=mock-openai-api-key" >> $GITHUB_ENV
+            echo "AZURE_OPENAI_API_VERSION=2024-02-01-preview" >> $GITHUB_ENV
+            echo "AZURE_OPENAI_CHAT_DEPLOYMENT=gpt-35-turbo" >> $GITHUB_ENV
+            echo "AZURE_OPENAI_EMBEDDING_DEPLOYMENT=text-embedding-ada-002" >> $GITHUB_ENV
+
+            echo "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT=https://mock-docint-endpoint.cognitiveservices.azure.com" >> $GITHUB_ENV
+            echo "AZURE_DOCUMENT_INTELLIGENCE_API_KEY=mock-docint-api-key" >> $GITHUB_ENV
+
+            echo "AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=https;AccountName=mockaccount;AccountKey=mock-key;EndpointSuffix=core.windows.net" >> $GITHUB_ENV
+            echo "AZURE_STORAGE_CONTAINER_NAME=documents" >> $GITHUB_ENV
+          fi
+
+      # Run the tests with the determined parameters
+      - name: Build Docker image for testing
+        run: |
+          # Create a .env file with all necessary environment variables
+          echo "DJANGO_SETTINGS_MODULE=konveyor.settings.testing" > .env
+          echo "DJANGO_ENV=${{ steps.test-params.outputs.env }}" >> .env
+          echo "DJANGO_DEBUG=False" >> .env
+          echo "DJANGO_SECRET_KEY=django-insecure-test-key-for-ci" >> .env
+          echo "AZURE_SEARCH_ENDPOINT=${AZURE_SEARCH_ENDPOINT:-https://mock-search-endpoint.search.windows.net}" >> .env
+          echo "AZURE_COGNITIVE_SEARCH_ENDPOINT=${AZURE_COGNITIVE_SEARCH_ENDPOINT:-https://mock-search-endpoint.search.windows.net}" >> .env
+          echo "AZURE_SEARCH_API_KEY=${AZURE_SEARCH_API_KEY:-mock-search-api-key}" >> .env
+          echo "AZURE_SEARCH_INDEX_NAME=konveyor-documents" >> .env
+          echo "AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT:-https://mock-openai-endpoint.openai.azure.com}" >> .env
+          echo "AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY:-mock-openai-api-key}" >> .env
+          echo "AZURE_OPENAI_API_VERSION=2024-02-01-preview" >> .env
+          echo "AZURE_OPENAI_CHAT_DEPLOYMENT=gpt-4o" >> .env
+          echo "AZURE_OPENAI_EMBEDDING_DEPLOYMENT=${AZURE_OPENAI_EMBEDDING_DEPLOYMENT:-text-embedding-ada-002}" >> .env
+          echo "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT=${AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT:-https://mock-docint-endpoint.cognitiveservices.azure.com}" >> .env
+          echo "AZURE_DOCUMENT_INTELLIGENCE_API_KEY=${AZURE_DOCUMENT_INTELLIGENCE_API_KEY:-mock-docint-api-key}" >> .env
+          echo "AZURE_STORAGE_CONNECTION_STRING=${AZURE_STORAGE_CONNECTION_STRING:-DefaultEndpointsProtocol=https;AccountName=mockaccount;AccountKey=mock-key;EndpointSuffix=core.windows.net}" >> .env
+          echo "AZURE_STORAGE_CONTAINER_NAME=documents" >> .env
+
+          # Build the Docker image with the environment file
+          docker build --build-arg DJANGO_SETTINGS_MODULE=konveyor.settings.testing -t konveyor-test:latest .
+
+      - name: Run tests in Docker
+        id: run-tests
+        run: |
+          mkdir -p tests/results
+          # Set proper permissions on the results directory
+          chmod -R 777 tests/results
+
+          # Run tests in Docker container with environment file
+          # Use a different approach to handle permissions
+          docker run --rm \
+            --env-file .env \
+            -v $(pwd)/tests/results:/app/test-output \
+            -v $(pwd)/tests/run_all_tests.py:/app/tests/run_all_tests.py \
+            konveyor-test:latest \
+            bash -c "cd /app && mkdir -p /app/tests/results && python tests/run_all_tests.py ${{ steps.test-params.outputs.args }} -v && cp -r /app/tests/results/* /app/test-output/ 2>/dev/null || true"
+
+          # Store exit code
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+
+      # Set test result output
+      - name: Set test result
+        id: test-result
+        run: |
+          if [[ "${{ steps.run-tests.outputs.exit_code }}" == "0" ]]; then
+            echo "passed=true" >> $GITHUB_OUTPUT
+          else
+            echo "passed=false" >> $GITHUB_OUTPUT
+          fi
+
+      # Create test results directory if it doesn't exist
+      - name: Create test results directory
+        if: always()
+        run: mkdir -p tests/results
+
+      # Upload test results as artifacts
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            tests/results/
+            **/test-*.xml
+          retention-days: 5
+
+      # Clean up infrastructure if it was deployed for real tests
+      - name: Azure Login for Cleanup
+        if: ${{ always() && (github.event_name == 'push' || github.event_name == 'pull_request' || inputs.test_type == 'real' || github.event.inputs.test_type == 'real' || contains(github.event.inputs.test_type, 'both')) }}
+        uses: azure/login@v2.1.0
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS || env.AZURE_CREDENTIALS }}
+        continue-on-error: true
+
+      - name: Set up Terraform for Cleanup
+        if: >-
+          ${{
+            always() &&
+            (inputs.deploy_infrastructure == 'always' || github.event.inputs.deploy_infrastructure == 'always' ||
+            (inputs.deploy_infrastructure == 'auto' || github.event.inputs.deploy_infrastructure == 'auto' || inputs.deploy_infrastructure == '' || github.event.inputs.deploy_infrastructure == '' || inputs.deploy_infrastructure == null || github.event.inputs.deploy_infrastructure == null) &&
+            (inputs.test_type == 'real' || github.event.inputs.test_type == 'real' ||
+             (github.event_name == 'pull_request' && github.base_ref == 'main')))
+          }}
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.5.7'
+
+      - name: Clean up infrastructure
+        if: >-
+          ${{
+            always() &&
+            (inputs.deploy_infrastructure == 'always' || github.event.inputs.deploy_infrastructure == 'always' ||
+            (inputs.deploy_infrastructure == 'auto' || github.event.inputs.deploy_infrastructure == 'auto' || inputs.deploy_infrastructure == '' || github.event.inputs.deploy_infrastructure == '' || inputs.deploy_infrastructure == null || github.event.inputs.deploy_infrastructure == null) &&
+            (inputs.test_type == 'real' || github.event.inputs.test_type == 'real' ||
+             (github.event_name == 'pull_request' && github.base_ref == 'main')))
+          }}
+        run: |
+          # Check if Konveyor-infra directory exists
+          if [ ! -d "Konveyor-infra" ]; then
+            echo "::warning::Konveyor-infra directory not found. Skipping infrastructure cleanup."
+            exit 0
+          fi
+
+          # Check if the environment directory exists
+          ENV_DIR="Konveyor-infra/environments/${{ inputs.environment || github.event.inputs.environment || 'test' }}"
+          if [ ! -d "$ENV_DIR" ]; then
+            echo "::warning::Environment directory $ENV_DIR not found. Skipping infrastructure cleanup."
+            exit 0
+          fi
+
+          cd $ENV_DIR
+          terraform init
+          terraform destroy -auto-approve

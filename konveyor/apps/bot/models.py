@@ -2,9 +2,10 @@
 Models for the bot app.
 """
 
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
 from django.utils import timezone
+
 from konveyor.apps.core.models import TimeStampedModel
 
 
@@ -12,6 +13,7 @@ class SlackUserProfile(TimeStampedModel):
     """
     Model to store Slack user profile information.
     """
+
     slack_id = models.CharField(max_length=50, unique=True)
     slack_name = models.CharField(max_length=100)
     slack_email = models.EmailField(blank=True, null=True)
@@ -20,19 +22,33 @@ class SlackUserProfile(TimeStampedModel):
     slack_team_id = models.CharField(max_length=50, blank=True, null=True)
 
     # Link to Django User if available
-    user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='slack_profile')
+    user = models.OneToOneField(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="slack_profile",
+    )
 
     # User preferences
-    code_language_preference = models.CharField(max_length=50, blank=True, null=True,
-                                            help_text="Preferred programming language for code examples")
-    response_format_preference = models.CharField(max_length=20, blank=True, null=True,
-                                                choices=[
-                                                    ('concise', 'Concise'),
-                                                    ('detailed', 'Detailed'),
-                                                    ('technical', 'Technical')
-                                                ],
-                                                default='concise',
-                                                help_text="Preferred response format")
+    code_language_preference = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text="Preferred programming language for code examples",
+    )
+    response_format_preference = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        choices=[
+            ("concise", "Concise"),
+            ("detailed", "Detailed"),
+            ("technical", "Technical"),
+        ],
+        default="concise",
+        help_text="Preferred response format",
+    )
 
     # Interaction history
     last_interaction = models.DateTimeField(blank=True, null=True)
@@ -48,13 +64,14 @@ class SlackUserProfile(TimeStampedModel):
     def update_interaction(self):
         """Update the interaction count and timestamp."""
         from django.utils import timezone
+
         self.last_interaction = timezone.now()
         self.interaction_count += 1
-        self.save(update_fields=['last_interaction', 'interaction_count'])
+        self.save(update_fields=["last_interaction", "interaction_count"])
 
     def get_preferred_response_format(self):
         """Get the user's preferred response format."""
-        return self.response_format_preference or 'concise'
+        return self.response_format_preference or "concise"
 
     def get_preferred_code_language(self):
         """Get the user's preferred code language."""
@@ -75,59 +92,105 @@ class BotFeedback(TimeStampedModel):
     The separation between the interface (in core) and implementation (here)
     allows for better testability and flexibility in storage mechanisms.
     """
+
     # Message identifiers
-    slack_message_ts = models.CharField(max_length=50, db_index=True,
-                                help_text="Slack message timestamp (used as message ID)")
-    slack_channel_id = models.CharField(max_length=50, db_index=True,
-                                help_text="Slack channel ID where the message was posted")
-    conversation_id = models.CharField(max_length=100, blank=True, null=True, db_index=True,
-                                help_text="Conversation ID if available")
+    slack_message_ts = models.CharField(
+        max_length=50,
+        db_index=True,
+        help_text="Slack message timestamp (used as message ID)",
+    )
+    slack_channel_id = models.CharField(
+        max_length=50,
+        db_index=True,
+        help_text="Slack channel ID where the message was posted",
+    )
+    conversation_id = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        db_index=True,
+        help_text="Conversation ID if available",
+    )
 
     # User who provided feedback
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
-                            related_name='bot_feedback')
-    slack_user_id = models.CharField(max_length=50, db_index=True,
-                                    help_text="Slack user ID who provided the feedback")
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="bot_feedback",
+    )
+    slack_user_id = models.CharField(
+        max_length=50,
+        db_index=True,
+        help_text="Slack user ID who provided the feedback",
+    )
 
     # Feedback details
     FEEDBACK_CHOICES = [
-        ('positive', 'Positive (👍)'),
-        ('negative', 'Negative (👎)'),
-        ('neutral', 'Neutral'),
-        ('removed', 'Removed')
+        ("positive", "Positive (👍)"),
+        ("negative", "Negative (👎)"),
+        ("neutral", "Neutral"),
+        ("removed", "Removed"),
     ]
-    feedback_type = models.CharField(max_length=20, choices=FEEDBACK_CHOICES,
-                                    help_text="Type of feedback provided")
-    reaction = models.CharField(max_length=50, blank=True, null=True,
-                                    help_text="The specific reaction emoji used")
+    feedback_type = models.CharField(
+        max_length=20, choices=FEEDBACK_CHOICES, help_text="Type of feedback provided"
+    )
+    reaction = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text="The specific reaction emoji used",
+    )
 
     # Message content (for reference)
-    question = models.TextField(blank=True, null=True,
-                            help_text="The original user question")
-    answer = models.TextField(blank=True, null=True,
-                            help_text="The bot's answer that received feedback")
+    question = models.TextField(
+        blank=True, null=True, help_text="The original user question"
+    )
+    answer = models.TextField(
+        blank=True, null=True, help_text="The bot's answer that received feedback"
+    )
 
     # Metadata
-    skill_used = models.CharField(max_length=100, blank=True, null=True,
-                                help_text="The skill that generated the answer")
-    function_used = models.CharField(max_length=100, blank=True, null=True,
-                                help_text="The function that generated the answer")
-    feedback_timestamp = models.DateTimeField(default=timezone.now,
-                                help_text="When the feedback was provided")
+    skill_used = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="The skill that generated the answer",
+    )
+    function_used = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="The function that generated the answer",
+    )
+    feedback_timestamp = models.DateTimeField(
+        default=timezone.now, help_text="When the feedback was provided"
+    )
 
     class Meta:
         verbose_name = "Bot Feedback"
         verbose_name_plural = "Bot Feedback"
         # Ensure we don't have duplicate feedback entries for the same message and user
-        unique_together = [['slack_message_ts', 'slack_user_id', 'reaction']]
+        unique_together = [["slack_message_ts", "slack_user_id", "reaction"]]
 
     def __str__(self):
-        return f"{self.get_feedback_type_display()} from {self.slack_user_id} on message {self.slack_message_ts}"
+        return f"{self.get_feedback_type_display()} from {self.slack_user_id} on message {self.slack_message_ts}"  # noqa: E501
 
     @classmethod
-    def record_feedback(cls, slack_message_ts, slack_channel_id, slack_user_id,
-                        feedback_type, reaction=None, question=None, answer=None,
-                        skill_used=None, function_used=None, conversation_id=None):
+    def record_feedback(
+        cls,
+        slack_message_ts,
+        slack_channel_id,
+        slack_user_id,
+        feedback_type,
+        reaction=None,
+        question=None,
+        answer=None,
+        skill_used=None,
+        function_used=None,
+        conversation_id=None,
+    ):
         """
         Record feedback for a bot message.
 
@@ -151,12 +214,12 @@ class BotFeedback(TimeStampedModel):
             feedback = cls.objects.get(
                 slack_message_ts=slack_message_ts,
                 slack_user_id=slack_user_id,
-                reaction=reaction
+                reaction=reaction,
             )
             # Update the existing feedback
             feedback.feedback_type = feedback_type
             feedback.feedback_timestamp = timezone.now()
-            feedback.save(update_fields=['feedback_type', 'feedback_timestamp'])
+            feedback.save(update_fields=["feedback_type", "feedback_timestamp"])
         except cls.DoesNotExist:
             # Create a new feedback entry
             feedback = cls.objects.create(
@@ -169,7 +232,7 @@ class BotFeedback(TimeStampedModel):
                 answer=answer,
                 skill_used=skill_used,
                 function_used=function_used,
-                conversation_id=conversation_id
+                conversation_id=conversation_id,
             )
 
         return feedback

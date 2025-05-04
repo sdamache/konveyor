@@ -23,4 +23,4 @@ terraform init
 
 ## Note
 
-This setup needs to be created first, before the main infrastructure, as it provides the remote state storage location. 
+This setup needs to be created first, before the main infrastructure, as it provides the remote state storage location.

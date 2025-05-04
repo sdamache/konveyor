@@ -5,24 +5,25 @@ This module contains tests for the DocumentationNavigatorSkill, including
 unit tests and integration tests with the SearchService.
 """
 
-import pytest
-import asyncio
-from unittest.mock import MagicMock, patch
-from typing import Dict, Any, List
+import asyncio  # noqa: F401
 
 # Mock the Django models and SearchService before importing DocumentationNavigatorSkill
 import sys
-from unittest.mock import MagicMock, AsyncMock
+from typing import Any, Dict, List  # noqa: F401
+from unittest.mock import AsyncMock, MagicMock, patch  # noqa: F401
+
+import pytest
 
 # Mock the Django models
-sys.modules['konveyor.apps.documents.models'] = MagicMock()
-sys.modules['konveyor.apps.search.services.search_service'] = MagicMock()
-sys.modules['konveyor.core.documents.document_service'] = MagicMock()
-sys.modules['konveyor.core.azure_utils.service'] = MagicMock()
-sys.modules['konveyor.core.azure_utils.retry'] = MagicMock()
-sys.modules['konveyor.core.azure_utils.mixins'] = MagicMock()
-sys.modules['konveyor.core.conversation.factory'] = MagicMock()
-sys.modules['konveyor.core.conversation.interface'] = MagicMock()
+sys.modules["konveyor.apps.documents.models"] = MagicMock()
+sys.modules["konveyor.apps.search.services.search_service"] = MagicMock()
+sys.modules["konveyor.core.documents.document_service"] = MagicMock()
+sys.modules["konveyor.core.azure_utils.service"] = MagicMock()
+sys.modules["konveyor.core.azure_utils.retry"] = MagicMock()
+sys.modules["konveyor.core.azure_utils.mixins"] = MagicMock()
+sys.modules["konveyor.core.conversation.factory"] = MagicMock()
+sys.modules["konveyor.core.conversation.interface"] = MagicMock()
+
 
 # Create a mock SearchService class
 class MockSearchService:
@@ -36,19 +37,23 @@ class MockSearchService:
                 "document_id": "doc1",
                 "content": "This is sample content about onboarding.",
                 "metadata": {"title": "Onboarding Guide"},
-                "@search.score": 0.9
+                "@search.score": 0.9,
             },
             {
                 "id": "chunk2",
                 "document_id": "doc2",
                 "content": "More information about the onboarding process.",
                 "metadata": {"title": "Employee Handbook"},
-                "@search.score": 0.8
-            }
+                "@search.score": 0.8,
+            },
         ]
 
+
 # Replace the SearchService with our mock
-sys.modules['konveyor.apps.search.services.search_service'].SearchService = MockSearchService
+sys.modules[
+    "konveyor.apps.search.services.search_service"
+].SearchService = MockSearchService
+
 
 # Create a mock ConversationManager
 class MockConversationManager:
@@ -62,7 +67,7 @@ class MockConversationManager:
             "id": conversation_id,
             "user_id": user_id,
             "created_at": "2023-01-01T00:00:00",
-            "metadata": metadata or {}
+            "metadata": metadata or {},
         }
         self.messages[conversation_id] = []
         return self.conversations[conversation_id]
@@ -77,20 +82,24 @@ class MockConversationManager:
             "content": content,
             "type": message_type,
             "created_at": "2023-01-01T00:00:00",
-            "metadata": metadata or {}
+            "metadata": metadata or {},
         }
 
         self.messages[conversation_id].append(message)
         return message
 
-    async def get_conversation_messages(self, conversation_id, limit=50, skip=0, include_metadata=True):
+    async def get_conversation_messages(
+        self, conversation_id, limit=50, skip=0, include_metadata=True
+    ):
         if conversation_id not in self.conversations:
             return []
 
         messages = self.messages.get(conversation_id, [])
         return messages[-limit:] if limit else messages
 
-    async def get_conversation_context(self, conversation_id, format="string", max_messages=None):
+    async def get_conversation_context(
+        self, conversation_id, format="string", max_messages=None
+    ):
         if conversation_id not in self.conversations:
             return "" if format == "string" else []
 
@@ -123,11 +132,13 @@ class MockConversationManager:
 
     async def get_user_conversations(self, user_id, limit=10, skip=0):
         user_conversations = [
-            conv for conv in self.conversations.values()
+            conv
+            for conv in self.conversations.values()
             if conv.get("user_id") == user_id
         ]
 
-        return user_conversations[skip:skip + limit]
+        return user_conversations[skip : skip + limit]
+
 
 # Create a mock ConversationManagerFactory
 class MockConversationManagerFactory:
@@ -135,12 +146,18 @@ class MockConversationManagerFactory:
     async def create_manager():
         return MockConversationManager()
 
+
 # Mock the ConversationManagerFactory
-sys.modules['konveyor.core.conversation.factory'] = MagicMock()
-sys.modules['konveyor.core.conversation.factory'].ConversationManagerFactory = MockConversationManagerFactory
+sys.modules["konveyor.core.conversation.factory"] = MagicMock()
+sys.modules[
+    "konveyor.core.conversation.factory"
+].ConversationManagerFactory = MockConversationManagerFactory
 
 # Now import DocumentationNavigatorSkill
-from konveyor.skills.documentation_navigator.DocumentationNavigatorSkill import DocumentationNavigatorSkill
+from konveyor.skills.documentation_navigator.DocumentationNavigatorSkill import (  # noqa: E402, E501
+    DocumentationNavigatorSkill,
+)
+
 
 # Mock the Semantic Kernel
 class MockKernel:
@@ -152,6 +169,7 @@ class MockKernel:
 
     async def invoke(self, function, **kwargs):
         return "Mock response"
+
 
 # Mock the create_kernel function
 def mock_create_kernel():
@@ -172,7 +190,7 @@ class TestDocumentationNavigatorSkill:
         """Test that the skill initializes correctly."""
         skill = DocumentationNavigatorSkill()
         assert skill is not None
-        assert hasattr(skill, 'search_service')
+        assert hasattr(skill, "search_service")
 
     @pytest.mark.asyncio
     async def test_search_documentation(self, skill):
@@ -212,8 +230,7 @@ class TestDocumentationNavigatorSkill:
 
         # Call the function with conversation ID
         answer = await skill.answer_question(
-            "What is the onboarding process?",
-            conversation_id=conversation_id
+            "What is the onboarding process?", conversation_id=conversation_id
         )
 
         # Check that the answer contains expected elements
@@ -237,14 +254,12 @@ class TestDocumentationNavigatorSkill:
 
         # Add initial question and answer
         await skill.answer_question(
-            "What is the onboarding process?",
-            conversation_id=conversation_id
+            "What is the onboarding process?", conversation_id=conversation_id
         )
 
         # Call the continue_conversation function
         follow_up_answer = await skill.continue_conversation(
-            "What should I do on my first day?",
-            conversation_id=conversation_id
+            "What should I do on my first day?", conversation_id=conversation_id
         )
 
         # Check that the answer contains expected elements
@@ -297,7 +312,9 @@ class TestDocumentationNavigatorSkill:
         assert len(result_blocks) > 0
 
         # Check that we have the footer with follow-up suggestion
-        footer_blocks = [b for b in blocks if b.get("type") == "context" and "follow-up" in str(b)]
+        footer_blocks = [
+            b for b in blocks if b.get("type") == "context" and "follow-up" in str(b)
+        ]
         assert len(footer_blocks) > 0
 
     def test_preprocess_query(self, skill):
@@ -309,7 +326,9 @@ class TestDocumentationNavigatorSkill:
         assert "onboarding process" in processed or "employee onboarding" in processed
 
         # Test with new employee query
-        processed = skill._preprocess_query("I'm a new employee, what should I do first?")
+        processed = skill._preprocess_query(
+            "I'm a new employee, what should I do first?"
+        )
         assert "new employee" in processed
         assert "onboarding process" in processed or "first day" in processed
 
@@ -336,7 +355,7 @@ class TestDocumentationNavigatorSkill:
                 "document_id": "doc1",
                 "content": "Sample content",
                 "metadata": {"title": "Test Document"},
-                "@search.score": 0.9
+                "@search.score": 0.9,
             }
         ]
 

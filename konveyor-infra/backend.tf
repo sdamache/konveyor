@@ -5,4 +5,4 @@ terraform {
     container_name       = "tfstate"
     key                  = "konveyor.terraform.tfstate"
   }
-} 
+}

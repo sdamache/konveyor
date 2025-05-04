@@ -5,11 +5,12 @@ This package provides the orchestration layer for routing requests to appropriat
 Semantic Kernel skills and tools. It handles request analysis, skill selection,
 and response formatting.
 
-This module provides proxy imports for the AgentOrchestratorSkill and SkillRegistry classes,
+This module provides proxy imports for the AgentOrchestratorSkill and SkillRegistry classes,  # noqa: E501
 which have been moved to konveyor.core.agent.
 """
 
 import logging
+
 from konveyor.core.agent.orchestrator import AgentOrchestratorSkill
 from konveyor.core.agent.registry import SkillRegistry
 

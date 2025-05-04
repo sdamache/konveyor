@@ -15,26 +15,77 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='SlackUserProfile',
+            name="SlackUserProfile",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('modified_at', models.DateTimeField(auto_now=True)),
-                ('slack_id', models.CharField(max_length=50, unique=True)),
-                ('slack_name', models.CharField(max_length=100)),
-                ('slack_email', models.EmailField(blank=True, max_length=254, null=True)),
-                ('slack_real_name', models.CharField(blank=True, max_length=100, null=True)),
-                ('slack_display_name', models.CharField(blank=True, max_length=100, null=True)),
-                ('slack_team_id', models.CharField(blank=True, max_length=50, null=True)),
-                ('code_language_preference', models.CharField(blank=True, help_text='Preferred programming language for code examples', max_length=50, null=True)),
-                ('response_format_preference', models.CharField(blank=True, choices=[('concise', 'Concise'), ('detailed', 'Detailed'), ('technical', 'Technical')], default='concise', help_text='Preferred response format', max_length=20, null=True)),
-                ('last_interaction', models.DateTimeField(blank=True, null=True)),
-                ('interaction_count', models.IntegerField(default=0)),
-                ('user', models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='slack_profile', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("modified_at", models.DateTimeField(auto_now=True)),
+                ("slack_id", models.CharField(max_length=50, unique=True)),
+                ("slack_name", models.CharField(max_length=100)),
+                (
+                    "slack_email",
+                    models.EmailField(blank=True, max_length=254, null=True),
+                ),
+                (
+                    "slack_real_name",
+                    models.CharField(blank=True, max_length=100, null=True),
+                ),
+                (
+                    "slack_display_name",
+                    models.CharField(blank=True, max_length=100, null=True),
+                ),
+                (
+                    "slack_team_id",
+                    models.CharField(blank=True, max_length=50, null=True),
+                ),
+                (
+                    "code_language_preference",
+                    models.CharField(
+                        blank=True,
+                        help_text="Preferred programming language for code examples",
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "response_format_preference",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("concise", "Concise"),
+                            ("detailed", "Detailed"),
+                            ("technical", "Technical"),
+                        ],
+                        default="concise",
+                        help_text="Preferred response format",
+                        max_length=20,
+                        null=True,
+                    ),
+                ),
+                ("last_interaction", models.DateTimeField(blank=True, null=True)),
+                ("interaction_count", models.IntegerField(default=0)),
+                (
+                    "user",
+                    models.OneToOneField(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="slack_profile",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Slack User Profile',
-                'verbose_name_plural': 'Slack User Profiles',
+                "verbose_name": "Slack User Profile",
+                "verbose_name_plural": "Slack User Profiles",
             },
         ),
     ]

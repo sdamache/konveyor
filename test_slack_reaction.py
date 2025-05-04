@@ -7,9 +7,9 @@ to test the feedback mechanism.
 """
 
 import json
-import requests
-import sys
 import time
+
+import requests
 
 # Slack event for a reaction_added event
 reaction_event = {
@@ -23,13 +23,13 @@ reaction_event = {
         "item": {
             "type": "message",
             "channel": "C123456",
-            "ts": "1234567890.123460"  # Use a new timestamp for a new feedback entry
+            "ts": "1234567890.123460",  # Use a new timestamp for a new feedback entry
         },
-        "event_ts": "1234567890.123456"
+        "event_ts": "1234567890.123456",
     },
     "type": "event_callback",
     "event_id": "Ev123457",
-    "event_time": 1234567890
+    "event_time": 1234567890,
 }
 
 # URL for the Slack webhook endpoint
@@ -40,7 +40,7 @@ print(f"Sending reaction_added event to {webhook_url}...")
 response = requests.post(
     webhook_url,
     headers={"Content-Type": "application/json"},
-    data=json.dumps(reaction_event)
+    data=json.dumps(reaction_event),
 )
 
 # Print the response

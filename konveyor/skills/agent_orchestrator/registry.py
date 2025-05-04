@@ -5,26 +5,47 @@ This module provides a registry for Semantic Kernel skills, allowing the
 orchestrator to discover and invoke the appropriate skills based on user requests.
 """
 
+import inspect
 import logging
 import sys
-from typing import Dict, Any, List, Optional, Type, Set
-import inspect
-from semantic_kernel.functions import KernelFunction
+from typing import Any, Dict, List, Optional, Set, Type  # noqa: F401
+
+from semantic_kernel.functions import KernelFunction  # noqa: F401
 
 # Default keywords for built-in skills
 DEFAULT_SKILL_KEYWORDS = {
     "DocumentationNavigatorSkill": [
-        "documentation", "docs", "search", "find", "information", "help",
-        "guide", "manual", "reference", "lookup", "document", "article",
-        "tutorial", "how-to", "faq", "question", "answer", "onboarding",
-        "getting started", "learn", "knowledge", "info"
+        "documentation",
+        "docs",
+        "search",
+        "find",
+        "information",
+        "help",
+        "guide",
+        "manual",
+        "reference",
+        "lookup",
+        "document",
+        "article",
+        "tutorial",
+        "how-to",
+        "faq",
+        "question",
+        "answer",
+        "onboarding",
+        "getting started",
+        "learn",
+        "knowledge",
+        "info",
     ]
 }
 
 # Configure logging
-logging.basicConfig(level=logging.INFO,
-                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                   stream=sys.stdout)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    stream=sys.stdout,
+)
 logger = logging.getLogger(__name__)
 
 
@@ -39,20 +60,24 @@ class SkillRegistry:
     Attributes:
         skills (Dict[str, Any]): Dictionary of registered skills
         skill_descriptions (Dict[str, str]): Descriptions of registered skills
-        function_descriptions (Dict[str, Dict[str, str]]): Descriptions of skill functions
+        function_descriptions (Dict[str, Dict[str, str]]): Descriptions of skill functions  # noqa: E501
         keywords (Dict[str, Set[str]]): Keywords associated with each skill
     """
 
     def __init__(self):
         """Initialize the skill registry."""
-        self.skills: Dict[str, Any] = {}
-        self.skill_descriptions: Dict[str, str] = {}
-        self.function_descriptions: Dict[str, Dict[str, str]] = {}
-        self.keywords: Dict[str, Set[str]] = {}
+        self.skills: dict[str, Any] = {}
+        self.skill_descriptions: dict[str, str] = {}
+        self.function_descriptions: dict[str, dict[str, str]] = {}
+        self.keywords: dict[str, set[str]] = {}
 
-    def register_skill(self, skill: Any, skill_name: Optional[str] = None,
-                      description: Optional[str] = None,
-                      keywords: Optional[List[str]] = None) -> str:
+    def register_skill(
+        self,
+        skill: Any,
+        skill_name: str | None = None,
+        description: str | None = None,
+        keywords: list[str] | None = None,
+    ) -> str:
         """
         Register a skill with the registry.
 
@@ -87,23 +112,27 @@ class SkillRegistry:
             doc = inspect.getdoc(skill)
             if doc:
                 # Use the first line of the docstring
-                self.skill_descriptions[skill_name] = doc.split('\n')[0]
-                logger.info(f"Using docstring description: {self.skill_descriptions[skill_name]}")
+                self.skill_descriptions[skill_name] = doc.split("\n")[0]
+                logger.info(
+                    f"Using docstring description: {self.skill_descriptions[skill_name]}"  # noqa: E501
+                )
             else:
                 self.skill_descriptions[skill_name] = f"{skill_name} skill"
-                logger.info(f"Using default description: {self.skill_descriptions[skill_name]}")
+                logger.info(
+                    f"Using default description: {self.skill_descriptions[skill_name]}"
+                )
 
         # Store function descriptions
         self.function_descriptions[skill_name] = {}
         for name, method in inspect.getmembers(skill, inspect.ismethod):
             # Skip private methods
-            if name.startswith('_'):
+            if name.startswith("_"):
                 continue
 
             # Check if it's a kernel function
-            if hasattr(method, 'kernel_function'):
+            if hasattr(method, "kernel_function"):
                 # Get the description from the kernel_function attribute
-                desc = getattr(method.kernel_function, 'description', '')
+                desc = getattr(method.kernel_function, "description", "")
                 if desc:
                     self.function_descriptions[skill_name][name] = desc
                 else:
@@ -111,13 +140,19 @@ class SkillRegistry:
                     doc = inspect.getdoc(method)
                     if doc:
                         # Use the first line of the docstring
-                        self.function_descriptions[skill_name][name] = doc.split('\n')[0]
+                        self.function_descriptions[skill_name][name] = doc.split("\n")[
+                            0
+                        ]
                     else:
-                        self.function_descriptions[skill_name][name] = f"{name} function"
+                        self.function_descriptions[skill_name][name] = (
+                            f"{name} function"
+                        )
             # Also check for methods with a kernel_function attribute directly
-            elif hasattr(skill, name) and hasattr(getattr(skill, name), 'kernel_function'):
+            elif hasattr(skill, name) and hasattr(
+                getattr(skill, name), "kernel_function"
+            ):
                 method = getattr(skill, name)
-                desc = getattr(method.kernel_function, 'description', '')
+                desc = getattr(method.kernel_function, "description", "")
                 if desc:
                     self.function_descriptions[skill_name][name] = desc
                 else:
@@ -125,9 +160,13 @@ class SkillRegistry:
                     doc = inspect.getdoc(method)
                     if doc:
                         # Use the first line of the docstring
-                        self.function_descriptions[skill_name][name] = doc.split('\n')[0]
+                        self.function_descriptions[skill_name][name] = doc.split("\n")[
+                            0
+                        ]
                     else:
-                        self.function_descriptions[skill_name][name] = f"{name} function"
+                        self.function_descriptions[skill_name][name] = (
+                            f"{name} function"
+                        )
 
         # Store keywords
         if keywords:
@@ -136,15 +175,19 @@ class SkillRegistry:
         else:
             # Check for default keywords first
             if skill.__class__.__name__ in DEFAULT_SKILL_KEYWORDS:
-                self.keywords[skill_name] = set(DEFAULT_SKILL_KEYWORDS[skill.__class__.__name__])
-                logger.info(f"Using default keywords for {skill.__class__.__name__}: {self.keywords[skill_name]}")
+                self.keywords[skill_name] = set(
+                    DEFAULT_SKILL_KEYWORDS[skill.__class__.__name__]
+                )
+                logger.info(
+                    f"Using default keywords for {skill.__class__.__name__}: {self.keywords[skill_name]}"  # noqa: E501
+                )
             else:
                 # Extract keywords from skill name and description
                 self.keywords[skill_name] = set()
                 logger.info("Extracting keywords from skill name and description")
 
                 if skill_name:
-                    name_keywords = skill_name.lower().split('_')
+                    name_keywords = skill_name.lower().split("_")
                     self.keywords[skill_name].update(name_keywords)
                     logger.info(f"Added keywords from skill name: {name_keywords}")
 
@@ -154,7 +197,9 @@ class SkillRegistry:
                     logger.info(f"Added keywords from description: {desc_keywords}")
 
         logger.info(f"Final keywords for {skill_name}: {self.keywords[skill_name]}")
-        logger.info(f"Registered skill: {skill_name} with {len(self.function_descriptions[skill_name])} functions")
+        logger.info(
+            f"Registered skill: {skill_name} with {len(self.function_descriptions[skill_name])} functions"  # noqa: E501
+        )
 
         # Log all registered skills for debugging
         logger.info(f"All registered skills: {list(self.skills.keys())}")
@@ -162,7 +207,7 @@ class SkillRegistry:
 
         return skill_name
 
-    def get_skill(self, skill_name: str) -> Optional[Any]:
+    def get_skill(self, skill_name: str) -> Any | None:
         """
         Get a skill by name.
 
@@ -174,7 +219,7 @@ class SkillRegistry:
         """
         return self.skills.get(skill_name)
 
-    def get_all_skills(self) -> Dict[str, Any]:
+    def get_all_skills(self) -> dict[str, Any]:
         """
         Get all registered skills.
 
@@ -183,7 +228,7 @@ class SkillRegistry:
         """
         return self.skills
 
-    def get_skill_description(self, skill_name: str) -> Optional[str]:
+    def get_skill_description(self, skill_name: str) -> str | None:
         """
         Get the description of a skill.
 
@@ -195,7 +240,7 @@ class SkillRegistry:
         """
         return self.skill_descriptions.get(skill_name)
 
-    def get_function_descriptions(self, skill_name: str) -> Dict[str, str]:
+    def get_function_descriptions(self, skill_name: str) -> dict[str, str]:
         """
         Get descriptions of all functions in a skill.
 
@@ -207,7 +252,7 @@ class SkillRegistry:
         """
         return self.function_descriptions.get(skill_name, {})
 
-    def find_skills_by_keywords(self, query: str) -> List[str]:
+    def find_skills_by_keywords(self, query: str) -> list[str]:
         """
         Find skills matching the given keywords.
 
@@ -226,7 +271,9 @@ class SkillRegistry:
         for skill_name, keywords in self.keywords.items():
             # Calculate match score based on keyword overlap
             overlap = query_words.intersection(keywords)
-            logger.info(f"Skill: {skill_name}, Keywords: {keywords}, Overlap: {overlap}")
+            logger.info(
+                f"Skill: {skill_name}, Keywords: {keywords}, Overlap: {overlap}"
+            )
             if overlap:
                 matches.append((skill_name, len(overlap)))
                 logger.info(f"Added match: {skill_name} with score {len(overlap)}")
@@ -239,7 +286,7 @@ class SkillRegistry:
         logger.info(f"Returning matches: {result}")
         return result
 
-    def find_skill_for_request(self, request: str) -> Optional[str]:
+    def find_skill_for_request(self, request: str) -> str | None:
         """
         Find the most appropriate skill for a given request.
 

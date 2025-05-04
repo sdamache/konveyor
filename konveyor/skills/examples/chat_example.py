@@ -9,32 +9,33 @@ Usage:
     python -m konveyor.skills.examples.chat_example
 """
 
+import asyncio
+import logging
 import os
 import sys
-import logging
-import asyncio
-from typing import Dict, Any
+from typing import Any
 
 # Set up logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 # Add the project root to the Python path if needed
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+project_root = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "..")
+)
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 # Set Django settings module
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'konveyor.settings.development')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "konveyor.settings.development")
 
-from konveyor.core.kernel import create_kernel, get_kernel_settings
-from konveyor.core.chat import ChatSkill
+from konveyor.core.chat import ChatSkill  # noqa: E402
+from konveyor.core.kernel import create_kernel, get_kernel_settings  # noqa: E402
 
 
-async def run_chat_example() -> Dict[str, Any]:
+async def run_chat_example() -> dict[str, Any]:
     """
     Run a simple example of using the ChatSkill.
 
@@ -61,16 +62,22 @@ async def run_chat_example() -> Dict[str, Any]:
     # Import the ChatSkill
     chat_skill = ChatSkill()
     # In newer versions of Semantic Kernel, we use add_plugin instead of import_skill
-    plugin = kernel.add_plugin(chat_skill, plugin_name="chat")
+    plugin = kernel.add_plugin(chat_skill, plugin_name="chat")  # noqa: F841
     # Get the function names from the ChatSkill class
-    function_names = [func for func in dir(chat_skill) if not func.startswith('_') and callable(getattr(chat_skill, func))]
+    function_names = [
+        func
+        for func in dir(chat_skill)
+        if not func.startswith("_") and callable(getattr(chat_skill, func))
+    ]
     logger.info(f"Imported ChatSkill with functions: {function_names}")
 
     results = {}
 
     # Run the answer_question function
     try:
-        question = "What is Semantic Kernel and how can it be used in a Django application?"
+        question = (
+            "What is Semantic Kernel and how can it be used in a Django application?"
+        )
         logger.info(f"Running answer_question with question: {question}")
 
         # Mock the answer since we're using dummy credentials
@@ -84,13 +91,15 @@ async def run_chat_example() -> Dict[str, Any]:
 
     # Run the chat function
     try:
-        message = "Hello! I'm new to the team. Can you help me understand our tech stack?"
+        message = (
+            "Hello! I'm new to the team. Can you help me understand our tech stack?"
+        )
         logger.info(f"Running chat with message: {message}")
 
         # Mock the chat response since we're using dummy credentials
         chat_result = {
             "response": f"Mocked chat response to: {message}",
-            "history": f"User: {message}\nAssistant: Mocked response"
+            "history": f"User: {message}\nAssistant: Mocked response",
         }
 
         results["chat"] = chat_result
@@ -103,7 +112,7 @@ async def run_chat_example() -> Dict[str, Any]:
         # Mock the follow-up response since we're using dummy credentials
         follow_up_result = {
             "response": f"Mocked follow-up response to: {follow_up}",
-            "history": f"{chat_result['history']}\nUser: {follow_up}\nAssistant: Mocked follow-up response"
+            "history": f"{chat_result['history']}\nUser: {follow_up}\nAssistant: Mocked follow-up response",  # noqa: E501
         }
 
         results["follow_up"] = follow_up_result
@@ -114,7 +123,7 @@ async def run_chat_example() -> Dict[str, Any]:
 
     # Format a response for Slack
     try:
-        markdown_text = "Here are some *important* points about our architecture:\n* Microservices\n* Event-driven\n* Cloud-native"
+        markdown_text = "Here are some *important* points about our architecture:\n* Microservices\n* Event-driven\n* Cloud-native"  # noqa: E501
         logger.info(f"Formatting for Slack: {markdown_text}")
 
         # Mock the Slack formatting since we're using dummy credentials
@@ -138,8 +147,8 @@ async def run_chat_example() -> Dict[str, Any]:
         # Format text as a bullet list
         items = "Item 1\nItem 2\nItem 3"
         # Mock the bullet list formatting since we're using dummy credentials
-        lines = items.strip().split('\n')
-        bullet_list = '\n'.join([f"• {line.strip()}" for line in lines if line.strip()])
+        lines = items.strip().split("\n")
+        bullet_list = "\n".join([f"• {line.strip()}" for line in lines if line.strip()])
 
         results["bullet_list"] = str(bullet_list)
         logger.info(f"Bullet list: {str(bullet_list)}")
@@ -154,7 +163,7 @@ if __name__ == "__main__":
     print("\n=== Running ChatSkill Example ===\n")
 
     # Check if we have Azure OpenAI credentials
-    if not os.environ.get('AZURE_OPENAI_ENDPOINT'):
+    if not os.environ.get("AZURE_OPENAI_ENDPOINT"):
         print("WARNING: AZURE_OPENAI_ENDPOINT environment variable not set.")
         print("This example requires Azure OpenAI credentials to run.")
         print("Please set the following environment variables:")

@@ -7,21 +7,24 @@ It also integrates with the conversation memory system to maintain context
 across interactions.
 """
 
+# Removed: import asyncio
 import logging
 import re
 import uuid
-import asyncio
 from datetime import datetime
-from typing import Dict, Any, List, Optional, Union, Tuple
-from semantic_kernel.functions import kernel_function
+from typing import Any, Dict, List, Optional, Tuple, Union  # noqa: F401, F401
+
 from semantic_kernel import Kernel
+from semantic_kernel.functions import kernel_function
 
 from konveyor.apps.search.services.search_service import SearchService
 from konveyor.core.conversation.factory import ConversationManagerFactory
-from konveyor.core.conversation.interface import ConversationInterface
+
+# Removed: from konveyor.core.conversation.interface import ConversationInterface
 
 # Configure logging
 logger = logging.getLogger(__name__)
+
 
 class DocumentationNavigatorSkill:
     """
@@ -35,10 +38,10 @@ class DocumentationNavigatorSkill:
     Attributes:
         search_service (SearchService): The search service for documentation retrieval
         kernel (Optional[Kernel]): The Semantic Kernel instance (if provided)
-        conversation_manager (Optional[ConversationInterface]): The conversation manager for memory
+        conversation_manager (Optional[ConversationInterface]): The conversation manager for memory  # noqa: E501
     """
 
-    def __init__(self, kernel: Optional[Kernel] = None):
+    def __init__(self, kernel: Kernel | None = None):
         """
         Initialize the Documentation Navigator Skill.
 
@@ -56,28 +59,40 @@ class DocumentationNavigatorSkill:
         """Initialize the conversation manager."""
         try:
             # Use the factory to create a conversation manager
-            # Note: We're not awaiting the coroutine here, but we'll await it when needed
+            # Note: We're not awaiting the coroutine here, but we'll await it when needed  # noqa: E501
             self.conversation_manager = ConversationManagerFactory.create_manager
             logger.info("Initialized conversation manager")
         except Exception as e:
             logger.warning(f"Failed to initialize conversation manager: {str(e)}")
-            logger.warning("Continuing without conversation memory - contextual conversations will be limited")
+            logger.warning(
+                "Continuing without conversation memory - contextual conversations will be limited"  # noqa: E501
+            )
 
             # Fallback to in-memory conversation manager
             try:
-                from konveyor.core.conversation.memory import InMemoryConversationManager
+                from konveyor.core.conversation.memory import (
+                    InMemoryConversationManager,
+                )
+
                 self.conversation_manager = lambda: InMemoryConversationManager()
                 logger.info("Initialized fallback in-memory conversation manager")
             except Exception as e2:
-                logger.error(f"Failed to initialize fallback conversation manager: {str(e2)}")
+                logger.error(
+                    f"Failed to initialize fallback conversation manager: {str(e2)}"
+                )
                 self.conversation_manager = None
 
     async def _get_conversation_manager(self):
         """Get or create the conversation manager."""
-        if not hasattr(self, '_conversation_manager_instance') or self._conversation_manager_instance is None:
+        if (
+            not hasattr(self, "_conversation_manager_instance")
+            or self._conversation_manager_instance is None
+        ):
             if self.conversation_manager:
                 try:
-                    self._conversation_manager_instance = await self.conversation_manager()
+                    self._conversation_manager_instance = (
+                        await self.conversation_manager()
+                    )
                 except Exception as e:
                     logger.error(f"Error creating conversation manager: {str(e)}")
                     self._conversation_manager_instance = None
@@ -86,10 +101,9 @@ class DocumentationNavigatorSkill:
         return self._conversation_manager_instance
 
     @kernel_function(
-        description="Search documentation for information",
-        name="search_documentation"
+        description="Search documentation for information", name="search_documentation"
     )
-    async def search_documentation(self, query: str, top: int = 5) -> Dict[str, Any]:
+    async def search_documentation(self, query: str, top: int = 5) -> dict[str, Any]:
         """
         Search documentation for information related to the query.
 
@@ -109,9 +123,7 @@ class DocumentationNavigatorSkill:
         try:
             # Perform search using the SearchService
             results = self.search_service.hybrid_search(
-                query=processed_query,
-                top=top,
-                load_full_content=True
+                query=processed_query, top=top, load_full_content=True
             )
 
             logger.info(f"Found {len(results)} results")
@@ -124,7 +136,7 @@ class DocumentationNavigatorSkill:
                 "processed_query": processed_query,
                 "results": formatted_results,
                 "result_count": len(results),
-                "success": True
+                "success": True,
             }
         except Exception as e:
             logger.error(f"Error searching documentation: {str(e)}")
@@ -134,14 +146,15 @@ class DocumentationNavigatorSkill:
                 "results": [],
                 "result_count": 0,
                 "error": str(e),
-                "success": False
+                "success": False,
             }
 
     @kernel_function(
-        description="Answer a question using documentation",
-        name="answer_question"
+        description="Answer a question using documentation", name="answer_question"
     )
-    async def answer_question(self, question: str, top: int = 5, conversation_id: Optional[str] = None) -> str:
+    async def answer_question(
+        self, question: str, top: int = 5, conversation_id: str | None = None
+    ) -> str:
         """
         Answer a question using documentation search.
 
@@ -160,7 +173,7 @@ class DocumentationNavigatorSkill:
 
         if not search_results["success"] or search_results["result_count"] == 0:
             logger.warning(f"No results found for question: {question}")
-            return "I couldn't find any relevant information to answer your question. Could you please rephrase or ask something else?"
+            return "I couldn't find any relevant information to answer your question. Could you please rephrase or ask something else?"  # noqa: E501
 
         # Format the answer with citations
         answer = self._format_answer_with_citations(question, search_results["results"])
@@ -176,7 +189,7 @@ class DocumentationNavigatorSkill:
                     await conversation_manager.add_message(
                         conversation_id=conversation_id,
                         content=question,
-                        message_type="user"
+                        message_type="user",
                     )
 
                     # Add assistant message
@@ -187,8 +200,8 @@ class DocumentationNavigatorSkill:
                         metadata={
                             "search_results": search_results["results"],
                             "result_count": search_results["result_count"],
-                            "query": question
-                        }
+                            "query": question,
+                        },
                     )
                     logger.info(f"Added Q&A to conversation history: {conversation_id}")
             except Exception as e:
@@ -198,9 +211,11 @@ class DocumentationNavigatorSkill:
 
     @kernel_function(
         description="Format search results in Slack-compatible Markdown",
-        name="format_for_slack"
+        name="format_for_slack",
     )
-    async def format_for_slack(self, query: str, top: int = 5, conversation_id: Optional[str] = None) -> Dict[str, Any]:
+    async def format_for_slack(
+        self, query: str, top: int = 5, conversation_id: str | None = None
+    ) -> dict[str, Any]:
         """
         Search documentation and format results in Slack-compatible Markdown.
 
@@ -230,28 +245,28 @@ class DocumentationNavigatorSkill:
                         await conversation_manager.add_message(
                             conversation_id=conversation_id,
                             content=query,
-                            message_type="user"
+                            message_type="user",
                         )
 
                         await conversation_manager.add_message(
                             conversation_id=conversation_id,
-                            content="I couldn't find any relevant information. Could you please rephrase your query?",
-                            message_type="assistant"
+                            content="I couldn't find any relevant information. Could you please rephrase your query?",  # noqa: E501
+                            message_type="assistant",
                         )
                 except Exception as e:
                     logger.error(f"Error updating conversation history: {str(e)}")
 
             return {
-                "text": "I couldn't find any relevant information. Could you please rephrase your query?",
+                "text": "I couldn't find any relevant information. Could you please rephrase your query?",  # noqa: E501
                 "blocks": [
                     {
                         "type": "section",
                         "text": {
                             "type": "mrkdwn",
-                            "text": "I couldn't find any relevant information. Could you please rephrase your query?"
-                        }
+                            "text": "I couldn't find any relevant information. Could you please rephrase your query?",  # noqa: E501
+                        },
                     }
-                ]
+                ],
             }
 
         # Format the results for Slack
@@ -269,7 +284,7 @@ class DocumentationNavigatorSkill:
                     await conversation_manager.add_message(
                         conversation_id=conversation_id,
                         content=query,
-                        message_type="user"
+                        message_type="user",
                     )
 
                     # Add assistant message (using text version for simplicity)
@@ -280,17 +295,16 @@ class DocumentationNavigatorSkill:
                         metadata={
                             "search_results": search_results["results"],
                             "result_count": search_results["result_count"],
-                            "query": query
-                        }
+                            "query": query,
+                        },
                     )
-                    logger.info(f"Added search results to conversation history: {conversation_id}")
+                    logger.info(
+                        f"Added search results to conversation history: {conversation_id}"  # noqa: E501
+                    )
             except Exception as e:
                 logger.error(f"Error updating conversation history: {str(e)}")
 
-        return {
-            "text": slack_text,
-            "blocks": slack_blocks
-        }
+        return {"text": slack_text, "blocks": slack_blocks}
 
     def _preprocess_query(self, query: str) -> str:
         """
@@ -313,7 +327,12 @@ class DocumentationNavigatorSkill:
 
         # Detect and enhance onboarding-related questions
         onboarding_patterns = {
-            "onboarding": ["onboarding process", "employee onboarding", "new hire", "orientation"],
+            "onboarding": [
+                "onboarding process",
+                "employee onboarding",
+                "new hire",
+                "orientation",
+            ],
             "new employee": ["onboarding process", "first day", "getting started"],
             "getting started": ["onboarding", "setup guide", "initial steps"],
             "first day": ["onboarding", "orientation", "welcome"],
@@ -322,7 +341,7 @@ class DocumentationNavigatorSkill:
             "training": ["learning", "courses", "education", "onboarding"],
             "mentor": ["buddy", "coach", "onboarding support"],
             "benefits": ["employee benefits", "perks", "hr", "onboarding"],
-            "handbook": ["employee handbook", "guide", "manual", "policies"]
+            "handbook": ["employee handbook", "guide", "manual", "policies"],
         }
 
         # Check for onboarding-related patterns and enhance the query
@@ -336,18 +355,83 @@ class DocumentationNavigatorSkill:
 
         # Identify domain-specific terms to preserve
         technical_terms = [
-            "api", "sdk", "cli", "ui", "ux", "git", "docker", "kubernetes", "k8s",
-            "azure", "aws", "gcp", "cloud", "devops", "ci/cd", "pipeline",
-            "semantic kernel", "llm", "openai", "gpt", "embedding", "vector",
-            "database", "storage", "memory", "cache", "index", "search",
-            "authentication", "authorization", "security", "encryption",
-            "documentation", "markdown", "slack", "teams", "chat", "bot",
-            "function", "method", "class", "object", "interface", "skill"
+            "api",
+            "sdk",
+            "cli",
+            "ui",
+            "ux",
+            "git",
+            "docker",
+            "kubernetes",
+            "k8s",
+            "azure",
+            "aws",
+            "gcp",
+            "cloud",
+            "devops",
+            "ci/cd",
+            "pipeline",
+            "semantic kernel",
+            "llm",
+            "openai",
+            "gpt",
+            "embedding",
+            "vector",
+            "database",
+            "storage",
+            "memory",
+            "cache",
+            "index",
+            "search",
+            "authentication",
+            "authorization",
+            "security",
+            "encryption",
+            "documentation",
+            "markdown",
+            "slack",
+            "teams",
+            "chat",
+            "bot",
+            "function",
+            "method",
+            "class",
+            "object",
+            "interface",
+            "skill",
         ]
 
         # Remove question words and common filler words
-        question_words = ["what", "how", "why", "when", "where", "who", "is", "are", "can", "could", "would", "should"]
-        filler_words = ["the", "a", "an", "in", "on", "at", "to", "for", "with", "by", "about", "like", "as", "of"]
+        question_words = [
+            "what",
+            "how",
+            "why",
+            "when",
+            "where",
+            "who",
+            "is",
+            "are",
+            "can",
+            "could",
+            "would",
+            "should",
+        ]
+        filler_words = [
+            "the",
+            "a",
+            "an",
+            "in",
+            "on",
+            "at",
+            "to",
+            "for",
+            "with",
+            "by",
+            "about",
+            "like",
+            "as",
+            "of",
+        ]
 
         # Only remove these words if they're standalone (not part of another word)
         words = processed.split()
@@ -355,7 +439,7 @@ class DocumentationNavigatorSkill:
 
         for word in words:
             # Remove punctuation for comparison
-            clean_word = re.sub(r'[^\w\s]', '', word)
+            clean_word = re.sub(r"[^\w\s]", "", word)
 
             # Preserve technical terms
             if any(term == clean_word for term in technical_terms):
@@ -375,7 +459,7 @@ class DocumentationNavigatorSkill:
         logger.info(f"Preprocessed query: '{query}' -> '{processed_query}'")
         return processed_query
 
-    def _format_results(self, results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _format_results(self, results: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
         Format search results for presentation.
 
@@ -405,15 +489,17 @@ class DocumentationNavigatorSkill:
                 "title": title,
                 "content": content,
                 "score": score,
-                "citation": f"[{i+1}] {title}",
-                "metadata": metadata
+                "citation": f"[{i + 1}] {title}",
+                "metadata": metadata,
             }
 
             formatted.append(formatted_result)
 
         return formatted
 
-    def _format_answer_with_citations(self, question: str, results: List[Dict[str, Any]]) -> str:
+    def _format_answer_with_citations(
+        self, question: str, results: list[dict[str, Any]]
+    ) -> str:
         """
         Format an answer with citations based on search results.
 
@@ -434,25 +520,29 @@ class DocumentationNavigatorSkill:
         # Extract content and metadata from results
         contents = [result["content"] for result in results]
         titles = [result["title"] for result in results]
-        citations = [result["citation"] for result in results]
+        citations = [result["citation"] for result in results]  # noqa: F841
         document_ids = [result["document_id"] for result in results]
 
         # Start with a clear introduction
-        answer = f"Based on the documentation, here's what I found about your question:\n\n"
+        answer = (
+            f"Based on the documentation, here's what I found about your question:\n\n"  # noqa: E501, F541
+        )
 
         # Add content with properly formatted citations
         for i, content in enumerate(contents):
             # Truncate content if too long, preserving sentence boundaries if possible
             if len(content) > 300:
                 # Try to find the last sentence boundary within the first 300 chars
-                last_period = content[:300].rfind('.')
-                if last_period > 200:  # Only use sentence boundary if it's not too short
-                    content = content[:last_period+1]
+                last_period = content[:300].rfind(".")
+                if (
+                    last_period > 200
+                ):  # Only use sentence boundary if it's not too short
+                    content = content[: last_period + 1]
                 else:
                     content = content[:300] + "..."
 
             # Format the citation as a superscript number
-            citation_mark = f"[{i+1}]"
+            citation_mark = f"[{i + 1}]"
 
             # Add the content with citation
             answer += f"{content} {citation_mark}\n\n"
@@ -462,13 +552,15 @@ class DocumentationNavigatorSkill:
 
         # Add detailed sources section with document IDs and titles
         answer += "**Sources:**\n"
-        for i, (title, doc_id) in enumerate(zip(titles, document_ids)):
+        for i, (title, doc_id) in enumerate(zip(titles, document_ids, strict=False)):
             # Format each citation with number, title, and document ID
-            answer += f"{i+1}. **{title}** (Document ID: `{doc_id}`)\n"
+            answer += f"{i + 1}. **{title}** (Document ID: `{doc_id}`)\n"
 
         return answer
 
-    def _format_slack_blocks(self, query: str, results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _format_slack_blocks(
+        self, query: str, results: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """
         Format search results as Slack blocks.
 
@@ -487,25 +579,24 @@ class DocumentationNavigatorSkill:
         blocks = []
 
         # Add header with search query and result count
-        blocks.append({
-            "type": "header",
-            "text": {
-                "type": "plain_text",
-                "text": f"Search Results ({len(results)} found)",
-                "emoji": True
+        blocks.append(
+            {
+                "type": "header",
+                "text": {
+                    "type": "plain_text",
+                    "text": f"Search Results ({len(results)} found)",
+                    "emoji": True,
+                },
             }
-        })
+        )
 
         # Add context block with the original query
-        blocks.append({
-            "type": "context",
-            "elements": [
-                {
-                    "type": "mrkdwn",
-                    "text": f"*Query:* _{query}_"
-                }
-            ]
-        })
+        blocks.append(
+            {
+                "type": "context",
+                "elements": [{"type": "mrkdwn", "text": f"*Query:* _{query}_"}],
+            }
+        )
 
         blocks.append({"type": "divider"})
 
@@ -523,31 +614,37 @@ class DocumentationNavigatorSkill:
             # Truncate content if too long, preserving sentence boundaries if possible
             if len(content) > 300:
                 # Try to find the last sentence boundary within the first 300 chars
-                last_period = content[:300].rfind('.')
-                if last_period > 200:  # Only use sentence boundary if it's not too short
-                    content = content[:last_period+1]
+                last_period = content[:300].rfind(".")
+                if (
+                    last_period > 200
+                ):  # Only use sentence boundary if it's not too short
+                    content = content[: last_period + 1]
                 else:
                     content = content[:300] + "..."
 
             # Add result section with title and content
-            blocks.append({
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": f"*{i+1}. {title}*\n{content}"
+            blocks.append(
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"*{i + 1}. {title}*\n{content}",
+                    },
                 }
-            })
+            )
 
             # Add context block with metadata
-            blocks.append({
-                "type": "context",
-                "elements": [
-                    {
-                        "type": "mrkdwn",
-                        "text": f"*Source:* Document ID: `{document_id}` {' | ' + relevance_str if relevance_str else ''}"
-                    }
-                ]
-            })
+            blocks.append(
+                {
+                    "type": "context",
+                    "elements": [
+                        {
+                            "type": "mrkdwn",
+                            "text": f"*Source:* Document ID: `{document_id}` {' | ' + relevance_str if relevance_str else ''}",  # noqa: E501
+                        }
+                    ],
+                }
+            )
 
             # Add action buttons for each result (if needed in the future)
             # blocks.append({
@@ -568,25 +665,29 @@ class DocumentationNavigatorSkill:
             blocks.append({"type": "divider"})
 
         # Add a final context block with a helpful message
-        blocks.append({
-            "type": "context",
-            "elements": [
-                {
-                    "type": "mrkdwn",
-                    "text": "💡 _Ask follow-up questions for more details on any of these results._"
-                }
-            ]
-        })
+        blocks.append(
+            {
+                "type": "context",
+                "elements": [
+                    {
+                        "type": "mrkdwn",
+                        "text": "💡 _Ask follow-up questions for more details on any of these results._",  # noqa: E501
+                    }
+                ],
+            }
+        )
 
         return blocks
 
     @kernel_function(
         description="Continue a conversation with follow-up questions",
-        name="continue_conversation"
+        name="continue_conversation",
     )
-    async def continue_conversation(self, follow_up_question: str, conversation_id: str, top: int = 5) -> str:
+    async def continue_conversation(
+        self, follow_up_question: str, conversation_id: str, top: int = 5
+    ) -> str:
         """
-        Continue a conversation with follow-up questions, using conversation history for context.
+        Continue a conversation with follow-up questions, using conversation history for context.  # noqa: E501
 
         Args:
             follow_up_question: The follow-up question
@@ -596,22 +697,27 @@ class DocumentationNavigatorSkill:
         Returns:
             Formatted answer with citations
         """
-        logger.info(f"Processing follow-up question: {follow_up_question} in conversation: {conversation_id}")
+        logger.info(
+            f"Processing follow-up question: {follow_up_question} in conversation: {conversation_id}"  # noqa: E501
+        )
 
         # Get the conversation manager
         conversation_manager = await self._get_conversation_manager()
 
         if not conversation_manager:
-            logger.warning("Conversation manager not available, treating as standalone question")
+            logger.warning(
+                "Conversation manager not available, treating as standalone question"
+            )
             return await self.answer_question(follow_up_question, top, conversation_id)
 
         try:
             # Get conversation context
             context = await conversation_manager.get_conversation_context(
-                conversation_id=conversation_id,
-                format="string"
+                conversation_id=conversation_id, format="string"
             )
-            logger.info(f"Retrieved conversation context with length: {len(context) if context else 0}")
+            logger.info(
+                f"Retrieved conversation context with length: {len(context) if context else 0}"  # noqa: E501
+            )
 
             # Extract previous queries from conversation history
             previous_queries = []
@@ -619,8 +725,7 @@ class DocumentationNavigatorSkill:
 
             # Get messages as dictionaries
             messages = await conversation_manager.get_conversation_messages(
-                conversation_id=conversation_id,
-                include_metadata=True
+                conversation_id=conversation_id, include_metadata=True
             )
 
             # Extract queries and results from user and assistant messages
@@ -633,7 +738,9 @@ class DocumentationNavigatorSkill:
                         previous_results.extend(metadata["search_results"])
 
             # Enhance the query with context from previous interactions
-            enhanced_query = self._enhance_query_with_context(follow_up_question, previous_queries)
+            enhanced_query = self._enhance_query_with_context(
+                follow_up_question, previous_queries
+            )
             logger.info(f"Enhanced query: {enhanced_query}")
 
             # Search for relevant documentation
@@ -643,36 +750,42 @@ class DocumentationNavigatorSkill:
                 logger.warning(f"No results found for enhanced query: {enhanced_query}")
 
                 # Try with original query as fallback
-                search_results = await self.search_documentation(follow_up_question, top)
+                search_results = await self.search_documentation(
+                    follow_up_question, top
+                )
 
                 if not search_results["success"] or search_results["result_count"] == 0:
-                    logger.warning(f"No results found for original query either: {follow_up_question}")
+                    logger.warning(
+                        f"No results found for original query either: {follow_up_question}"  # noqa: E501
+                    )
 
                     # Add to conversation history
                     await conversation_manager.add_message(
                         conversation_id=conversation_id,
                         content=follow_up_question,
-                        message_type="user"
+                        message_type="user",
                     )
 
-                    no_results_response = "I couldn't find any relevant information to answer your follow-up question. Could you please rephrase or ask something else?"
+                    no_results_response = "I couldn't find any relevant information to answer your follow-up question. Could you please rephrase or ask something else?"  # noqa: E501
 
                     await conversation_manager.add_message(
                         conversation_id=conversation_id,
                         content=no_results_response,
-                        message_type="assistant"
+                        message_type="assistant",
                     )
 
                     return no_results_response
 
             # Format the answer with citations
-            answer = self._format_answer_with_citations(follow_up_question, search_results["results"])
+            answer = self._format_answer_with_citations(
+                follow_up_question, search_results["results"]
+            )
 
             # Add to conversation history
             await conversation_manager.add_message(
                 conversation_id=conversation_id,
                 content=follow_up_question,
-                message_type="user"
+                message_type="user",
             )
 
             await conversation_manager.add_message(
@@ -683,8 +796,8 @@ class DocumentationNavigatorSkill:
                     "search_results": search_results["results"],
                     "result_count": search_results["result_count"],
                     "query": enhanced_query,
-                    "original_query": follow_up_question
-                }
+                    "original_query": follow_up_question,
+                },
             )
 
             return answer
@@ -695,10 +808,9 @@ class DocumentationNavigatorSkill:
             return await self.answer_question(follow_up_question, top, conversation_id)
 
     @kernel_function(
-        description="Create a new conversation",
-        name="create_conversation"
+        description="Create a new conversation", name="create_conversation"
     )
-    async def create_conversation(self, user_id: Optional[str] = None) -> Dict[str, Any]:
+    async def create_conversation(self, user_id: str | None = None) -> dict[str, Any]:
         """
         Create a new conversation for contextual interactions.
 
@@ -714,20 +826,34 @@ class DocumentationNavigatorSkill:
         conversation_manager = await self._get_conversation_manager()
 
         if not conversation_manager:
-            logger.warning("Conversation manager not available, returning dummy conversation ID")
-            return {"id": str(uuid.uuid4()), "user_id": user_id, "created_at": datetime.now().isoformat()}
+            logger.warning(
+                "Conversation manager not available, returning dummy conversation ID"
+            )
+            return {
+                "id": str(uuid.uuid4()),
+                "user_id": user_id,
+                "created_at": datetime.now().isoformat(),
+            }
 
         try:
             # Create a new conversation
-            conversation = await conversation_manager.create_conversation(user_id=user_id)
+            conversation = await conversation_manager.create_conversation(
+                user_id=user_id
+            )
             logger.info(f"Created new conversation: {conversation['id']}")
             return conversation
         except Exception as e:
             logger.error(f"Error creating conversation: {str(e)}")
             # Return a dummy conversation ID
-            return {"id": str(uuid.uuid4()), "user_id": user_id, "created_at": datetime.now().isoformat()}
+            return {
+                "id": str(uuid.uuid4()),
+                "user_id": user_id,
+                "created_at": datetime.now().isoformat(),
+            }
 
-    def _enhance_query_with_context(self, query: str, previous_queries: List[str], max_previous: int = 2) -> str:
+    def _enhance_query_with_context(
+        self, query: str, previous_queries: list[str], max_previous: int = 2
+    ) -> str:
         """
         Enhance a query with context from previous queries.
 
@@ -743,7 +869,11 @@ class DocumentationNavigatorSkill:
             return query
 
         # Take the most recent queries (limited by max_previous)
-        recent_queries = previous_queries[-max_previous:] if len(previous_queries) > max_previous else previous_queries
+        recent_queries = (
+            previous_queries[-max_previous:]
+            if len(previous_queries) > max_previous
+            else previous_queries
+        )
 
         # Extract key terms from previous queries
         key_terms = set()
@@ -761,12 +891,14 @@ class DocumentationNavigatorSkill:
             # Limit to 5 additional terms to avoid query explosion
             limited_terms = list(additional_terms)[:5]
             enhanced_query = f"{query} {' '.join(limited_terms)}"
-            logger.info(f"Enhanced query with terms from previous queries: {limited_terms}")
+            logger.info(
+                f"Enhanced query with terms from previous queries: {limited_terms}"
+            )
             return enhanced_query
 
         return query
 
-    def _format_slack_text(self, query: str, results: List[Dict[str, Any]]) -> str:
+    def _format_slack_text(self, query: str, results: list[dict[str, Any]]) -> str:
         """
         Format search results as plain text for Slack.
 
@@ -795,14 +927,16 @@ class DocumentationNavigatorSkill:
             # Truncate content if too long, preserving sentence boundaries if possible
             if len(content) > 150:
                 # Try to find the last sentence boundary within the first 150 chars
-                last_period = content[:150].rfind('.')
-                if last_period > 100:  # Only use sentence boundary if it's not too short
-                    content = content[:last_period+1]
+                last_period = content[:150].rfind(".")
+                if (
+                    last_period > 100
+                ):  # Only use sentence boundary if it's not too short
+                    content = content[: last_period + 1]
                 else:
                     content = content[:150] + "..."
 
             # Format the result with title, content, and source
-            text += f"{i+1}. {title}\n"
+            text += f"{i + 1}. {title}\n"
             text += f"{content}\n"
             text += f"Source: Document ID: {document_id}\n"
             text += "─────────────────────────────\n\n"
