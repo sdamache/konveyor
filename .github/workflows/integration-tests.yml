@@ -116,11 +116,94 @@ jobs:
           python-version: '3.10'
           cache: 'pip'
 
+      # Set default parameters based on context
+      - name: Set default parameters
+        id: defaults
+        run: |
+          # Initialize with base defaults
+          TEST_TYPE="mock"
+          ENVIRONMENT="test"
+          TEST_CATEGORY="all"
+          FAST_TRACK="false"
+          DEPLOY_INFRA="auto"
+
+          # Override based on branch/event context
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            if [[ "${{ github.base_ref }}" == "main" ]]; then
+              # PR to main - use real tests in test env
+              TEST_TYPE="real"
+              ENVIRONMENT="test"
+            elif [[ "${{ github.base_ref }}" == "dev" ]]; then
+              # PR to dev - use mock tests in dev env
+              TEST_TYPE="mock"
+              ENVIRONMENT="dev"
+            fi
+          elif [[ "${{ github.event_name }}" == "push" ]]; then
+            if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+              # Push to main - use real tests in test env
+              TEST_TYPE="real"
+              ENVIRONMENT="test"
+            elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
+              # Push to dev - use mock tests in dev env
+              TEST_TYPE="mock"
+              ENVIRONMENT="dev"
+            fi
+          fi
+
+          # Override with workflow inputs if they exist
+          if [[ "${{ github.event.inputs.test_type }}" != "" ]]; then
+            TEST_TYPE="${{ github.event.inputs.test_type }}"
+          elif [[ "${{ inputs.test_type }}" != "" ]]; then
+            TEST_TYPE="${{ inputs.test_type }}"
+          fi
+
+          if [[ "${{ github.event.inputs.environment }}" != "" ]]; then
+            ENVIRONMENT="${{ github.event.inputs.environment }}"
+          elif [[ "${{ inputs.environment }}" != "" ]]; then
+            ENVIRONMENT="${{ inputs.environment }}"
+          fi
+
+          if [[ "${{ github.event.inputs.test_category }}" != "" ]]; then
+            TEST_CATEGORY="${{ github.event.inputs.test_category }}"
+          elif [[ "${{ inputs.test_category }}" != "" ]]; then
+            TEST_CATEGORY="${{ inputs.test_category }}"
+          fi
+
+          if [[ "${{ github.event.inputs.fast_track }}" == "true" || "${{ inputs.fast_track }}" == "true" ]]; then
+            FAST_TRACK="true"
+          fi
+
+          if [[ "${{ github.event.inputs.deploy_infrastructure }}" != "" ]]; then
+            DEPLOY_INFRA="${{ github.event.inputs.deploy_infrastructure }}"
+          elif [[ "${{ inputs.deploy_infrastructure }}" != "" ]]; then
+            DEPLOY_INFRA="${{ inputs.deploy_infrastructure }}"
+          fi
+
+          # Set outputs for use in conditions
+          echo "test_type=${TEST_TYPE}" >> $GITHUB_OUTPUT
+          echo "environment=${ENVIRONMENT}" >> $GITHUB_OUTPUT
+          echo "test_category=${TEST_CATEGORY}" >> $GITHUB_OUTPUT
+          echo "fast_track=${FAST_TRACK}" >> $GITHUB_OUTPUT
+          echo "deploy_infra=${DEPLOY_INFRA}" >> $GITHUB_OUTPUT
+
+          # Set environment variables for use in steps
+          echo "TEST_TYPE=${TEST_TYPE}" >> $GITHUB_ENV
+          echo "ENVIRONMENT=${ENVIRONMENT}" >> $GITHUB_ENV
+          echo "TEST_CATEGORY=${TEST_CATEGORY}" >> $GITHUB_ENV
+          echo "FAST_TRACK=${FAST_TRACK}" >> $GITHUB_ENV
+          echo "DEPLOY_INFRA=${DEPLOY_INFRA}" >> $GITHUB_ENV
+
+          echo "Using TEST_TYPE: ${TEST_TYPE}"
+          echo "Using ENVIRONMENT: ${ENVIRONMENT}"
+          echo "Using TEST_CATEGORY: ${TEST_CATEGORY}"
+          echo "Using FAST_TRACK: ${FAST_TRACK}"
+          echo "Using DEPLOY_INFRA: ${DEPLOY_INFRA}"
+
       # Azure Login for real tests
       - name: Debug Azure Credentials
         run: |
           echo "Event name: ${{ github.event_name }}"
-          echo "Test type: ${{ inputs.test_type || github.event.inputs.test_type || 'not specified' }}"
+          echo "Test type: ${{ env.TEST_TYPE || 'not specified' }}"
           echo "Has AZURE_CREDENTIALS secret: ${{ secrets.AZURE_CREDENTIALS != '' }}"
 
           # Create a dummy Azure credentials file if the secret is missing
@@ -134,7 +217,7 @@ jobs:
 
       - name: Azure Login
         # Always run Azure login for PR and push events, or when real tests are specified
-        if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || inputs.test_type == 'real' || github.event.inputs.test_type == 'real' || contains(github.event.inputs.test_type, 'both') }}
+        if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || env.TEST_TYPE == 'real' || contains(env.TEST_TYPE, 'both') }}
         uses: azure/login@v2.1.0
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS || env.AZURE_CREDENTIALS }}
@@ -333,7 +416,7 @@ jobs:
 
       # Clean up infrastructure if it was deployed for real tests
       - name: Azure Login for Cleanup
-        if: ${{ always() && (github.event_name == 'push' || github.event_name == 'pull_request' || inputs.test_type == 'real' || github.event.inputs.test_type == 'real' || contains(github.event.inputs.test_type, 'both')) }}
+        if: ${{ always() && (github.event_name == 'push' || github.event_name == 'pull_request' || env.TEST_TYPE == 'real' || contains(env.TEST_TYPE, 'both')) }}
         uses: azure/login@v2.1.0
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS || env.AZURE_CREDENTIALS }}
@@ -343,10 +426,8 @@ jobs:
         if: >-
           ${{
             always() &&
-            (inputs.deploy_infrastructure == 'always' || github.event.inputs.deploy_infrastructure == 'always' ||
-            (inputs.deploy_infrastructure == 'auto' || github.event.inputs.deploy_infrastructure == 'auto' || inputs.deploy_infrastructure == '' || github.event.inputs.deploy_infrastructure == '' || inputs.deploy_infrastructure == null || github.event.inputs.deploy_infrastructure == null) &&
-            (inputs.test_type == 'real' || github.event.inputs.test_type == 'real' ||
-             (github.event_name == 'pull_request' && github.base_ref == 'main')))
+            (env.DEPLOY_INFRA == 'always' ||
+            (env.DEPLOY_INFRA == 'auto' && (env.TEST_TYPE == 'real' || (github.event_name == 'pull_request' && github.base_ref == 'main'))))
           }}
         uses: hashicorp/setup-terraform@v3
         with:
@@ -356,10 +437,8 @@ jobs:
         if: >-
           ${{
             always() &&
-            (inputs.deploy_infrastructure == 'always' || github.event.inputs.deploy_infrastructure == 'always' ||
-            (inputs.deploy_infrastructure == 'auto' || github.event.inputs.deploy_infrastructure == 'auto' || inputs.deploy_infrastructure == '' || github.event.inputs.deploy_infrastructure == '' || inputs.deploy_infrastructure == null || github.event.inputs.deploy_infrastructure == null) &&
-            (inputs.test_type == 'real' || github.event.inputs.test_type == 'real' ||
-             (github.event_name == 'pull_request' && github.base_ref == 'main')))
+            (env.DEPLOY_INFRA == 'always' ||
+            (env.DEPLOY_INFRA == 'auto' && (env.TEST_TYPE == 'real' || (github.event_name == 'pull_request' && github.base_ref == 'main'))))
           }}
         run: |
           # Check if Konveyor-infra directory exists
@@ -369,7 +448,7 @@ jobs:
           fi
 
           # Check if the environment directory exists
-          ENV_DIR="Konveyor-infra/environments/${{ inputs.environment || github.event.inputs.environment || 'test' }}"
+          ENV_DIR="Konveyor-infra/environments/${{ env.ENVIRONMENT }}"
           if [ ! -d "$ENV_DIR" ]; then
             echo "::warning::Environment directory $ENV_DIR not found. Skipping infrastructure cleanup."
             exit 0
