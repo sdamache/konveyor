@@ -32,7 +32,7 @@ def test_embedding_generation():
     # Generate embeddings for each test text
     for i, text in enumerate(test_texts):
         try:
-            logger.info(f"Generating embedding for text {i+1} ({len(text)} chars)")
+            logger.info(f"Generating embedding for text {i + 1} ({len(text)} chars)")
 
             # Generate the embedding
             embedding = client.generate_embedding(text)
@@ -43,11 +43,11 @@ def test_embedding_generation():
             )
             logger.info(f"First 5 values: {embedding[:5]}")
             print(
-                f"Text {i+1}: Successfully generated embedding with {len(embedding)} dimensions"  # noqa: E501
+                f"Text {i + 1}: Successfully generated embedding with {len(embedding)} dimensions"  # noqa: E501
             )
         except Exception as e:
-            logger.error(f"Failed to generate embedding for text {i+1}: {str(e)}")
-            print(f"Text {i+1}: Failed to generate embedding: {str(e)}")
+            logger.error(f"Failed to generate embedding for text {i + 1}: {str(e)}")
+            print(f"Text {i + 1}: Failed to generate embedding: {str(e)}")
 
 
 def test_completion_generation():
@@ -72,12 +72,12 @@ def test_completion_generation():
     # Generate completions for each message set
     for i, messages in enumerate(test_messages):
         try:
-            logger.info(f"Generating completion for message set {i+1}")
+            logger.info(f"Generating completion for message set {i + 1}")
             completion = client.generate_completion(messages, max_tokens=100)
             logger.info(
                 f"Successfully generated completion with {len(completion)} chars"
             )
-            print(f"\nPrompt {i+1}:")
+            print(f"\nPrompt {i + 1}:")
             print(f"User: {messages[-1]['content']}")
             print(
                 f"AI: {completion[:100]}..."
@@ -86,9 +86,9 @@ def test_completion_generation():
             )
         except Exception as e:
             logger.error(
-                f"Failed to generate completion for message set {i+1}: {str(e)}"
+                f"Failed to generate completion for message set {i + 1}: {str(e)}"
             )
-            print(f"Prompt {i+1}: Failed to generate completion: {str(e)}")
+            print(f"Prompt {i + 1}: Failed to generate completion: {str(e)}")
 
 
 def verify_environment():

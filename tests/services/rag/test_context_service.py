@@ -65,9 +65,9 @@ async def test_retrieve_context_integration(context_service, client_manager):
     # Retrieve context via service
     results = await context_service.retrieve_context(content)
     # Verify that our test document is returned
-    assert any(
-        r["content"] == content for r in results
-    ), f"Expected document content in results: {results}"
+    assert any(r["content"] == content for r in results), (
+        f"Expected document content in results: {results}"
+    )
     assert all(r["relevance_score"] >= 0.3 for r in results)
 
     # Cleanup: delete test document from index

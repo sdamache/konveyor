@@ -29,7 +29,7 @@ def rename_files():
 
     # Create a backup directory
     backup_dir = (
-        project_root / "backups" / f'backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
+        project_root / "backups" / f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     )
     backup_dir.mkdir(parents=True, exist_ok=True)
     logger.info(f"Created backup directory: {backup_dir}")

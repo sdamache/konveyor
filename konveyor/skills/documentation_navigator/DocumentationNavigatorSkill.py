@@ -489,7 +489,7 @@ class DocumentationNavigatorSkill:
                 "title": title,
                 "content": content,
                 "score": score,
-                "citation": f"[{i+1}] {title}",
+                "citation": f"[{i + 1}] {title}",
                 "metadata": metadata,
             }
 
@@ -542,7 +542,7 @@ class DocumentationNavigatorSkill:
                     content = content[:300] + "..."
 
             # Format the citation as a superscript number
-            citation_mark = f"[{i+1}]"
+            citation_mark = f"[{i + 1}]"
 
             # Add the content with citation
             answer += f"{content} {citation_mark}\n\n"
@@ -554,7 +554,7 @@ class DocumentationNavigatorSkill:
         answer += "**Sources:**\n"
         for i, (title, doc_id) in enumerate(zip(titles, document_ids, strict=False)):
             # Format each citation with number, title, and document ID
-            answer += f"{i+1}. **{title}** (Document ID: `{doc_id}`)\n"
+            answer += f"{i + 1}. **{title}** (Document ID: `{doc_id}`)\n"
 
         return answer
 
@@ -626,7 +626,10 @@ class DocumentationNavigatorSkill:
             blocks.append(
                 {
                     "type": "section",
-                    "text": {"type": "mrkdwn", "text": f"*{i+1}. {title}*\n{content}"},
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"*{i + 1}. {title}*\n{content}",
+                    },
                 }
             )
 
@@ -933,7 +936,7 @@ class DocumentationNavigatorSkill:
                     content = content[:150] + "..."
 
             # Format the result with title, content, and source
-            text += f"{i+1}. {title}\n"
+            text += f"{i + 1}. {title}\n"
             text += f"{content}\n"
             text += f"Source: Document ID: {document_id}\n"
             text += "─────────────────────────────\n\n"

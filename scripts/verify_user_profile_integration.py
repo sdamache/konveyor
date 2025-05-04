@@ -64,13 +64,13 @@ def verify_user_profiles():
 
     logger.info("Profile statistics:")
     logger.info(
-        f"  Profiles with email: {stats['with_email']} ({stats['with_email']/profile_count*100:.1f}%)"
+        f"  Profiles with email: {stats['with_email']} ({stats['with_email'] / profile_count * 100:.1f}%)"
     )
     logger.info(
-        f"  Profiles with code language preference: {stats['with_code_language']} ({stats['with_code_language']/profile_count*100:.1f}%)"
+        f"  Profiles with code language preference: {stats['with_code_language']} ({stats['with_code_language'] / profile_count * 100:.1f}%)"
     )
     logger.info(
-        f"  Profiles with response format preference: {stats['with_response_format']} ({stats['with_response_format']/profile_count*100:.1f}%)"
+        f"  Profiles with response format preference: {stats['with_response_format']} ({stats['with_response_format'] / profile_count * 100:.1f}%)"
     )
     logger.info(f"  Average interactions per profile: {stats['avg_interactions']:.1f}")
     logger.info(f"  Maximum interactions for a profile: {stats['max_interactions']}")
