@@ -1,5 +1,10 @@
 name: "Code Quality Checks"
 
+permissions:
+  contents: read   # Required for checkout
+  id-token: write  # Required for Azure login
+  actions: read    # Required for workflow calls
+
 on:
   pull_request:
     branches: [ main, dev ]

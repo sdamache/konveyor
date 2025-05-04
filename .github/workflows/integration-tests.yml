@@ -1,5 +1,11 @@
 name: "Integration Tests"
 
+permissions:
+  contents: read   # Required for checkout
+  id-token: write  # Required for Azure login
+  actions: read    # Required for workflow calls
+  packages: read   # Required for pulling from GHCR
+
 on:
   pull_request:
     branches: [ main, dev ]
