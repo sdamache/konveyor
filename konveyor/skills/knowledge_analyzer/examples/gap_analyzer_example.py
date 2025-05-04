@@ -55,7 +55,7 @@ def main():
 
     print("\n=== Simulating User Questions ===")
     for i, question in enumerate(questions):
-        print(f"\nQuestion {i+1}: {question}")
+        print(f"\nQuestion {i + 1}: {question}")
 
         # Analyze the question
         analysis_json = analyzer.analyze_question(question, user_id)

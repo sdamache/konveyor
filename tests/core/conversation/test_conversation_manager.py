@@ -7,7 +7,7 @@ including the InMemoryConversationManager and the ConversationManagerFactory.
 
 import asyncio
 import os  # noqa: F401
-from typing import Any, Dict, List  # noqa: F401, F401, F401
+from typing import Any, Dict, List  # noqa: F401
 
 import pytest
 
@@ -17,7 +17,7 @@ from konveyor.core.conversation.memory import InMemoryConversationManager
 
 
 # Test the InMemoryConversationManager
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_in_memory_conversation_manager():
     """Test the InMemoryConversationManager."""
     # Create a conversation manager
@@ -127,7 +127,7 @@ async def test_in_memory_conversation_manager():
 
 
 # Test the ConversationManagerFactory
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_conversation_manager_factory():
     """Test the ConversationManagerFactory."""
     # Create a memory conversation manager

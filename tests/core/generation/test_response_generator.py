@@ -6,8 +6,8 @@ including the ResponseGenerator and ResponseGeneratorFactory.
 """
 
 import asyncio
-from typing import Any, Dict, List  # noqa: F401, F401, F401
-from unittest.mock import AsyncMock, MagicMock, patch  # noqa: F401, F401, F401
+from typing import Any, Dict, List  # noqa: F401
+from unittest.mock import AsyncMock, MagicMock, patch  # noqa: F401
 
 import pytest
 
@@ -71,7 +71,7 @@ class MockConversationManager:
 
 
 # Test the ResponseGenerator
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_response_generator():
     """Test the ResponseGenerator."""
     # Create mock dependencies

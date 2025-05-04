@@ -6,7 +6,7 @@ verifying that they work correctly with the new core components.
 """
 
 import json
-from unittest.mock import AsyncMock, MagicMock, patch  # noqa: F401, F401
+from unittest.mock import AsyncMock, MagicMock, patch  # noqa: F401
 
 import pytest
 from django.http import HttpResponse, JsonResponse
@@ -60,7 +60,7 @@ def test_root_handler():
 
 
 # Test the slack_webhook function
-@pytest.mark.django_db()
+@pytest.mark.django_db
 def test_slack_webhook():
     """Test the slack_webhook function."""
     # Create a request factory

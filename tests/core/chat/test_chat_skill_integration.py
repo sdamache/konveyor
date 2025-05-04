@@ -6,7 +6,7 @@ verifying that it works correctly with the new core components.
 """
 
 import asyncio
-from typing import Any, Dict, List  # noqa: F401, F401, F401
+from typing import Any, Dict, List  # noqa: F401
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -15,7 +15,7 @@ from konveyor.core.chat.skill_updated import ChatSkill
 
 
 # Test the ChatSkill with mocked dependencies
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_chat_skill_integration():
     """Test the ChatSkill integration with the new core components."""
     # Create a mock kernel

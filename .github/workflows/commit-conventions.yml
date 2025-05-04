@@ -1,5 +1,8 @@
 name: "Branch Naming Enforcement"
 
+permissions:
+  contents: read  # Required for checkout
+
 on:
   pull_request:
     types: [opened, edited, synchronize, reopened]

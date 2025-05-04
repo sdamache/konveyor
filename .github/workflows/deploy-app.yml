@@ -1,7 +1,9 @@
 name: "Deploy Application to Azure"
 
 permissions:
-  contents: read # Default required for checkout
+  contents: read   # Required for checkout
+  id-token: write  # Required for Azure login
+  packages: write  # Required for pushing to GHCR
 
 on:
   push:

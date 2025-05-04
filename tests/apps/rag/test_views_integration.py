@@ -17,7 +17,7 @@ from konveyor.apps.rag.views_updated import ConversationViewSet
 
 
 # Test the ConversationViewSet
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_conversation_viewset():
     """Test the ConversationViewSet."""
     # Create a request factory

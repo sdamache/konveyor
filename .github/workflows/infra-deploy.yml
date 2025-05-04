@@ -1,8 +1,10 @@
 name: "Deploy Infrastructure and Save Variables"
 
 permissions:
-  contents: read
-  id-token: write # Required for GitHub OIDC token authentication
+  contents: read   # Required for checkout
+  id-token: write  # Required for GitHub OIDC token authentication
+  actions: write   # Required for creating GitHub variables
+  packages: read   # Required for pulling from GHCR
 
 on:
   workflow_dispatch:

@@ -222,12 +222,12 @@ sys.modules[
 class TestDocumentationNavigatorMemory:
     """Tests for the DocumentationNavigatorSkill with conversation memory."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def skill(self):
         """Create a DocumentationNavigatorSkill instance for testing."""
         return DocumentationNavigatorSkill()
 
-    @pytest.mark.asyncio()
+    @pytest.mark.asyncio
     async def test_create_conversation(self, skill):
         """Test creating a new conversation."""
         # Create a conversation
@@ -238,7 +238,7 @@ class TestDocumentationNavigatorMemory:
         assert conversation["user_id"] == "test-user"
         assert "created_at" in conversation
 
-    @pytest.mark.asyncio()
+    @pytest.mark.asyncio
     async def test_answer_question_with_conversation(self, skill):
         """Test answering a question with conversation context."""
         # Create a conversation
@@ -265,7 +265,7 @@ class TestDocumentationNavigatorMemory:
         assert messages[1]["type"] == "assistant"
         assert "What is the onboarding process?" in messages[0]["content"]
 
-    @pytest.mark.asyncio()
+    @pytest.mark.asyncio
     async def test_continue_conversation(self, skill):
         """Test continuing a conversation with follow-up questions."""
         # Create a conversation
@@ -322,7 +322,7 @@ class TestDocumentationNavigatorMemory:
         assert messages[5]["type"] == "assistant"
         assert "Who can help me with IT setup?" in messages[4]["content"]
 
-    @pytest.mark.asyncio()
+    @pytest.mark.asyncio
     async def test_format_for_slack_with_conversation(self, skill):
         """Test formatting search results for Slack with conversation context."""
         # Create a conversation
@@ -349,7 +349,7 @@ class TestDocumentationNavigatorMemory:
         assert messages[1]["type"] == "assistant"
         assert "company policies" in messages[0]["content"]
 
-    @pytest.mark.asyncio()
+    @pytest.mark.asyncio
     async def test_query_enhancement_with_context(self, skill):
         """Test query enhancement based on conversation context."""
         # Create a conversation

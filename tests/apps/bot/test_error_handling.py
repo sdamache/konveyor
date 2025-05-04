@@ -3,7 +3,7 @@ Tests for improved error handling in the Slack webhook handler.
 """
 
 import json
-from unittest.mock import AsyncMock, MagicMock, patch  # noqa: F401, F401
+from unittest.mock import AsyncMock, MagicMock, patch  # noqa: F401
 
 import pytest
 from django.http import HttpResponse, JsonResponse  # noqa: F401
@@ -12,7 +12,7 @@ from django.test import RequestFactory
 from konveyor.apps.bot.views import process_message, slack_webhook  # noqa: F401
 
 
-@pytest.mark.django_db()
+@pytest.mark.django_db
 def test_error_handling_specific_errors():
     """Test that specific error types are handled correctly."""
     # Create a request factory
@@ -69,7 +69,7 @@ def test_error_handling_specific_errors():
         )  # text
 
 
-@pytest.mark.django_db()
+@pytest.mark.django_db
 def test_error_handling_slack_api_errors():
     """Test that Slack API errors are handled correctly."""
     # Create a request factory
@@ -128,7 +128,7 @@ def test_error_handling_slack_api_errors():
         assert mock_slack_service.send_direct_message.call_count == 1
 
 
-@pytest.mark.django_db()
+@pytest.mark.django_db
 def test_error_handling_graceful_recovery():
     """Test that the system recovers gracefully from errors."""
     # Create a request factory

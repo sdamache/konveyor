@@ -12,7 +12,7 @@ from django.test import RequestFactory
 from konveyor.apps.bot.views import process_message, slack_webhook
 
 
-@pytest.mark.django_db()
+@pytest.mark.django_db
 def test_conversation_context_management():
     """Test that conversation context is correctly managed."""
     # Create a request factory

@@ -15,7 +15,7 @@ async def dummy_process_activity(activity, auth_header, handler):
     return DummyResponse(body={"type": "message", "text": "Hello"}, status=200)
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_slack_messages_returns_200(monkeypatch):
     # Monkeypatch the Adapter to avoid real processing
     monkeypatch.setattr(ADAPTER, "process_activity", dummy_process_activity)
@@ -34,13 +34,13 @@ async def test_slack_messages_returns_200(monkeypatch):
     assert resp.status == 200
 
 
-@pytest.fixture()
+@pytest.fixture
 async def client(aiohttp_client):
     """A test client for the Bot HTTP endpoint."""
     return await aiohttp_client(APP)
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_slack_http_returns_200(client, monkeypatch):
     # Monkeypatch the Adapter.process_activity
     monkeypatch.setattr(ADAPTER, "process_activity", dummy_process_activity)
