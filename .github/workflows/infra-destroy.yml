@@ -60,6 +60,7 @@ jobs:
         run: terraform init
 
       - name: Terraform Destroy
+        timeout-minutes: 25
         run: terraform destroy -auto-approve
 
       - name: Clean up GitHub Variables and Secrets

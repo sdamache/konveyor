@@ -387,6 +387,7 @@ jobs:
 
       # Run the tests with the determined parameters
       - name: Build Docker image for testing
+        timeout-minutes: 25
         run: |
           # Create a .env file with all necessary environment variables
           echo "DJANGO_SETTINGS_MODULE=konveyor.settings.testing" > .env
@@ -412,6 +413,7 @@ jobs:
 
       - name: Run tests in Docker
         id: run-tests
+        timeout-minutes: 25
         run: |
           mkdir -p tests/results
           # Set proper permissions on the results directory
@@ -492,6 +494,7 @@ jobs:
             (env.DEPLOY_INFRA == 'always' ||
             (env.DEPLOY_INFRA == 'auto' && (env.TEST_TYPE == 'real' || (github.event_name == 'pull_request' && github.base_ref == 'main'))))
           }}
+        timeout-minutes: 25
         run: |
           # Check if Konveyor-infra directory exists (case-insensitive)
           if [ ! -d "Konveyor-infra" ] && [ ! -d "konveyor-infra" ]; then

@@ -312,6 +312,7 @@ jobs:
             (env.DEPLOY_INFRA == 'auto' && (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod')))
           }}
         id: deploy-infra
+        timeout-minutes: 25
         run: |
           # Check if Konveyor-infra directory exists (case-insensitive)
           if [ ! -d "Konveyor-infra" ] && [ ! -d "konveyor-infra" ]; then
@@ -408,6 +409,7 @@ jobs:
           fi
 
       - name: Build Docker image for testing
+        timeout-minutes: 25
         run: |
           # Create a .env file with all necessary environment variables
           echo "DJANGO_SETTINGS_MODULE=konveyor.settings.${{ github.event.inputs.environment || 'testing' }}" > .env
@@ -431,6 +433,7 @@ jobs:
           docker build --build-arg DJANGO_SETTINGS_MODULE=konveyor.settings.testing -t konveyor-test:latest .
 
       - name: Run tests with coverage in Docker
+        timeout-minutes: 25
         run: |
           mkdir -p tests/results
           mkdir -p coverage
