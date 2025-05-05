@@ -82,14 +82,36 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
+      - name: Create Terraform Variables
+        run: |
+          # Create terraform.tfvars file securely using GitHub Secrets
+          # This approach prevents secrets from being exposed in logs
+          cat > terraform.tfvars << 'EOF'
+          microsoft_app_id="${{ secrets.TF_VAR_MICROSOFT_APP_ID || 'c8218a52-681c-4df2-b558-5fa8e5067b43' }}"
+          microsoft_app_password="${{ secrets.TF_VAR_MICROSOFT_APP_PASSWORD }}"
+          slack_bot_token="${{ secrets.TF_VAR_SLACK_BOT_TOKEN }}"
+          slack_app_token="${{ secrets.TF_VAR_SLACK_APP_TOKEN }}"
+          slack_signing_secret="${{ secrets.TF_VAR_SLACK_SIGNING_SECRET }}"
+          slack_client_id="${{ secrets.TF_VAR_SLACK_CLIENT_ID }}"
+          slack_client_secret="${{ secrets.TF_VAR_SLACK_CLIENT_SECRET }}"
+          slack_test_channel_id="${{ secrets.TF_VAR_SLACK_TEST_CHANNEL_ID || 'D08KQ0WPGR2' }}"
+          GHCR_PAT="${{ secrets.GHCR_PAT }}"
+          DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY || 'django-insecure-test-key-for-ci' }}"
+          github_repository="${{ github.repository }}"
+          docker_registry_username="${{ github.actor }}"
+          EOF
+
+          # Debug: Confirm the file was created (without showing contents)
+          echo "terraform.tfvars file created successfully"
+
       - name: Terraform Validate
         run: terraform validate
 
       - name: Terraform Plan
-        run: terraform plan -out=tfplan
+        run: terraform plan -var-file=terraform.tfvars -out=tfplan
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve tfplan
+        run: timeout 15m terraform apply -auto-approve tfplan
 
       - name: Extract Terraform Outputs
         id: terraform-outputs
