@@ -425,7 +425,7 @@ jobs:
             -v $(pwd)/tests/results:/app/test-output \
             -v $(pwd)/tests/run_all_tests.py:/app/tests/run_all_tests.py \
             konveyor-test:latest \
-            bash -c "cd /app && mkdir -p /app/tests/results && python tests/run_all_tests.py ${{ steps.test-params.outputs.args }} -v && cp -r /app/tests/results/* /app/test-output/ 2>/dev/null || true"
+            bash -c "cd /app && mkdir -p /app/tests/results && python tests/run_all_tests.py ${{ steps.test-params.outputs.args }} -v && ls -la /app/tests/results/ && cp -r /app/tests/results/* /app/test-output/ 2>/dev/null || true && echo 'Test results copied to host'"
 
           # Store exit code
           echo "exit_code=$?" >> $GITHUB_OUTPUT
@@ -451,9 +451,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: |
-            tests/results/
-            **/test-*.xml
+          path: tests/results/**/*.xml
           retention-days: 5
 
       # Clean up infrastructure if it was deployed for real tests
@@ -520,7 +518,15 @@ jobs:
           fi
 
           cd $ENV_DIR
-          terraform init
+
+          # Initialize Terraform with remote backend for state persistence
+          # This ensures state is saved even though resources will be destroyed
+          terraform init \
+            -backend=true \
+            -backend-config="resource_group_name=terraform-state-rg" \
+            -backend-config="storage_account_name=konveyortfstate" \
+            -backend-config="container_name=tfstate" \
+            -backend-config="key=${{ env.ENVIRONMENT }}.terraform.tfstate"
 
           # Create terraform.tfvars file securely using GitHub Secrets
           # This approach prevents secrets from being exposed in logs

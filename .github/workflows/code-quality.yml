@@ -362,7 +362,13 @@ jobs:
           echo "Using infrastructure directory: $INFRA_DIR"
           echo "Using environment directory: $ENV_DIR"
           cd $ENV_DIR
-          terraform init
+          # Initialize Terraform with remote backend for state persistence
+          terraform init \
+            -backend=true \
+            -backend-config="resource_group_name=terraform-state-rg" \
+            -backend-config="storage_account_name=konveyortfstate" \
+            -backend-config="container_name=tfstate" \
+            -backend-config="key=${{ github.event.inputs.environment || 'test' }}.terraform.tfstate"
 
           # Check if terraform init succeeded
           if [ $? -ne 0 ]; then
@@ -484,3 +490,12 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           file: ./coverage/coverage.xml
+
+      # Upload test results as artifacts
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: tests/results/**/*.xml
+          retention-days: 5

@@ -80,7 +80,14 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Terraform Init
-        run: terraform init
+        run: |
+          # Initialize Terraform with remote backend for state persistence
+          terraform init \
+            -backend=true \
+            -backend-config="resource_group_name=terraform-state-rg" \
+            -backend-config="storage_account_name=konveyortfstate" \
+            -backend-config="container_name=tfstate" \
+            -backend-config="key=${{ inputs.environment || github.event.inputs.environment || 'test' }}.terraform.tfstate"
 
       - name: Create Terraform Variables
         run: |
