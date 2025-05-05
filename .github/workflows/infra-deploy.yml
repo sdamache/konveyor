@@ -48,6 +48,7 @@ jobs:
   terraform:
     name: Deploy Infrastructure (${{ inputs.environment || github.event.inputs.environment || 'test' }})
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     environment: ${{ inputs.environment || github.event.inputs.environment || 'test' }}
 
     outputs:
@@ -88,7 +89,6 @@ jobs:
         run: terraform plan -out=tfplan
 
       - name: Terraform Apply
-        timeout-minutes: 25
         run: terraform apply -auto-approve tfplan
 
       - name: Extract Terraform Outputs

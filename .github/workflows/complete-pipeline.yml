@@ -62,6 +62,7 @@ jobs:
   branch-naming:
     name: "Validate Branch Naming"
     if: github.event_name == 'pull_request'
+    timeout-minutes: 25
     uses: ./.github/workflows/commit-conventions.yml
 
   # Step 2: Run code quality checks
@@ -69,8 +70,8 @@ jobs:
     name: "Code Quality Checks"
     needs: [branch-naming]
     if: always() && (needs.branch-naming.result == 'success' || needs.branch-naming.result == 'skipped')
-    uses: ./.github/workflows/code-quality.yml
     timeout-minutes: 25
+    uses: ./.github/workflows/code-quality.yml
     with:
       test_type: ${{ github.event.inputs.test_type || 'mock' }}
       environment: ${{ github.event.inputs.environment || 'test' }}
@@ -82,8 +83,8 @@ jobs:
     name: "Integration Tests"
     needs: [code-quality]
     if: always() && (needs.code-quality.result == 'success' || needs.code-quality.result == 'skipped')
-    uses: ./.github/workflows/integration-tests.yml
     timeout-minutes: 25
+    uses: ./.github/workflows/integration-tests.yml
     with:
       test_type: ${{ github.event.inputs.test_type || 'mock' }}
       environment: ${{ github.event.inputs.environment || 'dev' }}
@@ -100,8 +101,8 @@ jobs:
       always() &&
       needs.integration-tests.outputs.success == 'true' &&
       (github.event.inputs.deploy == 'true' || github.ref_type == 'tag' || startsWith(github.ref, 'refs/tags/v'))
-    uses: ./.github/workflows/deploy-app.yml
     timeout-minutes: 25
+    uses: ./.github/workflows/deploy-app.yml
     with:
       ref: ${{ github.event.inputs.ref || github.ref }}
       environment: ${{ github.event.inputs.environment || 'test' }}
@@ -116,8 +117,8 @@ jobs:
       always() &&
       needs.integration-tests.outputs.success == 'true' &&
       (github.event.inputs.deploy == 'true' || github.ref_type == 'tag' || contains(github.ref, 'infra'))
-    uses: ./.github/workflows/infra-deploy.yml
     timeout-minutes: 25
+    uses: ./.github/workflows/infra-deploy.yml
     with:
       ref: ${{ github.event.inputs.ref || github.ref }}
       environment: ${{ github.event.inputs.environment || 'test' }}

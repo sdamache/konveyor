@@ -27,6 +27,7 @@ jobs:
   approval:
     name: Manual Approval for Destruction
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     environment: ${{ github.event.inputs.environment }}-destroy-approval
     steps:
       - name: Approval Check
@@ -36,6 +37,7 @@ jobs:
     name: Destroy Infrastructure (${{ github.event.inputs.environment }})
     needs: approval
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     environment: ${{ github.event.inputs.environment }}
 
     defaults:
@@ -60,7 +62,6 @@ jobs:
         run: terraform init
 
       - name: Terraform Destroy
-        timeout-minutes: 25
         run: terraform destroy -auto-approve
 
       - name: Clean up GitHub Variables and Secrets

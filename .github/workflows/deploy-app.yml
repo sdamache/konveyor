@@ -58,6 +58,7 @@ jobs:
   build-and-deploy:
     name: Deploy Application to Azure (${{ inputs.environment || github.event.inputs.environment || 'test' }})
     runs-on: ubuntu-latest
+    timeout-minutes: 25
 
     steps:
       - name: Checkout repository (push/tag)
@@ -99,17 +100,14 @@ jobs:
           echo "Using IMAGE_TAG: ${{ env.IMAGE_TAG }}"
 
       - name: Build Docker image
-        timeout-minutes: 25
         run: |
           docker build -t ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }} .
 
       - name: Push Docker image to GHCR
-        timeout-minutes: 25
         run: |
           docker push ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }}
 
       - name: Azure Login
-        timeout-minutes: 25
         uses: azure/login@v2.1.0
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
@@ -140,7 +138,6 @@ jobs:
           echo "Will deploy to app: ${{ env.AZURE_WEBAPP_NAME }} in resource group: ${{ env.AZURE_RESOURCE_GROUP }}"
 
       - name: Deploy to Azure Web App (using GHCR image)
-        timeout-minutes: 25
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}

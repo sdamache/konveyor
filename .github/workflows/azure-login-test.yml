@@ -25,6 +25,7 @@ jobs:
   azure-login-test:
     name: Test Azure Login
     runs-on: ubuntu-latest
+    timeout-minutes: 25
 
     steps:
       - name: Checkout repository
