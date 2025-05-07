@@ -34,6 +34,7 @@ jobs:
   cleanup:
     name: "Clean up soft-deleted Azure resources"
     runs-on: ubuntu-latest
+    timeout-minutes: 10  # Add timeout to prevent the job from hanging
 
     steps:
       - name: Checkout code
@@ -55,7 +56,7 @@ jobs:
       - name: Check if resource group exists
         id: check-rg
         run: |
-          if az group exists --name ${{ env.RESOURCE_GROUP }}; then
+          if timeout 30 az group exists --name ${{ env.RESOURCE_GROUP }}; then
             echo "Resource group exists"
             echo "exists=true" >> $GITHUB_OUTPUT
           else
@@ -78,7 +79,8 @@ jobs:
           # Document Intelligence
           DOCINT_NAME="konveyor-${{ env.ENVIRONMENT }}-docint"
           echo "Attempting to purge soft-deleted Document Intelligence account: $DOCINT_NAME"
-          az cognitiveservices account purge \
+          # Use timeout command with proper syntax
+          timeout 30 az cognitiveservices account purge \
             --name $DOCINT_NAME \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --subscription $SUBSCRIPTION_ID \
@@ -87,7 +89,8 @@ jobs:
           # OpenAI
           OPENAI_NAME="konveyor-${{ env.ENVIRONMENT }}-openai"
           echo "Attempting to purge soft-deleted OpenAI account: $OPENAI_NAME"
-          az cognitiveservices account purge \
+          # Use timeout command with proper syntax
+          timeout 30 az cognitiveservices account purge \
             --name $OPENAI_NAME \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --subscription $SUBSCRIPTION_ID \
@@ -95,30 +98,62 @@ jobs:
 
           # Cognitive Search
           SEARCH_NAME="konveyor-${{ env.ENVIRONMENT }}-search"
-          echo "Attempting to purge soft-deleted Cognitive Search service: $SEARCH_NAME"
-          az search service purge \
-            --name $SEARCH_NAME \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --subscription $SUBSCRIPTION_ID || echo "No soft-deleted Cognitive Search service found or unable to purge"
+          echo "Attempting to handle soft-deleted Cognitive Search service: $SEARCH_NAME"
+
+          # Note: Azure CLI doesn't have a direct command for purging search services
+          # We'll try a few different approaches
+
+          # First, check if the search service exists
+          echo "Checking if search service exists..."
+          if timeout 30 az search service show --name $SEARCH_NAME --resource-group ${{ env.RESOURCE_GROUP }} > /dev/null 2>&1; then
+            echo "Search service exists, no need to purge"
+          else
+            echo "Search service doesn't exist, checking for soft-deleted instance..."
+
+            # Try to create a new search service with the same name
+            # If it fails with a specific error, it might be soft-deleted
+            echo "Attempting to create a new search service to see if the name is available..."
+            CREATE_OUTPUT=$(timeout 30 az search service create --name $SEARCH_NAME --resource-group ${{ env.RESOURCE_GROUP }} --sku basic 2>&1 || true)
+
+            if echo "$CREATE_OUTPUT" | grep -q "FlagMustBeSetForRestore"; then
+              echo "Search service is soft-deleted. Attempting to use REST API to purge..."
+
+              # Get the Azure access token
+              ACCESS_TOKEN=$(timeout 30 az account get-access-token --query accessToken -o tsv)
+
+              # Try to purge using REST API
+              echo "Using REST API to purge the search service..."
+              timeout 30 curl -s -X POST \
+                -H "Authorization: Bearer $ACCESS_TOKEN" \
+                -H "Content-Type: application/json" \
+                "https://management.azure.com/subscriptions/$SUBSCRIPTION_ID/resourceGroups/${{ env.RESOURCE_GROUP }}/providers/Microsoft.Search/searchServices/$SEARCH_NAME/delete?api-version=2020-08-01" \
+                || echo "Failed to purge search service using REST API"
+
+              echo "Waiting 10 seconds for purge operation to complete..."
+              sleep 10
+            else
+              echo "Search service doesn't appear to be soft-deleted or couldn't be checked properly"
+            fi
+          fi
 
           # Key Vault
           KV_NAME="konveyor-${{ env.ENVIRONMENT }}-kv"
           echo "Checking Key Vault: $KV_NAME"
-          if az keyvault show --name $KV_NAME --resource-group ${{ env.RESOURCE_GROUP }} > /dev/null 2>&1; then
+          if timeout 30 az keyvault show --name $KV_NAME --resource-group ${{ env.RESOURCE_GROUP }} > /dev/null 2>&1; then
             echo "Key Vault exists, cleaning up access policies..."
-            # Get the current access policies
-            POLICIES=$(az keyvault show --name $KV_NAME --resource-group ${{ env.RESOURCE_GROUP }} --query "properties.accessPolicies[].objectId" -o tsv)
+            # Get the current access policies with timeout
+            POLICIES=$(timeout 30 az keyvault show --name $KV_NAME --resource-group ${{ env.RESOURCE_GROUP }} --query "properties.accessPolicies[].objectId" -o tsv)
 
-            # Remove each access policy
+            # Remove each access policy with timeout
             for POLICY_ID in $POLICIES; do
               echo "Removing access policy for object ID: $POLICY_ID"
-              az keyvault delete-policy --name $KV_NAME --resource-group ${{ env.RESOURCE_GROUP }} --object-id $POLICY_ID || echo "Failed to remove policy"
+              timeout 30 az keyvault delete-policy --name $KV_NAME --resource-group ${{ env.RESOURCE_GROUP }} --object-id $POLICY_ID || echo "Failed to remove policy"
             done
           else
             echo "Key Vault does not exist, checking for soft-deleted Key Vault..."
-            # Try to purge the soft-deleted key vault
+            # Try to purge the soft-deleted key vault with timeout
             echo "Attempting to purge soft-deleted Key Vault: $KV_NAME"
-            az keyvault purge --name $KV_NAME || echo "No soft-deleted Key Vault found or unable to purge"
+            timeout 30 az keyvault purge --name $KV_NAME || echo "No soft-deleted Key Vault found or unable to purge"
           fi
 
           echo "Resource cleanup completed"
