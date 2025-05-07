@@ -91,8 +91,18 @@ on:
         value: ${{ jobs.integration-tests.outputs.tests_passed }}
 
 jobs:
+  resource-cleanup:
+    name: "Clean up soft-deleted resources"
+    uses: ./.github/workflows/resource-cleanup.yml
+    with:
+      environment: ${{ github.event.inputs.environment || 'test' }}
+      resource_group: ${{ format('konveyor-{0}-rg', github.event.inputs.environment || 'test') }}
+    secrets:
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+
   integration-tests:
     name: Run Integration Tests
+    needs: resource-cleanup
     runs-on: ubuntu-latest
     timeout-minutes: 25
     outputs:
@@ -455,6 +465,8 @@ jobs:
           retention-days: 5
 
       # Clean up infrastructure if it was deployed for real tests
+# Removed GitHub CLI installation step
+
       - name: Azure Login for Cleanup
         id: azure-login-cleanup
         if: ${{ always() && (github.event_name == 'push' || github.event_name == 'pull_request' || env.TEST_TYPE == 'real' || contains(env.TEST_TYPE, 'both')) }}
@@ -527,6 +539,9 @@ jobs:
             -backend-config="storage_account_name=konveyortfstate" \
             -backend-config="container_name=tfstate" \
             -backend-config="key=${{ env.ENVIRONMENT }}.terraform.tfstate"
+
+          # Call the resource-cleanup workflow as a reusable workflow
+          # This will be done in a separate job
 
           # Create terraform.tfvars file securely using GitHub Secrets
           # This approach prevents secrets from being exposed in logs

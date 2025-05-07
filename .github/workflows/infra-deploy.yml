@@ -45,8 +45,18 @@ env:
   AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
 jobs:
+  resource-cleanup:
+    name: "Clean up soft-deleted resources"
+    uses: ./.github/workflows/resource-cleanup.yml
+    with:
+      environment: ${{ inputs.environment || github.event.inputs.environment || 'test' }}
+      resource_group: ${{ format('konveyor-{0}-rg', inputs.environment || github.event.inputs.environment || 'test') }}
+    secrets:
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+
   terraform:
     name: Deploy Infrastructure (${{ inputs.environment || github.event.inputs.environment || 'test' }})
+    needs: resource-cleanup
     runs-on: ubuntu-latest
     timeout-minutes: 25
     environment: ${{ inputs.environment || github.event.inputs.environment || 'test' }}
@@ -78,6 +88,10 @@ jobs:
         uses: azure/login@v2.1.0
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+# Removed GitHub CLI installation step
+
+# Resource cleanup is now handled by a separate job
 
       - name: Terraform Init
         run: |

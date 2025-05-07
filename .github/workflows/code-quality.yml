@@ -53,6 +53,15 @@ on:
         required: false
 
 jobs:
+  resource-cleanup:
+    name: "Clean up soft-deleted resources"
+    uses: ./.github/workflows/resource-cleanup.yml
+    with:
+      environment: ${{ github.event.inputs.environment || 'test' }}
+      resource_group: ${{ format('konveyor-{0}-rg', github.event.inputs.environment || 'test') }}
+    secrets:
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+
   lint:
     name: Lint Python Code
     runs-on: ubuntu-latest
@@ -95,6 +104,7 @@ jobs:
     name: Test Coverage
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    needs: resource-cleanup
 
     env:
       DJANGO_SETTINGS_MODULE: konveyor.settings.testing
@@ -362,6 +372,11 @@ jobs:
           echo "Using infrastructure directory: $INFRA_DIR"
           echo "Using environment directory: $ENV_DIR"
           cd $ENV_DIR
+          # Set environment variable for easier reference
+          ENVIRONMENT="${{ github.event.inputs.environment || 'test' }}"
+
+          # Resource cleanup is now handled by a separate job
+
           # Initialize Terraform with remote backend for state persistence
           terraform init \
             -backend=true \

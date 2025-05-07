@@ -1,0 +1,124 @@
+name: Azure Resource Cleanup
+
+on:
+  # Allow this workflow to be called by other workflows
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Environment to deploy to (test, prod)'
+        required: false
+        default: 'test'
+        type: string
+      resource_group:
+        description: 'Resource group name'
+        required: false
+        type: string
+    secrets:
+      AZURE_CREDENTIALS:
+        required: true
+
+  # Allow this workflow to be triggered manually
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to (test, prod)'
+        required: false
+        default: 'test'
+        type: string
+      resource_group:
+        description: 'Resource group name'
+        required: false
+        type: string
+
+jobs:
+  cleanup:
+    name: "Clean up soft-deleted Azure resources"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2.1.0
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set environment variables
+        run: |
+          # Set environment variables for easier reference
+          ENVIRONMENT="${{ inputs.environment }}"
+          RESOURCE_GROUP="${{ inputs.resource_group || format('konveyor-{0}-rg', inputs.environment) }}"
+          echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_ENV
+          echo "RESOURCE_GROUP=$RESOURCE_GROUP" >> $GITHUB_ENV
+
+      - name: Check if resource group exists
+        id: check-rg
+        run: |
+          if az group exists --name ${{ env.RESOURCE_GROUP }}; then
+            echo "Resource group exists"
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "Resource group does not exist"
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Clean up soft-deleted resources
+        if: steps.check-rg.outputs.exists == 'true'
+        run: |
+          echo "Cleaning up soft-deleted resources in resource group: ${{ env.RESOURCE_GROUP }}"
+
+          # Get the subscription ID
+          SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+          echo "Subscription ID: $SUBSCRIPTION_ID"
+
+          # Clean up soft-deleted Cognitive Services accounts
+          echo "Cleaning up soft-deleted Cognitive Services accounts..."
+
+          # Document Intelligence
+          DOCINT_NAME="konveyor-${{ env.ENVIRONMENT }}-docint"
+          echo "Attempting to purge soft-deleted Document Intelligence account: $DOCINT_NAME"
+          az cognitiveservices account purge \
+            --name $DOCINT_NAME \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --subscription $SUBSCRIPTION_ID \
+            --location eastus || echo "No soft-deleted Document Intelligence account found or unable to purge"
+
+          # OpenAI
+          OPENAI_NAME="konveyor-${{ env.ENVIRONMENT }}-openai"
+          echo "Attempting to purge soft-deleted OpenAI account: $OPENAI_NAME"
+          az cognitiveservices account purge \
+            --name $OPENAI_NAME \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --subscription $SUBSCRIPTION_ID \
+            --location eastus || echo "No soft-deleted OpenAI account found or unable to purge"
+
+          # Cognitive Search
+          SEARCH_NAME="konveyor-${{ env.ENVIRONMENT }}-search"
+          echo "Attempting to purge soft-deleted Cognitive Search service: $SEARCH_NAME"
+          az search service purge \
+            --name $SEARCH_NAME \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --subscription $SUBSCRIPTION_ID || echo "No soft-deleted Cognitive Search service found or unable to purge"
+
+          # Key Vault
+          KV_NAME="konveyor-${{ env.ENVIRONMENT }}-kv"
+          echo "Checking Key Vault: $KV_NAME"
+          if az keyvault show --name $KV_NAME --resource-group ${{ env.RESOURCE_GROUP }} > /dev/null 2>&1; then
+            echo "Key Vault exists, cleaning up access policies..."
+            # Get the current access policies
+            POLICIES=$(az keyvault show --name $KV_NAME --resource-group ${{ env.RESOURCE_GROUP }} --query "properties.accessPolicies[].objectId" -o tsv)
+
+            # Remove each access policy
+            for POLICY_ID in $POLICIES; do
+              echo "Removing access policy for object ID: $POLICY_ID"
+              az keyvault delete-policy --name $KV_NAME --resource-group ${{ env.RESOURCE_GROUP }} --object-id $POLICY_ID || echo "Failed to remove policy"
+            done
+          else
+            echo "Key Vault does not exist, checking for soft-deleted Key Vault..."
+            # Try to purge the soft-deleted key vault
+            echo "Attempting to purge soft-deleted Key Vault: $KV_NAME"
+            az keyvault purge --name $KV_NAME || echo "No soft-deleted Key Vault found or unable to purge"
+          fi
+
+          echo "Resource cleanup completed"
