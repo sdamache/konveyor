@@ -34,7 +34,7 @@ jobs:
   cleanup:
     name: "Clean up soft-deleted Azure resources"
     runs-on: ubuntu-latest
-    timeout-minutes: 10  # Add timeout to prevent the job from hanging
+    timeout-minutes: 20  # Increased timeout to allow for longer purge operations
 
     steps:
       - name: Checkout code
@@ -268,13 +268,34 @@ jobs:
 
             if [ -n "$SOFT_DELETED" ]; then
               echo "Found soft-deleted Key Vault. Attempting to purge..."
-              # Try to purge the soft-deleted key vault with timeout
+              # Try to purge the soft-deleted key vault with a longer timeout
               echo "Attempting to purge soft-deleted Key Vault: $KV_NAME"
-              timeout 60 az keyvault purge --name $KV_NAME
+
+              # Increase timeout to 5 minutes (300 seconds) for Key Vault purge
+              for i in {1..3}; do
+                echo "Purge attempt $i of 3..."
+                if timeout 300 az keyvault purge --name $KV_NAME; then
+                  echo "Key Vault purge operation succeeded!"
+                  break
+                else
+                  echo "Purge attempt $i failed or timed out. Waiting before retry..."
+                  sleep 60
+                fi
+
+                # If this is the last attempt, check if it's still soft-deleted
+                if [ $i -eq 3 ]; then
+                  STILL_DELETED=$(az keyvault list-deleted --query "[?name=='$KV_NAME']" -o tsv)
+                  if [ -n "$STILL_DELETED" ]; then
+                    echo "WARNING: Failed to purge Key Vault after 3 attempts."
+                  else
+                    echo "Key Vault no longer appears as soft-deleted. It may have been purged successfully."
+                  fi
+                fi
+              done
 
               # Wait for purge operation to complete
               echo "Waiting for purge operation to complete..."
-              sleep 30
+              sleep 60
             else
               echo "No soft-deleted Key Vault found"
             fi
