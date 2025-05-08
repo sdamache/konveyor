@@ -195,113 +195,64 @@ jobs:
           echo "Using ENVIRONMENT: ${ENVIRONMENT}"
           echo "Using DEPLOY_INFRA: ${DEPLOY_INFRA}"
 
-      # Debug Azure Credentials
+      # Azure Login for real tests
       - name: Debug Azure Credentials
         run: |
           echo "Event name: ${{ github.event_name }}"
-          echo "Test type: ${{ env.TEST_TYPE }}"
-          echo "Environment: ${{ env.ENVIRONMENT }}"
+          echo "Test type: ${{ env.TEST_TYPE || 'not specified' }}"
           echo "Has AZURE_CREDENTIALS secret: ${{ secrets.AZURE_CREDENTIALS != '' }}"
-          echo "Has individual Azure credentials: ${{ secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_TENANT_ID != '' && secrets.AZURE_SUBSCRIPTION_ID != '' }}"
 
           # Print the structure of the AZURE_CREDENTIALS (without revealing sensitive values)
           if [[ "${{ secrets.AZURE_CREDENTIALS }}" != "" ]]; then
             echo "AZURE_CREDENTIALS structure:"
             # Extract keys from the JSON without showing values
-            echo "${{ secrets.AZURE_CREDENTIALS }}" | grep -o '"[^"]*":' | tr -d '":' | sort
+            echo "${{ secrets.AZURE_CREDENTIALS }}" | grep -o '"[^"\"]*":' | tr -d '":' | sort
           fi
 
-      # Try Azure Login with the full AZURE_CREDENTIALS
-      - name: Azure Login (Full Credentials)
-        id: azure-login-full
-        if: ${{ env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod' }}
+      # Create a dummy Azure credentials file if the secret is missing
+      - name: Check Azure Credentials
+        if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || env.TEST_TYPE == 'real' || contains(env.TEST_TYPE, 'both') }}
+        id: check-azure-creds
+        run: |
+          if [[ -n "${{ secrets.AZURE_CREDENTIALS }}" ]]; then
+            echo "has_credentials=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_credentials=false" >> $GITHUB_OUTPUT
+            echo "::warning::AZURE_CREDENTIALS secret is missing. Creating a dummy credentials file for testing."
+            # Create a dummy credentials file
+            echo '{"clientId":"dummy-client-id","clientSecret":"dummy-client-secret","subscriptionId":"dummy-subscription-id","tenantId":"dummy-tenant-id"}' > azure-credentials.json
+            # Set the AZURE_CREDENTIALS environment variable
+            echo "AZURE_CREDENTIALS_JSON=$(cat azure-credentials.json)" >> $GITHUB_ENV
+          fi
+
+      - name: Azure Login
+        # Always run Azure login for PR and push events, or when real tests are specified
+        id: azure-login
+        if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || env.TEST_TYPE == 'real' || contains(env.TEST_TYPE, 'both') }}
         uses: azure/login@v2.1.0
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          creds: ${{ steps.check-azure-creds.outputs.has_credentials == 'true' && secrets.AZURE_CREDENTIALS || env.AZURE_CREDENTIALS_JSON }}
         continue-on-error: true
 
       # Report login status
-      - name: Report Azure Login Status (Full Credentials)
-        if: ${{ env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod' }}
+      - name: Report Azure Login Status
+        if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || env.TEST_TYPE == 'real' || contains(env.TEST_TYPE, 'both') }}
         run: |
-          if [[ "${{ steps.azure-login-full.outcome }}" == "success" ]]; then
-            echo "✅ Azure login with full credentials succeeded"
+          if [[ "${{ steps.azure-login.outcome }}" == "success" ]]; then
+            echo "✅ Azure login succeeded"
           else
-            echo "❌ Azure login with full credentials failed"
+            echo "❌ Azure login failed"
           fi
 
-      # Try Azure Login with simplified credentials if full login failed
-      - name: Create Simplified Credentials
-        if: ${{ (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod') && steps.azure-login-full.outcome != 'success' }}
-        id: create-simplified-creds
+      - name: Set Terraform Auth Variables
+        if: steps.azure-login.outcome == 'success'
         run: |
-          # Check if AZURE_CREDENTIALS secret exists
-          if [[ -n "${{ secrets.AZURE_CREDENTIALS }}" ]]; then
-            # Extract the essential fields from the full credentials
-            CREDS=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | grep -o '"clientId":"[^"]*"' | tr -d '\n')
-            CREDS="${CREDS},$(echo '${{ secrets.AZURE_CREDENTIALS }}' | grep -o '"clientSecret":"[^"]*"' | tr -d '\n')"
-            CREDS="${CREDS},$(echo '${{ secrets.AZURE_CREDENTIALS }}' | grep -o '"subscriptionId":"[^"]*"' | tr -d '\n')"
-            CREDS="${CREDS},$(echo '${{ secrets.AZURE_CREDENTIALS }}' | grep -o '"tenantId":"[^"]*"' | tr -d '\n')"
-            echo "{${CREDS}}" > simplified-creds.json
-            echo "SIMPLIFIED_CREDS=$(cat simplified-creds.json)" >> $GITHUB_ENV
-            echo "has_simplified_creds=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_simplified_creds=false" >> $GITHUB_OUTPUT
-          fi
-
-      # Try Azure Login with simplified credentials
-      - name: Azure Login (Simplified Credentials)
-        if: ${{ (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod') && steps.azure-login-full.outcome != 'success' && steps.create-simplified-creds.outputs.has_simplified_creds == 'true' }}
-        id: azure-login-simplified
-        uses: azure/login@v2.1.0
-        with:
-          creds: ${{ env.SIMPLIFIED_CREDS }}
-        continue-on-error: true
-
-      # Check for individual Azure credentials
-      - name: Check Individual Azure Credentials
-        id: check-individual-creds
-        if: ${{ (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod') && steps.azure-login-full.outcome != 'success' }}
-        run: |
-          if [[ -n "${{ secrets.AZURE_CLIENT_ID }}" && -n "${{ secrets.AZURE_TENANT_ID }}" && -n "${{ secrets.AZURE_SUBSCRIPTION_ID }}" ]]; then
-            echo "has_individual_creds=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_individual_creds=false" >> $GITHUB_OUTPUT
-          fi
-
-      # Try Azure Login with individual credentials if both previous methods failed
-      - name: Azure Login (Individual Credentials)
-        if: ${{ (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod') && steps.azure-login-full.outcome != 'success' && (steps.azure-login-simplified.outcome != 'success' || steps.create-simplified-creds.outputs.has_simplified_creds != 'true') && steps.check-individual-creds.outputs.has_individual_creds == 'true' }}
-        id: azure-login-individual
-        uses: azure/login@v2.1.0
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        continue-on-error: true
-
-      # Report login status for individual credentials
-      - name: Report Azure Login Status (Individual Credentials)
-        if: ${{ (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod') && steps.azure-login-full.outcome != 'success' && (steps.azure-login-simplified.outcome != 'success' || steps.create-simplified-creds.outputs.has_simplified_creds != 'true') && steps.check-individual-creds.outputs.has_individual_creds == 'true' }}
-        run: |
-          if [[ "${{ steps.azure-login-individual.outcome }}" == "success" ]]; then
-            echo "✅ Azure login with individual credentials succeeded"
-          else
-            echo "❌ Azure login with individual credentials failed"
-          fi
-
-      # Set a variable to indicate if any login method succeeded
-      - name: Set Login Success Variable
-        if: ${{ env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod' }}
-        id: login-success
-        run: |
-          if [[ "${{ steps.azure-login-full.outcome }}" == "success" || "${{ steps.azure-login-simplified.outcome }}" == "success" || "${{ steps.azure-login-individual.outcome }}" == "success" ]]; then
-            echo "success=true" >> $GITHUB_OUTPUT
-            echo "✅ At least one Azure login method succeeded"
-          else
-            echo "success=false" >> $GITHUB_OUTPUT
-            echo "❌ All Azure login methods failed"
-          fi
+          echo "Setting Terraform ARM environment variables for Service Principal auth..."
+          echo "ARM_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID || fromJson(secrets.AZURE_CREDENTIALS).clientId }}" >> $GITHUB_ENV
+          echo "ARM_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET || fromJson(secrets.AZURE_CREDENTIALS).clientSecret }}" >> $GITHUB_ENV
+          echo "ARM_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID || fromJson(secrets.AZURE_CREDENTIALS).subscriptionId }}" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=${{ secrets.AZURE_TENANT_ID || fromJson(secrets.AZURE_CREDENTIALS).tenantId }}" >> $GITHUB_ENV
+          echo "ARM_USE_AZUREAD=true" >> $GITHUB_ENV # Ensures Azure AD based auth is used.
 
       # Update Terraform setup condition
       - name: Set up Terraform

@@ -275,6 +275,16 @@ jobs:
             echo "❌ Azure login failed"
           fi
 
+      - name: Set Terraform Auth Variables
+        if: steps.azure-login.outcome == 'success'
+        run: |
+          echo "Setting Terraform ARM environment variables for Service Principal auth..."
+          echo "ARM_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID || fromJson(secrets.AZURE_CREDENTIALS).clientId }}" >> $GITHUB_ENV
+          echo "ARM_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET || fromJson(secrets.AZURE_CREDENTIALS).clientSecret }}" >> $GITHUB_ENV
+          echo "ARM_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID || fromJson(secrets.AZURE_CREDENTIALS).subscriptionId }}" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=${{ secrets.AZURE_TENANT_ID || fromJson(secrets.AZURE_CREDENTIALS).tenantId }}" >> $GITHUB_ENV
+          echo "ARM_USE_AZUREAD=true" >> $GITHUB_ENV # Ensures Azure AD based auth is used.
+
       # Determine test parameters
       - name: Determine test parameters
         id: test-params
