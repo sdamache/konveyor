@@ -10,6 +10,10 @@ resource "azurerm_cognitive_account" "openai" {
     type = "SystemAssigned"
   }
 
+  lifecycle {
+    # Prevent destroy to maintain resources and avoid soft-delete issues
+    prevent_destroy = true
+  }
 }
 
 resource "azurerm_cognitive_deployment" "gpt_deployment" {

@@ -80,23 +80,11 @@ jobs:
           DOCINT_NAME="konveyor-${{ env.ENVIRONMENT }}-docint"
           echo "Attempting to purge soft-deleted Document Intelligence account: $DOCINT_NAME"
 
-          # First check if the resource exists and is active
+          # We're using prevent_destroy=true, so we don't want to delete active resources
           ACTIVE_RESOURCE=$(az cognitiveservices account list --query "[?name=='$DOCINT_NAME' && resourceGroup=='${{ env.RESOURCE_GROUP }}']" -o tsv)
 
           if [ -n "$ACTIVE_RESOURCE" ]; then
-            echo "Found active Document Intelligence account. Attempting to delete it first..."
-            # Delete the active resource
-            if timeout 60 az cognitiveservices account delete \
-              --name $DOCINT_NAME \
-              --resource-group ${{ env.RESOURCE_GROUP }} \
-              --yes; then
-              echo "Successfully deleted the active Document Intelligence account."
-              # Wait for the deletion to complete and the resource to enter soft-deleted state
-              echo "Waiting for the resource to enter soft-deleted state..."
-              sleep 60
-            else
-              echo "Failed to delete the active Document Intelligence account."
-            fi
+            echo "Found active Document Intelligence account. Keeping it active as per resource management strategy."
           fi
 
           # Now check if the resource exists in a soft-deleted state
@@ -141,23 +129,11 @@ jobs:
           OPENAI_NAME="konveyor-${{ env.ENVIRONMENT }}-openai"
           echo "Attempting to purge soft-deleted OpenAI account: $OPENAI_NAME"
 
-          # First check if the resource exists and is active
+          # We're using prevent_destroy=true, so we don't want to delete active resources
           ACTIVE_RESOURCE=$(az cognitiveservices account list --query "[?name=='$OPENAI_NAME' && resourceGroup=='${{ env.RESOURCE_GROUP }}']" -o tsv)
 
           if [ -n "$ACTIVE_RESOURCE" ]; then
-            echo "Found active OpenAI account. Attempting to delete it first..."
-            # Delete the active resource
-            if timeout 60 az cognitiveservices account delete \
-              --name $OPENAI_NAME \
-              --resource-group ${{ env.RESOURCE_GROUP }} \
-              --yes; then
-              echo "Successfully deleted the active OpenAI account."
-              # Wait for the deletion to complete and the resource to enter soft-deleted state
-              echo "Waiting for the resource to enter soft-deleted state..."
-              sleep 60
-            else
-              echo "Failed to delete the active OpenAI account."
-            fi
+            echo "Found active OpenAI account. Keeping it active as per resource management strategy."
           fi
 
           # Now check if the resource exists in a soft-deleted state

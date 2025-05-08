@@ -89,9 +89,7 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-# Removed GitHub CLI installation step
-
-# Resource cleanup is now handled by a separate job
+      # Note: Resource cleanup is handled by the resource-cleanup job
 
       - name: Terraform Init
         run: |
