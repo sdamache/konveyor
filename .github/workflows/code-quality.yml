@@ -258,7 +258,7 @@ jobs:
       - name: Set up Terraform
         if: >-
           ${{
-            steps.login-success.outputs.success == 'true' &&
+            steps.azure-login.outputs == 'success' &&
             (env.DEPLOY_INFRA == 'always' ||
             (env.DEPLOY_INFRA == 'auto' && (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod')))
           }}
@@ -270,7 +270,7 @@ jobs:
       - name: Deploy Infrastructure
         if: >-
           ${{
-            steps.login-success.outputs.success == 'true' &&
+            steps.azure-login.outputs == 'success' &&
             (env.DEPLOY_INFRA == 'always' ||
             (env.DEPLOY_INFRA == 'auto' && (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod')))
           }}
