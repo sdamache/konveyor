@@ -3,6 +3,10 @@ terraform {
     // Configuration for resource_group_name, storage_account_name,
     // container_name will be passed via -backend-config in CI.
     // The 'key' will be determined by the selected workspace.
+    resource_group_name  = "terraform-state-rg"
+    storage_account_name = "konveyortfstate"
+    container_name       = "tfstate"
+    key                  = "test-default.terraform.tfstate" // Key for the default workspace in this dir
   }
 
   required_providers {

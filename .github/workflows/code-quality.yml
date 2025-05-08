@@ -383,6 +383,7 @@ jobs:
             -backend-config="resource_group_name=terraform-state-rg" \
             -backend-config="storage_account_name=konveyortfstate" \
             -backend-config="container_name=tfstate" \
+            -input=false
 
           # Select Workspaces for testing
           terraform workspace select integration-test || terraform workspace new integration-test
