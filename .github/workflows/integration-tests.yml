@@ -285,7 +285,7 @@ jobs:
             TEST_TYPE="${{ inputs.test_type || github.event.inputs.test_type || 'real' }}"
             ENVIRONMENT="${{ inputs.environment || github.event.inputs.environment || 'test' }}"
             TEST_CATEGORY="${{ inputs.test_category || github.event.inputs.test_category || 'all' }}"
-            FAST_TRACK="${{ inputs.fast_track || github.event.inputs.fast_track || 'false' }}"
+            FAST_TRACK="${{ format('{0}', inputs.fast_track || github.event.inputs.fast_track || 'false') }}"
           else
             # Default for push/PR events
             TEST_TYPE="real"
