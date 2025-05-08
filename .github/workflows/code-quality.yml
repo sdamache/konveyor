@@ -383,7 +383,9 @@ jobs:
             -backend-config="resource_group_name=terraform-state-rg" \
             -backend-config="storage_account_name=konveyortfstate" \
             -backend-config="container_name=tfstate" \
-            -backend-config="key=${{ github.event.inputs.environment || 'test' }}.terraform.tfstate"
+
+          # Select Workspaces for testing
+          terraform workspace select integration-test || terraform workspace new integration-test
 
           # Check if terraform init succeeded
           if [ $? -ne 0 ]; then

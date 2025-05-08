@@ -66,8 +66,11 @@ jobs:
             -backend=true \
             -backend-config="resource_group_name=terraform-state-rg" \
             -backend-config="storage_account_name=konveyortfstate" \
-            -backend-config="container_name=tfstate" \
-            -backend-config="key=${{ github.event.inputs.environment }}.terraform.tfstate"
+            -backend-config="container_name=tfstate"
+
+      # Select relevant workspace
+      - name: Select Terraform Workspace
+        run: terraform workspace select integration-test || terraform workspace new integration-test
 
       - name: Create Terraform Variables
         run: |

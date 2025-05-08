@@ -538,7 +538,9 @@ jobs:
             -backend-config="resource_group_name=terraform-state-rg" \
             -backend-config="storage_account_name=konveyortfstate" \
             -backend-config="container_name=tfstate" \
-            -backend-config="key=${{ env.ENVIRONMENT }}.terraform.tfstate"
+
+          # Select the relevant workspace
+          terraform workspace select integration-test || terraform workspace new integration-test
 
           # Call the resource-cleanup workflow as a reusable workflow
           # This will be done in a separate job

@@ -1,8 +1,18 @@
 terraform {
+  backend "azurerm" {
+    // Configuration for resource_group_name, storage_account_name,
+    // container_name will be passed via -backend-config in CI.
+    // The 'key' will be determined by the selected workspace.
+  }
+
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
       version = "~> 3.75.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
     }
   }
 }
@@ -24,3 +34,5 @@ provider "azurerm" {
     }
   }
 }
+
+# provider "random" {} # Add if you need to configure the random provider, otherwise it uses defaults
