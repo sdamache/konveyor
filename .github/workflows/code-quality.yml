@@ -4,6 +4,7 @@ permissions:
   contents: read   # Required for checkout
   id-token: write  # Required for Azure login
   actions: read    # Required for workflow calls
+  pages: write     # Required for GitHub Pages deployment
 
 on:
   workflow_dispatch:
@@ -136,35 +137,30 @@ jobs:
       - name: Set default parameters
         id: defaults
         run: |
-          # Initialize with base defaults
+          # Initialize with base defaults for feature branches/other pushes
           TEST_TYPE="mock"
-          ENVIRONMENT="test"
-          DEPLOY_INFRA="auto"
+          ENVIRONMENT="test" # Default environment for mock, can be overridden
+          DEPLOY_INFRA="auto"  # For mock on feature branches, infra deployment should be skipped by later conditions
 
-          # Override based on branch/event context
+          # Override for PRs
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            if [[ "${{ github.base_ref }}" == "main" ]]; then
-              # PR to main - use real tests in test env
+            if [[ "${{ github.base_ref }}" == "main" || "${{ github.base_ref }}" == "dev" ]]; then
+              # PR to main or dev - use REAL tests in TEST env
               TEST_TYPE="real"
               ENVIRONMENT="test"
-            elif [[ "${{ github.base_ref }}" == "dev" ]]; then
-              # PR to dev - use mock tests in dev env
-              TEST_TYPE="mock"
-              ENVIRONMENT="dev"
+              DEPLOY_INFRA="auto" # Real tests in test env might need infra
             fi
+          # Override for pushes to main or dev
           elif [[ "${{ github.event_name }}" == "push" ]]; then
-            if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-              # Push to main - use real tests in test env
+            if [[ "${{ github.ref }}" == "refs/heads/main" || "${{ github.ref }}" == "refs/heads/dev" ]]; then
+              # Push to main or dev - use REAL tests in TEST env
               TEST_TYPE="real"
               ENVIRONMENT="test"
-            elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
-              # Push to dev - use mock tests in dev env
-              TEST_TYPE="mock"
-              ENVIRONMENT="dev"
+              DEPLOY_INFRA="auto" # Real tests in test env might need infra
             fi
           fi
 
-          # Override with workflow inputs if they exist
+          # Override with workflow inputs if they exist (for workflow_dispatch/workflow_call)
           if [[ "${{ github.event.inputs.test_type }}" != "" ]]; then
             TEST_TYPE="${{ github.event.inputs.test_type }}"
           elif [[ "${{ inputs.test_type }}" != "" ]]; then
@@ -260,7 +256,9 @@ jobs:
           ${{
             steps.azure-login.outcome == 'success' &&
             (env.DEPLOY_INFRA == 'always' ||
-            (env.DEPLOY_INFRA == 'auto' && (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod')))
+            (env.DEPLOY_INFRA == 'auto' &&
+             (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both') &&
+             (env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod')))
           }}
         uses: hashicorp/setup-terraform@v3
         with:
@@ -272,7 +270,9 @@ jobs:
           ${{
             steps.azure-login.outcome == 'success' &&
             (env.DEPLOY_INFRA == 'always' ||
-            (env.DEPLOY_INFRA == 'auto' && (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod')))
+            (env.DEPLOY_INFRA == 'auto' &&
+             (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both') &&
+             (env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod')))
           }}
         id: deploy-infra
         run: |
@@ -468,3 +468,31 @@ jobs:
           name: test-results-unit-test
           path: tests/results/**/*.xml
           retention-days: 5
+
+# TODO: Uncomment the following steps and the deploy-report job to enable HTML reports on GitHub Pages.
+# TODO: Ensure your pytest command in the 'Run tests with coverage in Docker' step is updated to generate an HTML report,
+# TODO: e.g., by adding --html=coverage_report/index.html --self-contained-html
+# TODO: Uncomment deploy-report job to deploy reports to GitHub Pages
+
+
+#      - name: Upload Pages artifact (Coverage Report)
+#        if: always()
+#        uses: actions/upload-pages-artifact@v3
+#        with:
+#            path: 'coverage_report' # Assumes pytest-html outputs to coverage_report/index.html
+
+
+# deploy-report:
+#   needs: test-coverage
+#   if: always()
+#   runs-on: ubuntu-latest
+#   permissions:
+#     pages: write
+#     id-token: write
+#   environment:
+#     name: github-pages
+#     url: ${{ steps.deployment.outputs.page_url }}
+#   steps:
+#     - name: Deploy to GitHub Pages
+#       id: deployment
+#       uses: actions/deploy-pages@v4

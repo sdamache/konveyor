@@ -5,6 +5,7 @@ permissions:
   id-token: write  # Required for Azure login
   actions: read    # Required for workflow calls
   packages: read   # Required for pulling from GHCR
+  pages: write     # Required for GitHub Pages deployment
 
 on:
   workflow_dispatch:
@@ -147,37 +148,32 @@ jobs:
       - name: Set default parameters
         id: defaults
         run: |
-          # Initialize with base defaults
+          # Initialize with base defaults for feature branches/other pushes
           TEST_TYPE="mock"
-          ENVIRONMENT="test"
+          ENVIRONMENT="test" # Default environment for mock, can be overridden
           TEST_CATEGORY="all"
           FAST_TRACK="false"
-          DEPLOY_INFRA="auto"
+          DEPLOY_INFRA="auto" # For mock on feature branches, infra deployment should be skipped by later conditions
 
-          # Override based on branch/event context
+          # Override for PRs
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            if [[ "${{ github.base_ref }}" == "main" ]]; then
-              # PR to main - use real tests in test env
+            if [[ "${{ github.base_ref }}" == "main" || "${{ github.base_ref }}" == "dev" ]]; then
+              # PR to main or dev - use REAL tests in TEST env
               TEST_TYPE="real"
               ENVIRONMENT="test"
-            elif [[ "${{ github.base_ref }}" == "dev" ]]; then
-              # PR to dev - use REAL tests in TEST env
-              TEST_TYPE="real"
-              ENVIRONMENT="test"
+              DEPLOY_INFRA="auto" # Real tests in test env might need infra
             fi
+          # Override for pushes to main or dev
           elif [[ "${{ github.event_name }}" == "push" ]]; then
-            if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-              # Push to main - use real tests in test env
+            if [[ "${{ github.ref }}" == "refs/heads/main" || "${{ github.ref }}" == "refs/heads/dev" ]]; then
+              # Push to main or dev - use REAL tests in TEST env
               TEST_TYPE="real"
               ENVIRONMENT="test"
-            elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
-              # Push to dev - use REAL tests in TEST env
-              TEST_TYPE="real"
-              ENVIRONMENT="test"
+              DEPLOY_INFRA="auto" # Real tests in test env might need infra
             fi
           fi
 
-          # Override with workflow inputs if they exist
+          # Override with workflow inputs if they exist (for workflow_dispatch/workflow_call)
           if [[ "${{ github.event.inputs.test_type }}" != "" ]]; then
             TEST_TYPE="${{ github.event.inputs.test_type }}"
           elif [[ "${{ inputs.test_type }}" != "" ]]; then
@@ -587,3 +583,6 @@ jobs:
 
           # Use timeout to prevent hanging
           timeout 15m terraform destroy -auto-approve -var-file=terraform.tfvars
+
+#TODO: Assumption: Ensure run_all_tests.py script or the pytest command calls would be updated to generate --html=test_report/index.html when we uncomment this.
+#TODO: The actual github pages step will be added when we are successful with Upload Pages Artifact in code-quality
