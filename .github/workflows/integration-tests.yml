@@ -470,7 +470,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results
+          name: test-results-integration
           path: tests/results/**/*.xml
           retention-days: 5
 
