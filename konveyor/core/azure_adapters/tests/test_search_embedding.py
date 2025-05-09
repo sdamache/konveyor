@@ -3,6 +3,7 @@ import os
 import sys
 
 import django
+import pytest  # Make sure pytest is imported
 
 # Set up Django environment
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
@@ -15,10 +16,24 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# ADD THIS BLOCK AT THE MODULE LEVEL
+SEARCH_ENDPOINT = os.getenv("AZURE_SEARCH_ENDPOINT")
+SEARCH_API_KEY = os.getenv("AZURE_SEARCH_API_KEY")
+
+NEEDS_REAL_SEARCH = pytest.mark.skipif(
+    SEARCH_ENDPOINT == "Search service not deployed"
+    or SEARCH_ENDPOINT == "https://mock-search-endpoint.search.windows.net"
+    or not SEARCH_API_KEY
+    or SEARCH_API_KEY == "mock-search-api-key",
+    reason="Skipping test: real Azure Cognitive Search not configured or mock values detected.",
+)
+# END OF ADDED BLOCK
+
 from konveyor.apps.search.services.search_service import SearchService  # noqa: E402
 from konveyor.core.azure_adapters.openai.client import AzureOpenAIClient  # noqa: E402
 
 
+@NEEDS_REAL_SEARCH  # Apply the skip condition to the test function
 def test_search_service_embedding():
     """Test embedding generation through SearchService."""
     logger.info("Testing SearchService embedding generation")

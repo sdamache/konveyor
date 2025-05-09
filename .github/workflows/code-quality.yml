@@ -444,7 +444,7 @@ jobs:
             -v $(pwd)/tests/results:/app/test-output \
             -v $(pwd)/coverage:/app/coverage-output \
             konveyor-test:latest \
-            bash -c "cd /app && mkdir -p /app/tests/results && python -m pytest konveyor --cov=konveyor --cov-report=xml --junitxml=/app/tests/results/results.xml -v && cp -r /app/tests/results/* /app/test-output/ 2>/dev/null || true && cp coverage.xml /app/coverage-output/ 2>/dev/null || true"
+            bash -c "cd /app && mkdir -p /app/tests/results && python -m pytest konveyor --cov=konveyor --cov-report=xml --junitxml=/app/tests/results/results.xml -v; echo 'Pytest exit code: $?'; echo 'Listing /app/tests/results:'; ls -la /app/tests/results; cp -r /app/tests/results/* /app/test-output/ 2>/dev/null || true && cp coverage.xml /app/coverage-output/ 2>/dev/null || true"
 
       - name: Check coverage report
         run: |

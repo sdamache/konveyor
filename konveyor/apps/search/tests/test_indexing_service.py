@@ -162,6 +162,22 @@ class TestIndexingService(TestCase):
         super().setUpClass()
         print("==== Setting up TestIndexingService ====")
 
+        # ADD THIS BLOCK AT THE BEGINNING OF setUpClass
+        # Skip if real Azure Search is not configured or mock values are detected
+        search_endpoint = os.getenv("AZURE_SEARCH_ENDPOINT")
+        search_api_key = os.getenv("AZURE_SEARCH_API_KEY")
+
+        if (
+            search_endpoint == "Search service not deployed"
+            or search_endpoint == "https://mock-search-endpoint.search.windows.net"
+            or not search_api_key  # Covers missing key
+            or search_api_key == "mock-search-api-key"
+        ):  # Covers mock key
+            pytest.skip(
+                "Skipping IndexingService tests: real Azure Cognitive Search not configured or mock values detected."
+            )
+        # END OF ADDED BLOCK
+
         # Check required environment variables
         required_vars = [
             "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT",

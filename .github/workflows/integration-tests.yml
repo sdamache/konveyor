@@ -445,7 +445,7 @@ jobs:
             -v $(pwd)/tests/results:/app/test-output \
             -v $(pwd)/tests/run_all_tests.py:/app/tests/run_all_tests.py \
             konveyor-test:latest \
-            bash -c "cd /app && mkdir -p /app/tests/results && python tests/run_all_tests.py ${{ steps.test-params.outputs.args }} -v && ls -la /app/tests/results/ && cp -r /app/tests/results/* /app/test-output/ 2>/dev/null || true && echo 'Test results copied to host'"
+            bash -c "cd /app && mkdir -p /app/tests/results && python tests/run_all_tests.py ${{ steps.test-params.outputs.args }} --junitxml=/app/tests/results/results.xml -v && ls -la /app/tests/results/ && cp -r /app/tests/results/* /app/test-output/ 2>/dev/null || true && echo 'Test results copied to host'"
 
           # Store exit code
           echo "exit_code=$?" >> $GITHUB_OUTPUT
