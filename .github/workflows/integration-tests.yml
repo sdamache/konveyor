@@ -5,6 +5,7 @@ permissions:
   id-token: write  # Required for Azure login
   actions: read    # Required for workflow calls
   packages: read   # Required for pulling from GHCR
+  pages: write     # Required for GitHub Pages deployment
 
 on:
   workflow_dispatch:
@@ -91,15 +92,26 @@ on:
         value: ${{ jobs.integration-tests.outputs.tests_passed }}
 
 jobs:
+  resource-cleanup:
+    name: "Clean up soft-deleted resources"
+    uses: ./.github/workflows/resource-cleanup.yml
+    with:
+      environment: ${{ github.event.inputs.environment || 'test' }}
+      resource_group: ${{ format('konveyor-{0}-rg', github.event.inputs.environment || 'test') }}
+    secrets:
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+
   integration-tests:
     name: Run Integration Tests
+    needs: resource-cleanup
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     outputs:
       tests_passed: ${{ steps.test-result.outputs.passed }}
 
     env:
       # Django settings
-      DJANGO_SETTINGS_MODULE: konveyor.settings.${{ inputs.environment || github.event.inputs.environment || 'testing' }}
+      DJANGO_SETTINGS_MODULE: konveyor.settings.${{ inputs.environment || github.event.inputs.environment || 'test' }}
       DJANGO_ENV: ${{ inputs.environment || github.event.inputs.environment || 'test' }}
       DJANGO_DEBUG: 'False'
       DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY || 'django-insecure-test-key-for-ci' }}
@@ -136,37 +148,32 @@ jobs:
       - name: Set default parameters
         id: defaults
         run: |
-          # Initialize with base defaults
+          # Initialize with base defaults for feature branches/other pushes
           TEST_TYPE="mock"
-          ENVIRONMENT="test"
+          ENVIRONMENT="test" # Default environment for mock, can be overridden
           TEST_CATEGORY="all"
           FAST_TRACK="false"
-          DEPLOY_INFRA="auto"
+          DEPLOY_INFRA="auto" # For mock on feature branches, infra deployment should be skipped by later conditions
 
-          # Override based on branch/event context
+          # Override for PRs
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            if [[ "${{ github.base_ref }}" == "main" ]]; then
-              # PR to main - use real tests in test env
+            if [[ "${{ github.base_ref }}" == "main" || "${{ github.base_ref }}" == "dev" ]]; then
+              # PR to main or dev - use REAL tests in TEST env
               TEST_TYPE="real"
               ENVIRONMENT="test"
-            elif [[ "${{ github.base_ref }}" == "dev" ]]; then
-              # PR to dev - use mock tests in dev env
-              TEST_TYPE="mock"
-              ENVIRONMENT="dev"
+              DEPLOY_INFRA="auto" # Real tests in test env might need infra
             fi
+          # Override for pushes to main or dev
           elif [[ "${{ github.event_name }}" == "push" ]]; then
-            if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-              # Push to main - use real tests in test env
+            if [[ "${{ github.ref }}" == "refs/heads/main" || "${{ github.ref }}" == "refs/heads/dev" ]]; then
+              # Push to main or dev - use REAL tests in TEST env
               TEST_TYPE="real"
               ENVIRONMENT="test"
-            elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
-              # Push to dev - use mock tests in dev env
-              TEST_TYPE="mock"
-              ENVIRONMENT="dev"
+              DEPLOY_INFRA="auto" # Real tests in test env might need infra
             fi
           fi
 
-          # Override with workflow inputs if they exist
+          # Override with workflow inputs if they exist (for workflow_dispatch/workflow_call)
           if [[ "${{ github.event.inputs.test_type }}" != "" ]]; then
             TEST_TYPE="${{ github.event.inputs.test_type }}"
           elif [[ "${{ inputs.test_type }}" != "" ]]; then
@@ -264,48 +271,68 @@ jobs:
             echo "❌ Azure login failed"
           fi
 
+      - name: Set Terraform Auth Variables
+        if: steps.azure-login.outcome == 'success'
+        run: |
+          echo "Setting Terraform ARM environment variables for Service Principal auth..."
+          echo "ARM_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID || fromJson(secrets.AZURE_CREDENTIALS).clientId }}" >> $GITHUB_ENV
+          echo "ARM_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET || fromJson(secrets.AZURE_CREDENTIALS).clientSecret }}" >> $GITHUB_ENV
+          echo "ARM_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID || fromJson(secrets.AZURE_CREDENTIALS).subscriptionId }}" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=${{ secrets.AZURE_TENANT_ID || fromJson(secrets.AZURE_CREDENTIALS).tenantId }}" >> $GITHUB_ENV
+          echo "ARM_USE_AZUREAD=true" >> $GITHUB_ENV # Ensures Azure AD based auth is used.
+
       # Determine test parameters
       - name: Determine test parameters
         id: test-params
         run: |
-          # Determine environment and test type from inputs
+          # Use environment variables set by the 'Set default parameters' step
+          # These are available as env.VAR_NAME in shell scripts
+          CURRENT_TEST_TYPE="${{ env.TEST_TYPE }}"
+          CURRENT_ENVIRONMENT="${{ env.ENVIRONMENT }}"
+          CURRENT_TEST_CATEGORY="${{ env.TEST_CATEGORY }}"
+          CURRENT_FAST_TRACK="${{ env.FAST_TRACK }}"
+
+          # Override with workflow_dispatch or workflow_call inputs if they were the trigger
           if [[ "${{ github.event_name }}" == "workflow_dispatch" || "${{ github.event_name }}" == "workflow_call" ]]; then
-            # Use inputs for workflow_dispatch or workflow_call
-            TEST_TYPE="${{ inputs.test_type || github.event.inputs.test_type || 'real' }}"
-            ENVIRONMENT="${{ inputs.environment || github.event.inputs.environment || 'test' }}"
-            TEST_CATEGORY="${{ inputs.test_category || github.event.inputs.test_category || 'all' }}"
-            FAST_TRACK="${{ inputs.fast_track || github.event.inputs.fast_track || 'false' }}"
-          else
-            # Default for push/PR events
-            TEST_TYPE="real"
-            ENVIRONMENT="test"
-            TEST_CATEGORY="all"
-            FAST_TRACK="false"
+            # For explicit calls, inputs take precedence over branch-derived defaults
+            CURRENT_TEST_TYPE="${{ inputs.test_type || github.event.inputs.test_type || env.TEST_TYPE }}"
+            CURRENT_ENVIRONMENT="${{ inputs.environment || github.event.inputs.environment || env.ENVIRONMENT }}"
+            CURRENT_TEST_CATEGORY="${{ inputs.test_category || github.event.inputs.test_category || env.TEST_CATEGORY }}"
+            CURRENT_FAST_TRACK="${{ format('{0}', inputs.fast_track || github.event.inputs.fast_track || env.FAST_TRACK) }}"
           fi
 
           # Set command-line arguments for the test runner
-          ARGS="--category ${TEST_CATEGORY} --env ${ENVIRONMENT}"
+          ARGS="--category ${CURRENT_TEST_CATEGORY} --env ${CURRENT_ENVIRONMENT}"
 
-          if [[ "${TEST_TYPE}" == "mock" ]]; then
+          if [[ "${CURRENT_TEST_TYPE}" == "mock" ]]; then
             ARGS="${ARGS} --mock"
-          elif [[ "${TEST_TYPE}" == "real" ]]; then
+          elif [[ "${CURRENT_TEST_TYPE}" == "real" ]]; then
             ARGS="${ARGS} --real"
-          else
+          elif [[ "${CURRENT_TEST_TYPE}" == "both" ]]; then
             # Both mock and real
             ARGS="${ARGS} --mock --real"
           fi
 
-          if [[ "${FAST_TRACK}" == "true" ]]; then
+          if [[ "${CURRENT_FAST_TRACK}" == "true" ]]; then
             # For fast track, only run critical tests
-            if [[ "${TEST_CATEGORY}" == "all" ]]; then
-              # Override category to unit for fast track
-              ARGS="--category unit --env ${ENVIRONMENT} --real"
+            if [[ "${CURRENT_TEST_CATEGORY}" == "all" ]]; then
+              # Override category to unit for fast track, but keep environment and real/mock status
+              ARGS="--category unit --env ${CURRENT_ENVIRONMENT}"
+              if [[ "${CURRENT_TEST_TYPE}" == "mock" ]]; then
+                ARGS="${ARGS} --mock"
+              elif [[ "${CURRENT_TEST_TYPE}" == "real" ]]; then
+                ARGS="${ARGS} --real"
+              elif [[ "${CURRENT_TEST_TYPE}" == "both" ]];then
+                ARGS="${ARGS} --mock --real"
+              fi
             fi
           fi
 
           echo "args=${ARGS}" >> $GITHUB_OUTPUT
-          echo "env=${ENVIRONMENT}" >> $GITHUB_OUTPUT
-          echo "Test parameters: ${ARGS}"
+          # Output the environment that will actually be used by tests for clarity
+          echo "env=${CURRENT_ENVIRONMENT}" >> $GITHUB_OUTPUT
+          echo "Test parameters for runner: ${ARGS}"
+          echo "Test environment for runner: ${CURRENT_ENVIRONMENT}"
 
       # Set up environment variables from GitHub secrets/variables based on environment
       - name: Set up environment variables
@@ -389,7 +416,7 @@ jobs:
       - name: Build Docker image for testing
         run: |
           # Create a .env file with all necessary environment variables
-          echo "DJANGO_SETTINGS_MODULE=konveyor.settings.testing" > .env
+          echo "DJANGO_SETTINGS_MODULE=konveyor.settings.test" > .env
           echo "DJANGO_ENV=${{ steps.test-params.outputs.env }}" >> .env
           echo "DJANGO_DEBUG=False" >> .env
           echo "DJANGO_SECRET_KEY=django-insecure-test-key-for-ci" >> .env
@@ -408,7 +435,7 @@ jobs:
           echo "AZURE_STORAGE_CONTAINER_NAME=documents" >> .env
 
           # Build the Docker image with the environment file
-          docker build --build-arg DJANGO_SETTINGS_MODULE=konveyor.settings.testing -t konveyor-test:latest .
+          docker build --build-arg DJANGO_SETTINGS_MODULE=konveyor.settings.test -t konveyor-test:latest .
 
       - name: Run tests in Docker
         id: run-tests
@@ -424,7 +451,7 @@ jobs:
             -v $(pwd)/tests/results:/app/test-output \
             -v $(pwd)/tests/run_all_tests.py:/app/tests/run_all_tests.py \
             konveyor-test:latest \
-            bash -c "cd /app && mkdir -p /app/tests/results && python tests/run_all_tests.py ${{ steps.test-params.outputs.args }} -v && cp -r /app/tests/results/* /app/test-output/ 2>/dev/null || true"
+            bash -c "cd /app && mkdir -p /app/tests/results && python tests/run_all_tests.py ${{ steps.test-params.outputs.args }} -v; echo 'run_all_tests.py exit code: $?'; echo 'Listing /app/tests/results:'; ls -la /app/tests/results; cp -r /app/tests/results/* /app/test-output/ 2>/dev/null || true && echo 'Test results copied to host'"
 
           # Store exit code
           echo "exit_code=$?" >> $GITHUB_OUTPUT
@@ -449,13 +476,13 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results
-          path: |
-            tests/results/
-            **/test-*.xml
+          name: test-results-integration
+          path: tests/results/**/*.xml
           retention-days: 5
 
       # Clean up infrastructure if it was deployed for real tests
+# Removed GitHub CLI installation step
+
       - name: Azure Login for Cleanup
         id: azure-login-cleanup
         if: ${{ always() && (github.event_name == 'push' || github.event_name == 'pull_request' || env.TEST_TYPE == 'real' || contains(env.TEST_TYPE, 'both')) }}
@@ -519,5 +546,43 @@ jobs:
           fi
 
           cd $ENV_DIR
-          terraform init
-          terraform destroy -auto-approve
+
+          # Initialize Terraform with remote backend for state persistence
+          # This ensures state is saved even though resources will be destroyed
+          terraform init \
+            -backend=true \
+            -backend-config="resource_group_name=terraform-state-rg" \
+            -backend-config="storage_account_name=konveyortfstate" \
+            -backend-config="container_name=tfstate" \
+
+          # Select the relevant workspace
+          terraform workspace select integration-test || terraform workspace new integration-test
+
+          # Call the resource-cleanup workflow as a reusable workflow
+          # This will be done in a separate job
+
+          # Create terraform.tfvars file securely using GitHub Secrets
+          # This approach prevents secrets from being exposed in logs
+          cat > terraform.tfvars << 'EOF'
+          microsoft_app_id="${{ secrets.TF_VAR_MICROSOFT_APP_ID || 'c8218a52-681c-4df2-b558-5fa8e5067b43' }}"
+          microsoft_app_password="${{ secrets.TF_VAR_MICROSOFT_APP_PASSWORD }}"
+          slack_bot_token="${{ secrets.TF_VAR_SLACK_BOT_TOKEN }}"
+          slack_app_token="${{ secrets.TF_VAR_SLACK_APP_TOKEN }}"
+          slack_signing_secret="${{ secrets.TF_VAR_SLACK_SIGNING_SECRET }}"
+          slack_client_id="${{ secrets.TF_VAR_SLACK_CLIENT_ID }}"
+          slack_client_secret="${{ secrets.TF_VAR_SLACK_CLIENT_SECRET }}"
+          slack_test_channel_id="${{ secrets.TF_VAR_SLACK_TEST_CHANNEL_ID || 'D08KQ0WPGR2' }}"
+          GHCR_PAT="${{ secrets.GHCR_PAT }}"
+          DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY || 'django-insecure-test-key-for-ci' }}"
+          github_repository="${{ github.repository }}"
+          docker_registry_username="${{ github.actor }}"
+          EOF
+
+          # Debug: Confirm the file was created (without showing contents)
+          echo "terraform.tfvars file created successfully"
+
+          # Use timeout to prevent hanging
+          timeout 15m terraform destroy -auto-approve -var-file=terraform.tfvars
+
+#TODO: Assumption: Ensure run_all_tests.py script or the pytest command calls would be updated to generate --html=test_report/index.html when we uncomment this.
+#TODO: The actual github pages step will be added when we are successful with Upload Pages Artifact in code-quality

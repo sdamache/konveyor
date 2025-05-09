@@ -9,4 +9,9 @@ resource "azurerm_cognitive_account" "document_intelligence" {
   identity {
     type = "SystemAssigned"
   }
+
+  lifecycle {
+    # Prevent destroy during testing to avoid soft-delete issues
+    prevent_destroy = true
+  }
 }

@@ -27,6 +27,7 @@ jobs:
   approval:
     name: Manual Approval for Destruction
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     environment: ${{ github.event.inputs.environment }}-destroy-approval
     steps:
       - name: Approval Check
@@ -36,6 +37,7 @@ jobs:
     name: Destroy Infrastructure (${{ github.event.inputs.environment }})
     needs: approval
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     environment: ${{ github.event.inputs.environment }}
 
     defaults:
@@ -57,10 +59,36 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -input=false
+
+      # Select relevant workspace
+      - name: Select Terraform Workspace
+        run: terraform workspace select integration-test || terraform workspace new integration-test
+
+      - name: Create Terraform Variables
+        run: |
+          # Create terraform.tfvars file securely using GitHub Secrets
+          # This approach prevents secrets from being exposed in logs
+          cat > terraform.tfvars << 'EOF'
+          microsoft_app_id="${{ secrets.TF_VAR_MICROSOFT_APP_ID || 'c8218a52-681c-4df2-b558-5fa8e5067b43' }}"
+          microsoft_app_password="${{ secrets.TF_VAR_MICROSOFT_APP_PASSWORD }}"
+          slack_bot_token="${{ secrets.TF_VAR_SLACK_BOT_TOKEN }}"
+          slack_app_token="${{ secrets.TF_VAR_SLACK_APP_TOKEN }}"
+          slack_signing_secret="${{ secrets.TF_VAR_SLACK_SIGNING_SECRET }}"
+          slack_client_id="${{ secrets.TF_VAR_SLACK_CLIENT_ID }}"
+          slack_client_secret="${{ secrets.TF_VAR_SLACK_CLIENT_SECRET }}"
+          slack_test_channel_id="${{ secrets.TF_VAR_SLACK_TEST_CHANNEL_ID || 'D08KQ0WPGR2' }}"
+          GHCR_PAT="${{ secrets.GHCR_PAT }}"
+          DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY || 'django-insecure-test-key-for-ci' }}"
+          github_repository="${{ github.repository }}"
+          docker_registry_username="${{ github.actor }}"
+          EOF
+
+          # Debug: Confirm the file was created (without showing contents)
+          echo "terraform.tfvars file created successfully"
 
       - name: Terraform Destroy
-        run: terraform destroy -auto-approve
+        run: timeout 15m terraform destroy -auto-approve -var-file=terraform.tfvars
 
       - name: Clean up GitHub Variables and Secrets
         uses: actions/github-script@v6

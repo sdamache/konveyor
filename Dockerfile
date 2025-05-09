@@ -23,7 +23,7 @@ COPY requirements/*.txt /app/requirements/
 
 # Install Python dependencies into a wheelhouse for faster installation in the final stage
 # Install all requirements for testing and development
-RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements/testing.txt
+RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements/test.txt
 
 
 # Stage 2: Final - Build the final application image
@@ -34,7 +34,7 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 # Accept build argument for settings module with a default
-ARG DJANGO_SETTINGS_MODULE=konveyor.settings.testing
+ARG DJANGO_SETTINGS_MODULE=konveyor.settings.test
 ENV DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE}
 
 # Set working directory

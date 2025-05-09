@@ -4,6 +4,7 @@ permissions:
   contents: read   # Required for checkout
   packages: write  # Required for pushing to GHCR
   actions: write   # Required for workflow calls and creating GitHub variables
+  pages: write     # Required for code quality and integration test
 on:
   pull_request:
     branches: [ main, dev ]

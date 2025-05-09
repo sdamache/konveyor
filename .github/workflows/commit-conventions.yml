@@ -16,6 +16,7 @@ jobs:
   branch-naming:
     name: "Validate Branch Naming"
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - name: Enforce Feature Branch Naming
         if: startsWith(github.head_ref, 'feat/task-')

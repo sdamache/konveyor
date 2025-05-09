@@ -1,0 +1,269 @@
+name: Azure Resource Cleanup
+
+on:
+  # Allow this workflow to be called by other workflows
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Environment to deploy to (test, prod)'
+        required: false
+        default: 'test'
+        type: string
+      resource_group:
+        description: 'Resource group name'
+        required: false
+        type: string
+    secrets:
+      AZURE_CREDENTIALS:
+        required: true
+
+  # Allow this workflow to be triggered manually
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to (test, prod)'
+        required: false
+        default: 'test'
+        type: string
+      resource_group:
+        description: 'Resource group name'
+        required: false
+        type: string
+
+jobs:
+  cleanup:
+    name: "Clean up soft-deleted Azure resources"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20  # Increased timeout to allow for longer purge operations
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2.1.0
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set environment variables
+        run: |
+          # Set environment variables for easier reference
+          ENVIRONMENT="${{ inputs.environment }}"
+          RESOURCE_GROUP="${{ inputs.resource_group || format('konveyor-{0}-rg', inputs.environment) }}"
+          echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_ENV
+          echo "RESOURCE_GROUP=$RESOURCE_GROUP" >> $GITHUB_ENV
+
+      - name: Check if resource group exists
+        id: check-rg
+        run: |
+          if timeout 30 az group exists --name ${{ env.RESOURCE_GROUP }}; then
+            echo "Resource group exists"
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "Resource group does not exist"
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Clean up soft-deleted resources
+        if: steps.check-rg.outputs.exists == 'true'
+        run: |
+          echo "Cleaning up soft-deleted resources in resource group: ${{ env.RESOURCE_GROUP }}"
+
+          # Get the subscription ID
+          SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+          echo "Subscription ID: $SUBSCRIPTION_ID"
+
+          # Clean up soft-deleted Cognitive Services accounts
+          echo "Cleaning up soft-deleted Cognitive Services accounts..."
+
+          # Document Intelligence
+          DOCINT_NAME="konveyor-${{ env.ENVIRONMENT }}-docint"
+          echo "Attempting to purge soft-deleted Document Intelligence account: $DOCINT_NAME"
+
+          # We're using prevent_destroy=true, so we don't want to delete active resources
+          ACTIVE_RESOURCE=$(az cognitiveservices account list --query "[?name=='$DOCINT_NAME' && resourceGroup=='${{ env.RESOURCE_GROUP }}']" -o tsv)
+
+          if [ -n "$ACTIVE_RESOURCE" ]; then
+            echo "Found active Document Intelligence account. Keeping it active as per resource management strategy."
+          fi
+
+          # Now check if the resource exists in a soft-deleted state
+          SOFT_DELETED=$(az resource list --query "[?name=='$DOCINT_NAME' && resourceGroup=='${{ env.RESOURCE_GROUP }}' && properties.isInDeletionState==true]" -o tsv)
+
+          if [ -n "$SOFT_DELETED" ]; then
+            echo "Found soft-deleted Document Intelligence account. Attempting to purge..."
+            # Use timeout command with proper syntax
+            for i in {1..3}; do
+              echo "Purge attempt $i of 3..."
+              if timeout 60 az cognitiveservices account purge \
+                --name $DOCINT_NAME \
+                --resource-group ${{ env.RESOURCE_GROUP }} \
+                --subscription $SUBSCRIPTION_ID \
+                --location eastus; then
+                echo "Purge operation succeeded!"
+                break
+              else
+                echo "Purge attempt $i failed. Waiting before retry..."
+                sleep 30
+              fi
+
+              # If this is the last attempt, check if it's still soft-deleted
+              if [ $i -eq 3 ]; then
+                STILL_DELETED=$(az resource list --query "[?name=='$DOCINT_NAME' && resourceGroup=='${{ env.RESOURCE_GROUP }}' && properties.isInDeletionState==true]" -o tsv)
+                if [ -n "$STILL_DELETED" ]; then
+                  echo "WARNING: Failed to purge Document Intelligence account after 3 attempts."
+                else
+                  echo "Resource no longer appears as soft-deleted. It may have been purged successfully."
+                fi
+              fi
+            done
+
+            # Wait for purge operation to complete
+            echo "Waiting for purge operation to complete..."
+            sleep 30
+          else
+            echo "No soft-deleted Document Intelligence account found."
+          fi
+
+          # OpenAI
+          OPENAI_NAME="konveyor-${{ env.ENVIRONMENT }}-openai"
+          echo "Attempting to purge soft-deleted OpenAI account: $OPENAI_NAME"
+
+          # We're using prevent_destroy=true, so we don't want to delete active resources
+          ACTIVE_RESOURCE=$(az cognitiveservices account list --query "[?name=='$OPENAI_NAME' && resourceGroup=='${{ env.RESOURCE_GROUP }}']" -o tsv)
+
+          if [ -n "$ACTIVE_RESOURCE" ]; then
+            echo "Found active OpenAI account. Keeping it active as per resource management strategy."
+          fi
+
+          # Now check if the resource exists in a soft-deleted state
+          SOFT_DELETED=$(az resource list --query "[?name=='$OPENAI_NAME' && resourceGroup=='${{ env.RESOURCE_GROUP }}' && properties.isInDeletionState==true]" -o tsv)
+
+          if [ -n "$SOFT_DELETED" ]; then
+            echo "Found soft-deleted OpenAI account. Attempting to purge..."
+            # Use timeout command with proper syntax
+            for i in {1..3}; do
+              echo "Purge attempt $i of 3..."
+              if timeout 60 az cognitiveservices account purge \
+                --name $OPENAI_NAME \
+                --resource-group ${{ env.RESOURCE_GROUP }} \
+                --subscription $SUBSCRIPTION_ID \
+                --location eastus; then
+                echo "Purge operation succeeded!"
+                break
+              else
+                echo "Purge attempt $i failed. Waiting before retry..."
+                sleep 30
+              fi
+
+              # If this is the last attempt, check if it's still soft-deleted
+              if [ $i -eq 3 ]; then
+                STILL_DELETED=$(az resource list --query "[?name=='$OPENAI_NAME' && resourceGroup=='${{ env.RESOURCE_GROUP }}' && properties.isInDeletionState==true]" -o tsv)
+                if [ -n "$STILL_DELETED" ]; then
+                  echo "WARNING: Failed to purge OpenAI account after 3 attempts."
+                else
+                  echo "Resource no longer appears as soft-deleted. It may have been purged successfully."
+                fi
+              fi
+            done
+
+            # Wait for purge operation to complete
+            echo "Waiting for purge operation to complete..."
+            sleep 30
+          else
+            echo "No soft-deleted OpenAI account found."
+          fi
+
+          # Cognitive Search
+          SEARCH_NAME="konveyor-${{ env.ENVIRONMENT }}-search"
+          echo "Checking Cognitive Search service: $SEARCH_NAME"
+
+          # Note: Azure CLI doesn't have a direct command for purging search services
+          # First, check if the search service exists
+          echo "Checking if search service exists..."
+          if timeout 30 az search service show --name $SEARCH_NAME --resource-group ${{ env.RESOURCE_GROUP }} > /dev/null 2>&1; then
+            echo "Search service exists, no need to purge"
+          else
+            echo "Search service doesn't exist."
+            # We're intentionally not creating a probe service or checking for soft-deletion
+            # because we want to keep the test environment running without the search service
+            # to save costs. If a soft-deleted search service is causing issues, it can be
+            # manually purged using the Azure portal or CLI.
+            echo "Skipping soft-delete check for search service to avoid unintended creation."
+
+            # If there's a need to purge a soft-deleted search service, uncomment and use the following:
+            # Get the Azure access token
+            # ACCESS_TOKEN=$(timeout 30 az account get-access-token --query accessToken -o tsv)
+            # Try to purge using REST API
+            # echo "Using REST API to purge the search service..."
+            # timeout 30 curl -s -X POST \
+            #   -H "Authorization: Bearer $ACCESS_TOKEN" \
+            #   -H "Content-Type: application/json" \
+            #   "https://management.azure.com/subscriptions/$SUBSCRIPTION_ID/resourceGroups/${{ env.RESOURCE_GROUP }}/providers/Microsoft.Search/searchServices/$SEARCH_NAME/delete?api-version=2020-08-01" \
+            #   || echo "Failed to purge search service using REST API"
+          fi
+
+          # Key Vault
+          KV_NAME="konveyor-${{ env.ENVIRONMENT }}-kv"
+          echo "Checking Key Vault: $KV_NAME"
+
+          # First check if the Key Vault exists
+          if timeout 30 az keyvault show --name $KV_NAME --resource-group ${{ env.RESOURCE_GROUP }} > /dev/null 2>&1; then
+            echo "Key Vault exists, cleaning up access policies..."
+
+            # Get the current access policies with timeout
+            POLICIES=$(timeout 30 az keyvault show --name $KV_NAME --resource-group ${{ env.RESOURCE_GROUP }} --query "properties.accessPolicies[].objectId" -o tsv)
+
+            if [ -n "$POLICIES" ]; then
+              echo "Found access policies to clean up"
+
+              # Remove each access policy with timeout
+              for POLICY_ID in $POLICIES; do
+                echo "Removing access policy for object ID: $POLICY_ID"
+                timeout 30 az keyvault delete-policy --name $KV_NAME --resource-group ${{ env.RESOURCE_GROUP }} --object-id $POLICY_ID || echo "Failed to remove policy"
+              done
+            else
+              echo "No access policies found to clean up"
+            fi
+          else
+            echo "Key Vault does not exist, checking for soft-deleted Key Vault..."
+
+            # Check if there's a soft-deleted Key Vault
+            SOFT_DELETED=$(az keyvault list-deleted --query "[?name=='$KV_NAME']" -o tsv)
+
+            if [ -n "$SOFT_DELETED" ]; then
+              echo "Found soft-deleted Key Vault. Attempting to purge..."
+              # Try to purge the soft-deleted key vault with a longer timeout
+              echo "Attempting to purge soft-deleted Key Vault: $KV_NAME"
+
+              # Increase timeout to 5 minutes (300 seconds) for Key Vault purge
+              for i in {1..3}; do
+                echo "Purge attempt $i of 3..."
+                if timeout 300 az keyvault purge --name $KV_NAME; then
+                  echo "Key Vault purge operation succeeded!"
+                  break
+                else
+                  echo "Purge attempt $i failed or timed out. Waiting before retry..."
+                  sleep 60
+                fi
+
+                # If this is the last attempt, check if it's still soft-deleted
+                if [ $i -eq 3 ]; then
+                  STILL_DELETED=$(az keyvault list-deleted --query "[?name=='$KV_NAME']" -o tsv)
+                  if [ -n "$STILL_DELETED" ]; then
+                    echo "WARNING: Failed to purge Key Vault after 3 attempts."
+                  else
+                    echo "Key Vault no longer appears as soft-deleted. It may have been purged successfully."
+                  fi
+                fi
+              done
+
+              # Wait for purge operation to complete
+              echo "Waiting for purge operation to complete..."
+              sleep 60
+            else
+              echo "No soft-deleted Key Vault found"
+            fi
+          fi
+
+          echo "Resource cleanup completed"

@@ -4,6 +4,7 @@ permissions:
   contents: read   # Required for checkout
   id-token: write  # Required for Azure login
   actions: read    # Required for workflow calls
+  pages: write     # Required for GitHub Pages deployment
 
 on:
   workflow_dispatch:
@@ -53,9 +54,19 @@ on:
         required: false
 
 jobs:
+  resource-cleanup:
+    name: "Clean up soft-deleted resources"
+    uses: ./.github/workflows/resource-cleanup.yml
+    with:
+      environment: ${{ github.event.inputs.environment || 'test' }}
+      resource_group: ${{ format('konveyor-{0}-rg', github.event.inputs.environment || 'test') }}
+    secrets:
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+
   lint:
     name: Lint Python Code
     runs-on: ubuntu-latest
+    timeout-minutes: 25
 
     steps:
       - name: Checkout repository
@@ -93,9 +104,11 @@ jobs:
   test-coverage:
     name: Test Coverage
     runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: resource-cleanup
 
     env:
-      DJANGO_SETTINGS_MODULE: konveyor.settings.testing
+      DJANGO_SETTINGS_MODULE: konveyor.settings.test
       PYTHONPATH: ${{ github.workspace }}
 
     steps:
@@ -124,35 +137,30 @@ jobs:
       - name: Set default parameters
         id: defaults
         run: |
-          # Initialize with base defaults
+          # Initialize with base defaults for feature branches/other pushes
           TEST_TYPE="mock"
-          ENVIRONMENT="test"
-          DEPLOY_INFRA="auto"
+          ENVIRONMENT="test" # Default environment for mock, can be overridden
+          DEPLOY_INFRA="auto"  # For mock on feature branches, infra deployment should be skipped by later conditions
 
-          # Override based on branch/event context
+          # Override for PRs
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            if [[ "${{ github.base_ref }}" == "main" ]]; then
-              # PR to main - use real tests in test env
+            if [[ "${{ github.base_ref }}" == "main" || "${{ github.base_ref }}" == "dev" ]]; then
+              # PR to main or dev - use REAL tests in TEST env
               TEST_TYPE="real"
               ENVIRONMENT="test"
-            elif [[ "${{ github.base_ref }}" == "dev" ]]; then
-              # PR to dev - use mock tests in dev env
-              TEST_TYPE="mock"
-              ENVIRONMENT="dev"
+              DEPLOY_INFRA="auto" # Real tests in test env might need infra
             fi
+          # Override for pushes to main or dev
           elif [[ "${{ github.event_name }}" == "push" ]]; then
-            if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-              # Push to main - use real tests in test env
+            if [[ "${{ github.ref }}" == "refs/heads/main" || "${{ github.ref }}" == "refs/heads/dev" ]]; then
+              # Push to main or dev - use REAL tests in TEST env
               TEST_TYPE="real"
               ENVIRONMENT="test"
-            elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
-              # Push to dev - use mock tests in dev env
-              TEST_TYPE="mock"
-              ENVIRONMENT="dev"
+              DEPLOY_INFRA="auto" # Real tests in test env might need infra
             fi
           fi
 
-          # Override with workflow inputs if they exist
+          # Override with workflow inputs if they exist (for workflow_dispatch/workflow_call)
           if [[ "${{ github.event.inputs.test_type }}" != "" ]]; then
             TEST_TYPE="${{ github.event.inputs.test_type }}"
           elif [[ "${{ inputs.test_type }}" != "" ]]; then
@@ -183,121 +191,74 @@ jobs:
           echo "Using ENVIRONMENT: ${ENVIRONMENT}"
           echo "Using DEPLOY_INFRA: ${DEPLOY_INFRA}"
 
-      # Debug Azure Credentials
+      # Azure Login for real tests
       - name: Debug Azure Credentials
         run: |
           echo "Event name: ${{ github.event_name }}"
-          echo "Test type: ${{ env.TEST_TYPE }}"
-          echo "Environment: ${{ env.ENVIRONMENT }}"
+          echo "Test type: ${{ env.TEST_TYPE || 'not specified' }}"
           echo "Has AZURE_CREDENTIALS secret: ${{ secrets.AZURE_CREDENTIALS != '' }}"
-          echo "Has individual Azure credentials: ${{ secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_TENANT_ID != '' && secrets.AZURE_SUBSCRIPTION_ID != '' }}"
 
           # Print the structure of the AZURE_CREDENTIALS (without revealing sensitive values)
           if [[ "${{ secrets.AZURE_CREDENTIALS }}" != "" ]]; then
             echo "AZURE_CREDENTIALS structure:"
             # Extract keys from the JSON without showing values
-            echo "${{ secrets.AZURE_CREDENTIALS }}" | grep -o '"[^"]*":' | tr -d '":' | sort
+            echo "${{ secrets.AZURE_CREDENTIALS }}" | grep -o '"[^"\"]*":' | tr -d '":' | sort
           fi
 
-      # Try Azure Login with the full AZURE_CREDENTIALS
-      - name: Azure Login (Full Credentials)
-        id: azure-login-full
-        if: ${{ env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod' }}
+      # Create a dummy Azure credentials file if the secret is missing
+      - name: Check Azure Credentials
+        if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || env.TEST_TYPE == 'real' || contains(env.TEST_TYPE, 'both') }}
+        id: check-azure-creds
+        run: |
+          if [[ -n "${{ secrets.AZURE_CREDENTIALS }}" ]]; then
+            echo "has_credentials=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_credentials=false" >> $GITHUB_OUTPUT
+            echo "::warning::AZURE_CREDENTIALS secret is missing. Creating a dummy credentials file for testing."
+            # Create a dummy credentials file
+            echo '{"clientId":"dummy-client-id","clientSecret":"dummy-client-secret","subscriptionId":"dummy-subscription-id","tenantId":"dummy-tenant-id"}' > azure-credentials.json
+            # Set the AZURE_CREDENTIALS environment variable
+            echo "AZURE_CREDENTIALS_JSON=$(cat azure-credentials.json)" >> $GITHUB_ENV
+          fi
+
+      - name: Azure Login
+        # Always run Azure login for PR and push events, or when real tests are specified
+        id: azure-login
+        if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || env.TEST_TYPE == 'real' || contains(env.TEST_TYPE, 'both') }}
         uses: azure/login@v2.1.0
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          creds: ${{ steps.check-azure-creds.outputs.has_credentials == 'true' && secrets.AZURE_CREDENTIALS || env.AZURE_CREDENTIALS_JSON }}
         continue-on-error: true
 
       # Report login status
-      - name: Report Azure Login Status (Full Credentials)
-        if: ${{ env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod' }}
+      - name: Report Azure Login Status
+        if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || env.TEST_TYPE == 'real' || contains(env.TEST_TYPE, 'both') }}
         run: |
-          if [[ "${{ steps.azure-login-full.outcome }}" == "success" ]]; then
-            echo "✅ Azure login with full credentials succeeded"
+          if [[ "${{ steps.azure-login.outcome }}" == "success" ]]; then
+            echo "✅ Azure login succeeded"
           else
-            echo "❌ Azure login with full credentials failed"
+            echo "❌ Azure login failed"
           fi
 
-      # Try Azure Login with simplified credentials if full login failed
-      - name: Create Simplified Credentials
-        if: ${{ (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod') && steps.azure-login-full.outcome != 'success' }}
-        id: create-simplified-creds
+      - name: Set Terraform Auth Variables
+        if: steps.azure-login.outcome == 'success'
         run: |
-          # Check if AZURE_CREDENTIALS secret exists
-          if [[ -n "${{ secrets.AZURE_CREDENTIALS }}" ]]; then
-            # Extract the essential fields from the full credentials
-            CREDS=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | grep -o '"clientId":"[^"]*"' | tr -d '\n')
-            CREDS="${CREDS},$(echo '${{ secrets.AZURE_CREDENTIALS }}' | grep -o '"clientSecret":"[^"]*"' | tr -d '\n')"
-            CREDS="${CREDS},$(echo '${{ secrets.AZURE_CREDENTIALS }}' | grep -o '"subscriptionId":"[^"]*"' | tr -d '\n')"
-            CREDS="${CREDS},$(echo '${{ secrets.AZURE_CREDENTIALS }}' | grep -o '"tenantId":"[^"]*"' | tr -d '\n')"
-            echo "{${CREDS}}" > simplified-creds.json
-            echo "SIMPLIFIED_CREDS=$(cat simplified-creds.json)" >> $GITHUB_ENV
-            echo "has_simplified_creds=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_simplified_creds=false" >> $GITHUB_OUTPUT
-          fi
-
-      # Try Azure Login with simplified credentials
-      - name: Azure Login (Simplified Credentials)
-        if: ${{ (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod') && steps.azure-login-full.outcome != 'success' && steps.create-simplified-creds.outputs.has_simplified_creds == 'true' }}
-        id: azure-login-simplified
-        uses: azure/login@v2.1.0
-        with:
-          creds: ${{ env.SIMPLIFIED_CREDS }}
-        continue-on-error: true
-
-      # Check for individual Azure credentials
-      - name: Check Individual Azure Credentials
-        id: check-individual-creds
-        if: ${{ (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod') && steps.azure-login-full.outcome != 'success' }}
-        run: |
-          if [[ -n "${{ secrets.AZURE_CLIENT_ID }}" && -n "${{ secrets.AZURE_TENANT_ID }}" && -n "${{ secrets.AZURE_SUBSCRIPTION_ID }}" ]]; then
-            echo "has_individual_creds=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_individual_creds=false" >> $GITHUB_OUTPUT
-          fi
-
-      # Try Azure Login with individual credentials if both previous methods failed
-      - name: Azure Login (Individual Credentials)
-        if: ${{ (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod') && steps.azure-login-full.outcome != 'success' && (steps.azure-login-simplified.outcome != 'success' || steps.create-simplified-creds.outputs.has_simplified_creds != 'true') && steps.check-individual-creds.outputs.has_individual_creds == 'true' }}
-        id: azure-login-individual
-        uses: azure/login@v2.1.0
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        continue-on-error: true
-
-      # Report login status for individual credentials
-      - name: Report Azure Login Status (Individual Credentials)
-        if: ${{ (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod') && steps.azure-login-full.outcome != 'success' && (steps.azure-login-simplified.outcome != 'success' || steps.create-simplified-creds.outputs.has_simplified_creds != 'true') && steps.check-individual-creds.outputs.has_individual_creds == 'true' }}
-        run: |
-          if [[ "${{ steps.azure-login-individual.outcome }}" == "success" ]]; then
-            echo "✅ Azure login with individual credentials succeeded"
-          else
-            echo "❌ Azure login with individual credentials failed"
-          fi
-
-      # Set a variable to indicate if any login method succeeded
-      - name: Set Login Success Variable
-        if: ${{ env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod' }}
-        id: login-success
-        run: |
-          if [[ "${{ steps.azure-login-full.outcome }}" == "success" || "${{ steps.azure-login-simplified.outcome }}" == "success" || "${{ steps.azure-login-individual.outcome }}" == "success" ]]; then
-            echo "success=true" >> $GITHUB_OUTPUT
-            echo "✅ At least one Azure login method succeeded"
-          else
-            echo "success=false" >> $GITHUB_OUTPUT
-            echo "❌ All Azure login methods failed"
-          fi
+          echo "Setting Terraform ARM environment variables for Service Principal auth..."
+          echo "ARM_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID || fromJson(secrets.AZURE_CREDENTIALS).clientId }}" >> $GITHUB_ENV
+          echo "ARM_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET || fromJson(secrets.AZURE_CREDENTIALS).clientSecret }}" >> $GITHUB_ENV
+          echo "ARM_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID || fromJson(secrets.AZURE_CREDENTIALS).subscriptionId }}" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=${{ secrets.AZURE_TENANT_ID || fromJson(secrets.AZURE_CREDENTIALS).tenantId }}" >> $GITHUB_ENV
+          echo "ARM_USE_AZUREAD=true" >> $GITHUB_ENV # Ensures Azure AD based auth is used.
 
       # Update Terraform setup condition
       - name: Set up Terraform
         if: >-
           ${{
-            steps.login-success.outputs.success == 'true' &&
+            steps.azure-login.outcome == 'success' &&
             (env.DEPLOY_INFRA == 'always' ||
-            (env.DEPLOY_INFRA == 'auto' && (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod')))
+            (env.DEPLOY_INFRA == 'auto' &&
+             (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both') &&
+             (env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod')))
           }}
         uses: hashicorp/setup-terraform@v3
         with:
@@ -307,9 +268,11 @@ jobs:
       - name: Deploy Infrastructure
         if: >-
           ${{
-            steps.login-success.outputs.success == 'true' &&
+            steps.azure-login.outcome == 'success' &&
             (env.DEPLOY_INFRA == 'always' ||
-            (env.DEPLOY_INFRA == 'auto' && (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both' || env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod')))
+            (env.DEPLOY_INFRA == 'auto' &&
+             (env.TEST_TYPE == 'real' || env.TEST_TYPE == 'both') &&
+             (env.ENVIRONMENT == 'test' || env.ENVIRONMENT == 'prod')))
           }}
         id: deploy-infra
         run: |
@@ -360,7 +323,21 @@ jobs:
           echo "Using infrastructure directory: $INFRA_DIR"
           echo "Using environment directory: $ENV_DIR"
           cd $ENV_DIR
-          terraform init
+          # Set environment variable for easier reference
+          ENVIRONMENT="${{ github.event.inputs.environment || 'test' }}"
+
+          # Resource cleanup is now handled by a separate job
+
+          # Initialize Terraform with remote backend for state persistence
+          terraform init \
+            -backend=true \
+            -backend-config="resource_group_name=terraform-state-rg" \
+            -backend-config="storage_account_name=konveyortfstate" \
+            -backend-config="container_name=tfstate" \
+            -input=false
+
+          # Select Workspaces for testing
+          terraform workspace select integration-test || terraform workspace new integration-test
 
           # Check if terraform init succeeded
           if [ $? -ne 0 ]; then
@@ -378,11 +355,33 @@ jobs:
             exit 0
           fi
 
-          terraform validate
-          terraform plan -out=tfplan
+          # Create terraform.tfvars file securely using GitHub Secrets
+          # This approach prevents secrets from being exposed in logs
+          cat > terraform.tfvars << 'EOF'
+          microsoft_app_id="${{ secrets.TF_VAR_MICROSOFT_APP_ID || 'c8218a52-681c-4df2-b558-5fa8e5067b43' }}"
+          microsoft_app_password="${{ secrets.TF_VAR_MICROSOFT_APP_PASSWORD }}"
+          slack_bot_token="${{ secrets.TF_VAR_SLACK_BOT_TOKEN }}"
+          slack_app_token="${{ secrets.TF_VAR_SLACK_APP_TOKEN }}"
+          slack_signing_secret="${{ secrets.TF_VAR_SLACK_SIGNING_SECRET }}"
+          slack_client_id="${{ secrets.TF_VAR_SLACK_CLIENT_ID }}"
+          slack_client_secret="${{ secrets.TF_VAR_SLACK_CLIENT_SECRET }}"
+          slack_test_channel_id="${{ secrets.TF_VAR_SLACK_TEST_CHANNEL_ID || 'D08KQ0WPGR2' }}"
+          GHCR_PAT="${{ secrets.GHCR_PAT }}"
+          DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY || 'django-insecure-test-key-for-ci' }}"
+          github_repository="${{ github.repository }}"
+          docker_registry_username="${{ github.actor }}"
+          EOF
 
-          # Apply the plan
-          if terraform apply -auto-approve tfplan; then
+          # Debug: Confirm the file was created (without showing contents)
+          echo "terraform.tfvars file created successfully"
+
+          terraform validate
+
+          # Use -var-file explicitly to ensure variables are loaded
+          terraform plan -var-file=terraform.tfvars -out=tfplan
+
+          # Apply the plan with a timeout to prevent hanging
+          if timeout 15m terraform apply -auto-approve tfplan; then
             # Export environment variables for tests
             echo "AZURE_SEARCH_ENDPOINT=$(terraform output -raw cognitive_search_endpoint)" >> $GITHUB_ENV
             echo "AZURE_COGNITIVE_SEARCH_ENDPOINT=$(terraform output -raw cognitive_search_endpoint)" >> $GITHUB_ENV
@@ -410,7 +409,7 @@ jobs:
       - name: Build Docker image for testing
         run: |
           # Create a .env file with all necessary environment variables
-          echo "DJANGO_SETTINGS_MODULE=konveyor.settings.${{ github.event.inputs.environment || 'testing' }}" > .env
+          echo "DJANGO_SETTINGS_MODULE=konveyor.settings.${{ github.event.inputs.environment || 'test' }}" > .env
           echo "DJANGO_DEBUG=False" >> .env
           echo "DJANGO_SECRET_KEY=django-insecure-test-key-for-ci" >> .env
           echo "AZURE_SEARCH_ENDPOINT=${AZURE_SEARCH_ENDPOINT:-https://mock-search-endpoint.search.windows.net}" >> .env
@@ -428,7 +427,7 @@ jobs:
           echo "AZURE_STORAGE_CONTAINER_NAME=documents" >> .env
 
           # Build the Docker image with the environment file
-          docker build --build-arg DJANGO_SETTINGS_MODULE=konveyor.settings.testing -t konveyor-test:latest .
+          docker build --build-arg DJANGO_SETTINGS_MODULE=konveyor.settings.test -t konveyor-test:latest .
 
       - name: Run tests with coverage in Docker
         run: |
@@ -445,7 +444,7 @@ jobs:
             -v $(pwd)/tests/results:/app/test-output \
             -v $(pwd)/coverage:/app/coverage-output \
             konveyor-test:latest \
-            bash -c "cd /app && mkdir -p /app/tests/results && python -m pytest konveyor --cov=konveyor --cov-report=xml -v && cp -r /app/tests/results/* /app/test-output/ 2>/dev/null || true && cp coverage.xml /app/coverage-output/ 2>/dev/null || true"
+            bash -c "cd /app && mkdir -p /app/tests/results && python -m pytest konveyor --cov=konveyor --cov-report=xml --junitxml=/app/tests/results/results.xml -v; echo 'Pytest exit code: $?'; echo 'Listing /app/tests/results:'; ls -la /app/tests/results; cp -r /app/tests/results/* /app/test-output/ 2>/dev/null || true && cp coverage.xml /app/coverage-output/ 2>/dev/null || true"
 
       - name: Check coverage report
         run: |
@@ -460,3 +459,40 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           file: ./coverage/coverage.xml
+
+      # Upload test results as artifacts
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-unit-test
+          path: tests/results/**/*.xml
+          retention-days: 5
+
+# TODO: Uncomment the following steps and the deploy-report job to enable HTML reports on GitHub Pages.
+# TODO: Ensure your pytest command in the 'Run tests with coverage in Docker' step is updated to generate an HTML report,
+# TODO: e.g., by adding --html=coverage_report/index.html --self-contained-html
+# TODO: Uncomment deploy-report job to deploy reports to GitHub Pages
+
+
+#      - name: Upload Pages artifact (Coverage Report)
+#        if: always()
+#        uses: actions/upload-pages-artifact@v3
+#        with:
+#            path: 'coverage_report' # Assumes pytest-html outputs to coverage_report/index.html
+
+
+# deploy-report:
+#   needs: test-coverage
+#   if: always()
+#   runs-on: ubuntu-latest
+#   permissions:
+#     pages: write
+#     id-token: write
+#   environment:
+#     name: github-pages
+#     url: ${{ steps.deployment.outputs.page_url }}
+#   steps:
+#     - name: Deploy to GitHub Pages
+#       id: deployment
+#       uses: actions/deploy-pages@v4

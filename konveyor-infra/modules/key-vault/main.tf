@@ -20,4 +20,14 @@ resource "azurerm_key_vault_access_policy" "terraform" {
   secret_permissions = [
     "Get", "List", "Set", "Delete", "Purge"
   ]
+
+  # Add lifecycle block to prevent recreation issues
+  lifecycle {
+    create_before_destroy = true
+    # Use ignore_changes to prevent Terraform from trying to update the policy
+    ignore_changes = [
+      object_id,
+      application_id,
+    ]
+  }
 }

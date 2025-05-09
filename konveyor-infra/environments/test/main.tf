@@ -88,7 +88,7 @@ module "app_service" {
   app_settings = merge(
     {
       DJANGO_SECRET_KEY        = "${var.DJANGO_SECRET_KEY}" # Should be stored in Key Vault and referenced securely
-      DJANGO_SETTINGS_MODULE   = "konveyor.settings.testing"
+      DJANGO_SETTINGS_MODULE   = "konveyor.settings.test"
       DATABASE_URL             = "REPLACE_WITH_DB_URL" # Should be set to your Azure Database connection string
       AZURE_STORAGE_CONNECTION_STRING = module.storage.storage_connection_string
       AZURE_OPENAI_ENDPOINT    = module.openai.cognitive_account_endpoint
