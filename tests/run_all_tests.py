@@ -92,7 +92,7 @@ ENVIRONMENTS = {
     },
     "test": {
         "description": "Test environment",
-        "settings_module": "konveyor.settings.testing",
+        "settings_module": "konveyor.settings.test",
     },
     "prod": {
         "description": "Production environment",

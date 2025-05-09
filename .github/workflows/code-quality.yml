@@ -107,7 +107,7 @@ jobs:
     needs: resource-cleanup
 
     env:
-      DJANGO_SETTINGS_MODULE: konveyor.settings.testing
+      DJANGO_SETTINGS_MODULE: konveyor.settings.test
       PYTHONPATH: ${{ github.workspace }}
 
     steps:
@@ -409,7 +409,7 @@ jobs:
       - name: Build Docker image for testing
         run: |
           # Create a .env file with all necessary environment variables
-          echo "DJANGO_SETTINGS_MODULE=konveyor.settings.${{ github.event.inputs.environment || 'testing' }}" > .env
+          echo "DJANGO_SETTINGS_MODULE=konveyor.settings.${{ github.event.inputs.environment || 'test' }}" > .env
           echo "DJANGO_DEBUG=False" >> .env
           echo "DJANGO_SECRET_KEY=django-insecure-test-key-for-ci" >> .env
           echo "AZURE_SEARCH_ENDPOINT=${AZURE_SEARCH_ENDPOINT:-https://mock-search-endpoint.search.windows.net}" >> .env
@@ -427,7 +427,7 @@ jobs:
           echo "AZURE_STORAGE_CONTAINER_NAME=documents" >> .env
 
           # Build the Docker image with the environment file
-          docker build --build-arg DJANGO_SETTINGS_MODULE=konveyor.settings.testing -t konveyor-test:latest .
+          docker build --build-arg DJANGO_SETTINGS_MODULE=konveyor.settings.test -t konveyor-test:latest .
 
       - name: Run tests with coverage in Docker
         run: |
