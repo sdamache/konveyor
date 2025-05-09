@@ -176,42 +176,31 @@ jobs:
 
           # Cognitive Search
           SEARCH_NAME="konveyor-${{ env.ENVIRONMENT }}-search"
-          echo "Attempting to handle soft-deleted Cognitive Search service: $SEARCH_NAME"
+          echo "Checking Cognitive Search service: $SEARCH_NAME"
 
           # Note: Azure CLI doesn't have a direct command for purging search services
-          # We'll try a few different approaches
-
           # First, check if the search service exists
           echo "Checking if search service exists..."
           if timeout 30 az search service show --name $SEARCH_NAME --resource-group ${{ env.RESOURCE_GROUP }} > /dev/null 2>&1; then
             echo "Search service exists, no need to purge"
           else
-            echo "Search service doesn't exist, checking for soft-deleted instance..."
+            echo "Search service doesn't exist."
+            # We're intentionally not creating a probe service or checking for soft-deletion
+            # because we want to keep the test environment running without the search service
+            # to save costs. If a soft-deleted search service is causing issues, it can be
+            # manually purged using the Azure portal or CLI.
+            echo "Skipping soft-delete check for search service to avoid unintended creation."
 
-            # Try to create a new search service with the same name
-            # If it fails with a specific error, it might be soft-deleted
-            echo "Attempting to create a new search service to see if the name is available..."
-            CREATE_OUTPUT=$(timeout 30 az search service create --name $SEARCH_NAME --resource-group ${{ env.RESOURCE_GROUP }} --sku basic 2>&1 || true)
-
-            if echo "$CREATE_OUTPUT" | grep -q "FlagMustBeSetForRestore"; then
-              echo "Search service is soft-deleted. Attempting to use REST API to purge..."
-
-              # Get the Azure access token
-              ACCESS_TOKEN=$(timeout 30 az account get-access-token --query accessToken -o tsv)
-
-              # Try to purge using REST API
-              echo "Using REST API to purge the search service..."
-              timeout 30 curl -s -X POST \
-                -H "Authorization: Bearer $ACCESS_TOKEN" \
-                -H "Content-Type: application/json" \
-                "https://management.azure.com/subscriptions/$SUBSCRIPTION_ID/resourceGroups/${{ env.RESOURCE_GROUP }}/providers/Microsoft.Search/searchServices/$SEARCH_NAME/delete?api-version=2020-08-01" \
-                || echo "Failed to purge search service using REST API"
-
-              echo "Waiting 10 seconds for purge operation to complete..."
-              sleep 10
-            else
-              echo "Search service doesn't appear to be soft-deleted or couldn't be checked properly"
-            fi
+            # If there's a need to purge a soft-deleted search service, uncomment and use the following:
+            # Get the Azure access token
+            # ACCESS_TOKEN=$(timeout 30 az account get-access-token --query accessToken -o tsv)
+            # Try to purge using REST API
+            # echo "Using REST API to purge the search service..."
+            # timeout 30 curl -s -X POST \
+            #   -H "Authorization: Bearer $ACCESS_TOKEN" \
+            #   -H "Content-Type: application/json" \
+            #   "https://management.azure.com/subscriptions/$SUBSCRIPTION_ID/resourceGroups/${{ env.RESOURCE_GROUP }}/providers/Microsoft.Search/searchServices/$SEARCH_NAME/delete?api-version=2020-08-01" \
+            #   || echo "Failed to purge search service using REST API"
           fi
 
           # Key Vault
