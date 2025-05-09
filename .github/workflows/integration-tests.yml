@@ -161,9 +161,9 @@ jobs:
               TEST_TYPE="real"
               ENVIRONMENT="test"
             elif [[ "${{ github.base_ref }}" == "dev" ]]; then
-              # PR to dev - use mock tests in dev env
-              TEST_TYPE="mock"
-              ENVIRONMENT="dev"
+              # PR to dev - use REAL tests in TEST env
+              TEST_TYPE="real"
+              ENVIRONMENT="test"
             fi
           elif [[ "${{ github.event_name }}" == "push" ]]; then
             if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
@@ -171,9 +171,9 @@ jobs:
               TEST_TYPE="real"
               ENVIRONMENT="test"
             elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
-              # Push to dev - use mock tests in dev env
-              TEST_TYPE="mock"
-              ENVIRONMENT="dev"
+              # Push to dev - use REAL tests in TEST env
+              TEST_TYPE="real"
+              ENVIRONMENT="test"
             fi
           fi
 
@@ -289,44 +289,54 @@ jobs:
       - name: Determine test parameters
         id: test-params
         run: |
-          # Determine environment and test type from inputs
+          # Use environment variables set by the 'Set default parameters' step
+          # These are available as env.VAR_NAME in shell scripts
+          CURRENT_TEST_TYPE="${{ env.TEST_TYPE }}"
+          CURRENT_ENVIRONMENT="${{ env.ENVIRONMENT }}"
+          CURRENT_TEST_CATEGORY="${{ env.TEST_CATEGORY }}"
+          CURRENT_FAST_TRACK="${{ env.FAST_TRACK }}"
+
+          # Override with workflow_dispatch or workflow_call inputs if they were the trigger
           if [[ "${{ github.event_name }}" == "workflow_dispatch" || "${{ github.event_name }}" == "workflow_call" ]]; then
-            # Use inputs for workflow_dispatch or workflow_call
-            TEST_TYPE="${{ inputs.test_type || github.event.inputs.test_type || 'real' }}"
-            ENVIRONMENT="${{ inputs.environment || github.event.inputs.environment || 'test' }}"
-            TEST_CATEGORY="${{ inputs.test_category || github.event.inputs.test_category || 'all' }}"
-            FAST_TRACK="${{ format('{0}', inputs.fast_track || github.event.inputs.fast_track || 'false') }}"
-          else
-            # Default for push/PR events
-            TEST_TYPE="real"
-            ENVIRONMENT="test"
-            TEST_CATEGORY="all"
-            FAST_TRACK="false"
+            # For explicit calls, inputs take precedence over branch-derived defaults
+            CURRENT_TEST_TYPE="${{ inputs.test_type || github.event.inputs.test_type || env.TEST_TYPE }}"
+            CURRENT_ENVIRONMENT="${{ inputs.environment || github.event.inputs.environment || env.ENVIRONMENT }}"
+            CURRENT_TEST_CATEGORY="${{ inputs.test_category || github.event.inputs.test_category || env.TEST_CATEGORY }}"
+            CURRENT_FAST_TRACK="${{ format('{0}', inputs.fast_track || github.event.inputs.fast_track || env.FAST_TRACK) }}"
           fi
 
           # Set command-line arguments for the test runner
-          ARGS="--category ${TEST_CATEGORY} --env ${ENVIRONMENT}"
+          ARGS="--category ${CURRENT_TEST_CATEGORY} --env ${CURRENT_ENVIRONMENT}"
 
-          if [[ "${TEST_TYPE}" == "mock" ]]; then
+          if [[ "${CURRENT_TEST_TYPE}" == "mock" ]]; then
             ARGS="${ARGS} --mock"
-          elif [[ "${TEST_TYPE}" == "real" ]]; then
+          elif [[ "${CURRENT_TEST_TYPE}" == "real" ]]; then
             ARGS="${ARGS} --real"
-          else
+          elif [[ "${CURRENT_TEST_TYPE}" == "both" ]]; then
             # Both mock and real
             ARGS="${ARGS} --mock --real"
           fi
 
-          if [[ "${FAST_TRACK}" == "true" ]]; then
+          if [[ "${CURRENT_FAST_TRACK}" == "true" ]]; then
             # For fast track, only run critical tests
-            if [[ "${TEST_CATEGORY}" == "all" ]]; then
-              # Override category to unit for fast track
-              ARGS="--category unit --env ${ENVIRONMENT} --real"
+            if [[ "${CURRENT_TEST_CATEGORY}" == "all" ]]; then
+              # Override category to unit for fast track, but keep environment and real/mock status
+              ARGS="--category unit --env ${CURRENT_ENVIRONMENT}"
+              if [[ "${CURRENT_TEST_TYPE}" == "mock" ]]; then
+                ARGS="${ARGS} --mock"
+              elif [[ "${CURRENT_TEST_TYPE}" == "real" ]]; then
+                ARGS="${ARGS} --real"
+              elif [[ "${CURRENT_TEST_TYPE}" == "both" ]];then
+                ARGS="${ARGS} --mock --real"
+              fi
             fi
           fi
 
           echo "args=${ARGS}" >> $GITHUB_OUTPUT
-          echo "env=${ENVIRONMENT}" >> $GITHUB_OUTPUT
-          echo "Test parameters: ${ARGS}"
+          # Output the environment that will actually be used by tests for clarity
+          echo "env=${CURRENT_ENVIRONMENT}" >> $GITHUB_OUTPUT
+          echo "Test parameters for runner: ${ARGS}"
+          echo "Test environment for runner: ${CURRENT_ENVIRONMENT}"
 
       # Set up environment variables from GitHub secrets/variables based on environment
       - name: Set up environment variables
