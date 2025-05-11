@@ -26,13 +26,11 @@ resource "azurerm_linux_web_app" "this" {
 
   app_settings = merge(
     {
-      WEBSITES_ENABLE_APP_SERVICE_STORAGE = "false"
-      WEBSITES_PORT                      = "8000"
-      DJANGO_SETTINGS_MODULE             = "konveyor.settings.production"
       DOCKER_CUSTOM_IMAGE_NAME           = "${var.docker_image_name}:${var.docker_image_tag}"
       DOCKER_REGISTRY_SERVER_URL         = var.docker_registry_url
       DOCKER_REGISTRY_SERVER_USERNAME    = var.docker_registry_username
       DOCKER_REGISTRY_SERVER_PASSWORD    = var.docker_registry_password
+      DOCKER_ENABLE_CI                   = "true"
     },
     var.app_settings
   )
