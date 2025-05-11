@@ -59,6 +59,15 @@ jobs:
         with:
           ref: ${{ inputs.ref || github.event.inputs.ref || github.ref }}
 
+      - name: Debug Ref Information
+        run: |
+          echo "github.ref: ${{ github.ref }}"
+          echo "github.ref_name: ${{ github.ref_name }}"
+          echo "github.ref_type: ${{ github.ref_type }}"
+          echo "inputs.ref: ${{ inputs.ref }}"
+          echo "github.event.inputs.ref: ${{ github.event.inputs.ref }}"
+          echo "github.event_name: ${{ github.event_name }}"
+
       - name: Log in to GitHub Container Registry (GHCR)
         uses: docker/login-action@v3
         with:
@@ -69,22 +78,33 @@ jobs:
       - name: Set Image Tag
         id: set_tag
         run: |
+          # Determine the image tag based on the context
           if [ "${{ github.ref_type }}" == "tag" ]; then
-            echo "image_tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+            IMAGE_TAG="${{ github.ref_name }}"
           elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            echo "image_tag=${{ github.event.inputs.ref }}" >> $GITHUB_OUTPUT
+            IMAGE_TAG="${{ github.event.inputs.ref }}"
           elif [ "${{ github.event_name }}" == "workflow_call" ]; then
-            echo "image_tag=${{ inputs.ref || 'latest' }}" >> $GITHUB_OUTPUT
+            IMAGE_TAG="${{ inputs.ref || 'latest' }}"
           else
-            echo "image_tag=latest" >> $GITHUB_OUTPUT
+            IMAGE_TAG="latest"
           fi
-          echo "Using image_tag: ${{ steps.set_tag.outputs.image_tag }}"
-          echo "IMAGE_TAG=${{ steps.set_tag.outputs.image_tag }}" >> $GITHUB_ENV
+
+          # Make sure we have a valid tag
+          if [ -z "$IMAGE_TAG" ]; then
+            IMAGE_TAG="latest"
+          fi
+
+          # Set outputs
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          echo "Using image_tag: $IMAGE_TAG"
 
       - name: Build Docker image
         run: |
-          docker build -t ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }} .
+          echo "Building image with tag: ${{ env.IMAGE_TAG }}"
+          docker build -t "ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }}" .
 
       - name: Push Docker image to GHCR
         run: |
-          docker push ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }}
+          echo "Pushing image with tag: ${{ env.IMAGE_TAG }}"
+          docker push "ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }}"
