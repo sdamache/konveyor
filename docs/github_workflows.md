@@ -23,7 +23,7 @@ graph TD
         pipeline[complete-pipeline.yml] --> |calls| branch[commit-conventions.yml]
         branch --> |if success/skipped| quality[code-quality.yml]
         quality --> |if success/skipped| tests[integration-tests.yml]
-        tests --> |if tests pass| deploy[deploy-app.yml]
+        tests --> |if tests pass| deploy[build-image.yml]
         tests --> |if tests pass| infra[infra-deploy.yml]
     end
 
@@ -37,7 +37,7 @@ graph TD
         tests_ind --> |workflow_dispatch| test_options[Test Options]
         test_options --> run_tests
 
-        deploy_ind[deploy-app.yml] --> |workflow_dispatch| build[Build Docker Image]
+        deploy_ind[build-image.yml] --> |workflow_dispatch| build[Build Docker Image]
         build --> push[Push to GHCR]
         push --> deploy_app[Deploy to Azure App Service]
 
@@ -67,7 +67,7 @@ In the workflow structure:
    - Tests can be run in different environments (dev, test, prod)
    - Tests can be run with mock or real services
    - Different test categories can be selected (unit, integration, real, search, document, slack)
-4. **Deployment** (`deploy-app.yml`) only proceeds after integration tests pass.
+4. **Deployment** (`build-image.yml`) only proceeds after integration tests pass.
    - Deploys to the specified environment (dev, test, prod)
    - Uses environment-specific resource names
 5. **Infrastructure** (`infra-test.yml`) can run independently but should be completed before app deployment.
@@ -150,7 +150,7 @@ graph TD
     A[complete-pipeline.yml] --> B[commit-conventions.yml]
     A --> C[code-quality.yml]
     A --> D[integration-tests.yml]
-    A --> E[deploy-app.yml]
+    A --> E[build-image.yml]
     A --> F[infra-deploy.yml]
 
     classDef workflow fill:#f9f,stroke:#333,stroke-width:2px;
@@ -206,7 +206,7 @@ Runs integration tests, potentially with real Azure services.
 - `actions: read` - Required for workflow calls
 - `packages: read` - Required for pulling Docker images from GHCR
 
-#### 5. deploy-app.yml (Application Deployment)
+#### 5. build-image.yml (Application Deployment)
 
 Deploys the application to Azure App Service.
 
@@ -236,12 +236,12 @@ This section breaks down which specific actions in each workflow require which p
 
 #### Azure Login (azure/login@v2.1.0)
 - **Required Permission:** `id-token: write`
-- **Used in:** code-quality.yml, integration-tests.yml, deploy-app.yml, infra-deploy.yml
+- **Used in:** code-quality.yml, integration-tests.yml, build-image.yml, infra-deploy.yml
 - **Purpose:** To authenticate with Azure using OIDC
 
 #### Docker Login to GHCR (docker/login-action@v3)
 - **Required Permission:** `packages: read` (for pulling), `packages: write` (for pushing)
-- **Used in:** deploy-app.yml
+- **Used in:** build-image.yml
 - **Purpose:** To authenticate with GitHub Container Registry
 
 #### GitHub Variables/Secrets Creation
@@ -263,7 +263,7 @@ graph TD
     A[complete-pipeline.yml] --> B[commit-conventions.yml]
     A --> C[code-quality.yml]
     A --> D[integration-tests.yml]
-    A --> E[deploy-app.yml]
+    A --> E[build-image.yml]
     A --> F[infra-deploy.yml]
 
     B --> G[contents: read]
@@ -328,7 +328,7 @@ permissions:
   packages: read    # Required for pulling from GHCR
 ```
 
-#### deploy-app.yml
+#### build-image.yml
 ```yaml
 permissions:
   contents: read    # Required for checkout
