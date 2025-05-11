@@ -114,7 +114,6 @@ module "app_service" {
       # App Service settings
       WEBSITES_ENABLE_APP_SERVICE_STORAGE = "true"
       WEBSITES_PORT            = "8000"
-      WEBSITE_HTTPLOGGING_RETENTION_DAYS = "3"
       WEBSITES_CONTAINER_START_TIME_LIMIT = "600"
 
       # Docker settings
