@@ -176,7 +176,7 @@ jobs:
         with:
           name: AZURE_OPENAI_API_KEY_${{ inputs.environment || github.event.inputs.environment || 'TEST' }}
           value: ${{ env.AZURE_OPENAI_API_KEY }}
-          pa_token: ${{ secrets.GH_PAT }}
+          pa_token: ${{ secrets.GHCR_PAT }}
 
       - name: Save Document Intelligence API Key
         uses: gliech/create-github-secret-action@v1
