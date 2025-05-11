@@ -32,6 +32,11 @@ on:
         required: false
         default: 'test'
         type: string
+      image_tag:
+        description: 'Docker image tag to use'
+        required: false
+        default: 'latest'
+        type: string
     secrets:
       AZURE_CREDENTIALS:
         description: 'Azure credentials for authentication'
@@ -121,6 +126,7 @@ jobs:
           DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY || 'django-insecure-test-key-for-ci' }}"
           github_repository="${{ github.repository }}"
           docker_registry_username="${{ github.actor }}"
+          docker_image_tag="${{ inputs.image_tag || 'latest' }}"
           EOF
 
           # Debug: Confirm the file was created (without showing contents)

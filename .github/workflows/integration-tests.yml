@@ -82,6 +82,11 @@ on:
         required: false
         default: 'auto'
         type: string
+      image_tag:
+        description: 'Docker image tag to use'
+        required: false
+        default: 'latest'
+        type: string
     secrets:
       AZURE_CREDENTIALS:
         description: 'Azure credentials for authentication'
