@@ -45,7 +45,7 @@ on:
         description: 'Run only critical tests for quick deployment'
         required: false
         default: 'false'
-        type: boolean
+        type: string
       deploy_infrastructure:
         description: 'Whether to deploy infrastructure'
         required: false
@@ -76,7 +76,7 @@ on:
         description: 'Run only critical tests for quick deployment'
         required: false
         default: 'false'
-        type: boolean
+        type: string
       deploy_infrastructure:
         description: 'Whether to deploy infrastructure'
         required: false
@@ -197,6 +197,7 @@ jobs:
             TEST_CATEGORY="${{ inputs.test_category }}"
           fi
 
+          # Handle fast_track as a string
           if [[ "${{ github.event.inputs.fast_track }}" == "true" || "${{ inputs.fast_track }}" == "true" ]]; then
             FAST_TRACK="true"
           fi
@@ -303,7 +304,8 @@ jobs:
             CURRENT_TEST_TYPE="${{ inputs.test_type || github.event.inputs.test_type || env.TEST_TYPE }}"
             CURRENT_ENVIRONMENT="${{ inputs.environment || github.event.inputs.environment || env.ENVIRONMENT }}"
             CURRENT_TEST_CATEGORY="${{ inputs.test_category || github.event.inputs.test_category || env.TEST_CATEGORY }}"
-            CURRENT_FAST_TRACK="${{ format('{0}', inputs.fast_track || github.event.inputs.fast_track || env.FAST_TRACK) }}"
+            # Handle fast_track as a string
+            CURRENT_FAST_TRACK="${{ inputs.fast_track || github.event.inputs.fast_track || env.FAST_TRACK }}"
           fi
 
           # Set command-line arguments for the test runner

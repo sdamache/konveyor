@@ -54,7 +54,7 @@ on:
         description: 'Run only critical tests for quick deployment'
         required: false
         default: 'false'
-        type: boolean
+        type: string
       ref:
         description: 'The branch, tag or SHA to deploy (e.g., main, v1.0.0)'
         required: false
