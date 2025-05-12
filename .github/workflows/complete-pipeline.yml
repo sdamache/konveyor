@@ -101,7 +101,7 @@ jobs:
       test_type: ${{ github.event.inputs.test_type || 'mock' }}
       environment: ${{ github.event.inputs.environment || 'dev' }}
       test_category: ${{ github.event.inputs.test_category || 'all' }}
-      fast_track: ${{ github.event.inputs.fast_track || false }}
+      fast_track: ${{ github.event.inputs.fast_track || 'false' }}
       image_tag: ${{ needs.build-image.outputs.image_tag }}
     secrets:
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}

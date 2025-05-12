@@ -44,7 +44,7 @@ on:
       fast_track:
         description: 'Run only critical tests for quick deployment'
         required: false
-        default: false
+        default: 'false'
         type: boolean
       deploy_infrastructure:
         description: 'Whether to deploy infrastructure'
@@ -75,7 +75,7 @@ on:
       fast_track:
         description: 'Run only critical tests for quick deployment'
         required: false
-        default: false
+        default: 'false'
         type: boolean
       deploy_infrastructure:
         description: 'Whether to deploy infrastructure'
