@@ -53,7 +53,7 @@ on:
       fast_track:
         description: 'Run only critical tests for quick deployment'
         required: false
-        default: false
+        default: 'false'
         type: boolean
       ref:
         description: 'The branch, tag or SHA to deploy (e.g., main, v1.0.0)'
