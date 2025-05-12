@@ -17,7 +17,7 @@ on:
       deploy:
         description: 'Deploy to Azure after tests'
         required: false
-        default: false
+        default: 'false'
         type: boolean
       test_type:
         description: 'Type of tests to run'
