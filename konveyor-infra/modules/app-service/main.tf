@@ -30,7 +30,7 @@ resource "azurerm_linux_web_app" "this" {
       DOCKER_REGISTRY_SERVER_URL         = var.docker_registry_url
       DOCKER_REGISTRY_SERVER_USERNAME    = var.docker_registry_username
       DOCKER_REGISTRY_SERVER_PASSWORD    = var.docker_registry_password
-      DOCKER_ENABLE_CI                   = "true"
+      DOCKER_ENABLE_CI                   = "false"
     },
     var.app_settings
   )

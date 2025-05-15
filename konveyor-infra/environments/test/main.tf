@@ -117,7 +117,7 @@ module "app_service" {
       WEBSITES_CONTAINER_START_TIME_LIMIT = "600"
 
       # Docker settings
-      DOCKER_ENABLE_CI         = "true"
+      DOCKER_ENABLE_CI         = "false"
     },
     # Conditionally add search service settings if deployed
     var.deploy_search_service ? {

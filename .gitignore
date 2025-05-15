@@ -84,11 +84,6 @@ terraform.tfstate.backup
 # Terraform variables
 variables.tfvars
 
-# Terraform output
-output.tf
-
-# Terraform modules
-modules/
 
 
 # Cursor
