@@ -87,15 +87,37 @@ module "app_service" {
 
   app_settings = merge(
     {
-      DJANGO_SECRET_KEY        = "${var.DJANGO_SECRET_KEY}" # Should be stored in Key Vault and referenced securely
-      DJANGO_SETTINGS_MODULE   = "konveyor.settings.test"
-      DATABASE_URL             = "REPLACE_WITH_DB_URL" # Should be set to your Azure Database connection string
+      # Django settings
+      DJANGO_SECRET_KEY        = var.DJANGO_SECRET_KEY
+      DJANGO_SETTINGS_MODULE   = var.django_settings_module
+      DATABASE_URL             = var.database_url
+
+      # Azure Storage
       AZURE_STORAGE_CONNECTION_STRING = module.storage.storage_connection_string
-      AZURE_OPENAI_ENDPOINT    = module.openai.cognitive_account_endpoint
-      AZURE_OPENAI_KEY         = module.openai.cognitive_account_primary_key
+
+      # Azure OpenAI settings
+      AZURE_OPENAI_ENDPOINT    = var.AZURE_OPENAI_ENDPOINT != "https://example.openai.azure.com" ? var.AZURE_OPENAI_ENDPOINT : module.openai.cognitive_account_endpoint
+      AZURE_OPENAI_KEY         = var.AZURE_OPENAI_API_KEY != "dummy-key" ? var.AZURE_OPENAI_API_KEY : module.openai.cognitive_account_primary_key
+      AZURE_OPENAI_API_KEY     = var.AZURE_OPENAI_API_KEY != "dummy-key" ? var.AZURE_OPENAI_API_KEY : module.openai.cognitive_account_primary_key
+      AZURE_OPENAI_API_VERSION = var.openai_api_version
+      AZURE_OPENAI_CHAT_DEPLOYMENT = var.openai_chat_deployment
+      AZURE_OPENAI_EMBEDDING_DEPLOYMENT = var.openai_embedding_deployment
+      SKIP_AZURE_OPENAI_VALIDATION = tostring(var.skip_openai_validation)
+
+      # Azure Document Intelligence
       DOCUMENT_INTELLIGENCE_ENDPOINT = module.document_intelligence.endpoint
       DOCUMENT_INTELLIGENCE_KEY      = module.document_intelligence.primary_key
-      # Add any other required Django or Azure settings here
+
+      # Azure Search
+      AZURE_SEARCH_INDEX_NAME  = var.search_index_name
+
+      # App Service settings
+      WEBSITES_ENABLE_APP_SERVICE_STORAGE = "true"
+      WEBSITES_PORT            = "8000"
+      WEBSITES_CONTAINER_START_TIME_LIMIT = "600"
+
+      # Docker settings
+      DOCKER_ENABLE_CI         = "false"
     },
     # Conditionally add search service settings if deployed
     var.deploy_search_service ? {

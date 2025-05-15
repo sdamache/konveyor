@@ -100,7 +100,7 @@ graph TD
         pipeline[complete-pipeline.yml] --> |calls| branch[commit-conventions.yml]
         branch --> |if success/skipped| quality[code-quality.yml]
         quality --> |if success/skipped| tests[integration-tests.yml]
-        tests --> |if tests pass| deploy[deploy-app.yml]
+        tests --> |if tests pass| deploy[build-image.yml]
         tests --> |if tests pass| infra[infra-test.yml]
     end
 
@@ -114,7 +114,7 @@ graph TD
         tests_ind --> |workflow_dispatch| test_options[Test Options]
         test_options --> run_tests
 
-        deploy_ind[deploy-app.yml] --> |Tag/Manual| build[Build Docker Image]
+        deploy_ind[build-image.yml] --> |Tag/Manual| build[Build Docker Image]
         build --> push[Push to GHCR]
         push --> deploy_app[Deploy to Azure App Service]
 
@@ -183,7 +183,7 @@ graph TD
         pipeline[complete-pipeline.yml] --> |calls| branch[commit-conventions.yml]
         branch --> |if success/skipped| quality[code-quality.yml]
         quality --> |if success/skipped| tests[integration-tests.yml]
-        tests --> |if tests pass| deploy[deploy-app.yml]
+        tests --> |if tests pass| deploy[build-image.yml]
         tests --> |if tests pass| infra[infra-test.yml]
     end
 
@@ -197,7 +197,7 @@ graph TD
         tests_ind --> |workflow_dispatch| test_options[Test Options]
         test_options --> run_tests
 
-        deploy_ind[deploy-app.yml] --> |Tag/Manual| build[Build Docker Image]
+        deploy_ind[build-image.yml] --> |Tag/Manual| build[Build Docker Image]
         build --> push[Push to GHCR]
         push --> deploy_app[Deploy to Azure App Service]
 

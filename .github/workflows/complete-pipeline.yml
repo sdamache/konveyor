@@ -10,6 +10,8 @@ on:
     branches: [ main, dev ]
   push:
     branches: [ main, dev ]
+    tags:
+      - 'v*.*.*'  # Trigger on any tag that matches the pattern v*.*.* (e.g., v1.0.0, v1.2.3)
   workflow_dispatch:
     inputs:
       deploy:
@@ -51,65 +53,65 @@ on:
       fast_track:
         description: 'Run only critical tests for quick deployment'
         required: false
-        default: false
-        type: boolean
+        default: 'false'
+        type: string
       ref:
         description: 'The branch, tag or SHA to deploy (e.g., main, v1.0.0)'
         required: false
         type: string
 
 jobs:
-  # Step 1: Check branch naming conventions
+  # Step 1: Build and push Docker image
+  build-image:
+    name: "Build and Push Docker Image"
+    uses: ./.github/workflows/build-image.yml
+    with:
+      ref: ${{ github.event.inputs.ref || github.ref }}
+      environment: ${{ github.event.inputs.environment || 'test' }}
+    secrets:
+      GHCR_PAT: ${{ secrets.GHCR_PAT }}
+
+  # Step 2: Check branch naming conventions
   branch-naming:
     name: "Validate Branch Naming"
+    needs: [build-image]
     if: github.event_name == 'pull_request'
     uses: ./.github/workflows/commit-conventions.yml
 
-  # Step 2: Run code quality checks
+  # Step 3: Run code quality checks
   code-quality:
     name: "Code Quality Checks"
-    needs: [branch-naming]
+    needs: [branch-naming, build-image]
     if: always() && (needs.branch-naming.result == 'success' || needs.branch-naming.result == 'skipped')
     uses: ./.github/workflows/code-quality.yml
     with:
       test_type: ${{ github.event.inputs.test_type || 'mock' }}
       environment: ${{ github.event.inputs.environment || 'test' }}
+      image_tag: ${{ needs.build-image.outputs.image_tag }}
     secrets:
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
 
-  # Step 3: Run integration tests
+  # Step 4: Run integration tests
   integration-tests:
     name: "Integration Tests"
-    needs: [code-quality]
+    needs: [code-quality, build-image]
     if: always() && (needs.code-quality.result == 'success' || needs.code-quality.result == 'skipped')
     uses: ./.github/workflows/integration-tests.yml
     with:
       test_type: ${{ github.event.inputs.test_type || 'mock' }}
       environment: ${{ github.event.inputs.environment || 'dev' }}
       test_category: ${{ github.event.inputs.test_category || 'all' }}
-      fast_track: ${{ github.event.inputs.fast_track || false }}
+      fast_track: ${{ github.event.inputs.fast_track || 'false' }}
+      image_tag: ${{ needs.build-image.outputs.image_tag }}
     secrets:
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
 
-  # Step 4: Deploy to Azure App Service (if requested or on tag)
-  deploy:
-    name: "Deploy Application to Azure"
-    needs: [integration-tests]
-    if: |
-      always() &&
-      needs.integration-tests.outputs.success == 'true' &&
-      (github.event.inputs.deploy == 'true' || github.ref_type == 'tag' || startsWith(github.ref, 'refs/tags/v'))
-    uses: ./.github/workflows/deploy-app.yml
-    with:
-      ref: ${{ github.event.inputs.ref || github.ref }}
-      environment: ${{ github.event.inputs.environment || 'test' }}
-    secrets:
-      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+
 
   # Step 5: Deploy infrastructure (if needed)
   deploy-infra:
     name: "Deploy Infrastructure"
-    needs: [integration-tests]
+    needs: [integration-tests, build-image]
     if: |
       always() &&
       needs.integration-tests.outputs.success == 'true' &&
@@ -118,5 +120,8 @@ jobs:
     with:
       ref: ${{ github.event.inputs.ref || github.ref }}
       environment: ${{ github.event.inputs.environment || 'test' }}
+      image_tag: ${{ needs.build-image.outputs.image_tag }}
     secrets:
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+      GHCR_PAT: ${{ secrets.GHCR_PAT }}
+      DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}

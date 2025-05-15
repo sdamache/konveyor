@@ -1,4 +1,3 @@
-.terraform
 Instructions/*
 
 # Python
@@ -73,3 +72,19 @@ tasks/
 # Utility scripts
 fix_*.py
 tests/results/
+
+# Terraform
+.terraform
+.terraform.lock.hcl
+
+# Terraform state
+terraform.tfstate
+terraform.tfstate.backup
+
+# Terraform variables
+variables.tfvars
+
+
+
+# Cursor
+.cursorignore

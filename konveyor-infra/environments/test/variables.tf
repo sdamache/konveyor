@@ -150,3 +150,58 @@ variable "deploy_search_service" {
   type        = bool
   default     = false
 }
+
+variable "openai_api_version" {
+  description = "API version for Azure OpenAI"
+  type        = string
+  default     = "2025-01-01-preview"
+}
+
+variable "openai_chat_deployment" {
+  description = "Deployment name for Azure OpenAI chat model"
+  type        = string
+  default     = "gpt-deployment"
+}
+
+variable "openai_embedding_deployment" {
+  description = "Deployment name for Azure OpenAI embeddings model"
+  type        = string
+  default     = "embeddings"
+}
+
+variable "search_index_name" {
+  description = "Name of the Azure Cognitive Search index"
+  type        = string
+  default     = "konveyor-documents"
+}
+
+variable "skip_openai_validation" {
+  description = "Whether to skip validation of Azure OpenAI settings"
+  type        = bool
+  default     = true
+}
+
+variable "django_settings_module" {
+  description = "Django settings module to use in the test environment"
+  type        = string
+  default     = "konveyor.settings.test"
+}
+
+variable "database_url" {
+  description = "Database URL for the test environment"
+  type        = string
+  default     = "sqlite:///home/site/wwwroot/db.sqlite3"
+}
+
+variable "AZURE_OPENAI_API_KEY" {
+  description = "API key for Azure OpenAI"
+  type        = string
+  default     = "dummy-key"
+  sensitive   = true
+}
+
+variable "AZURE_OPENAI_ENDPOINT" {
+  description = "Endpoint URL for Azure OpenAI"
+  type        = string
+  default     = "https://example.openai.azure.com"
+}

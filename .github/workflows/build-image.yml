@@ -1,0 +1,110 @@
+name: "Build and Push Docker Image"
+
+permissions:
+  contents: read   # Required for checkout
+  id-token: write  # Required for Azure login
+  packages: write  # Required for pushing to GHCR
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'The branch, tag or SHA to deploy (e.g., main, v1.0.0)'
+        required: true
+        type: string
+      environment:
+        description: 'Environment to deploy to (dev, test, prod)'
+        required: false
+        default: 'test'
+        type: choice
+        options:
+          - dev
+          - test
+          - prod
+  workflow_call:
+    inputs:
+      ref:
+        description: 'The branch, tag or SHA to deploy (e.g., main, v1.0.0)'
+        required: false
+        type: string
+      environment:
+        description: 'Environment to deploy to (dev, test, prod)'
+        required: false
+        default: 'test'
+        type: string
+    secrets:
+      GHCR_PAT:
+        description: 'GitHub Container Registry Personal Access Token'
+        required: true
+    outputs:
+      image_tag:
+        description: "The Docker image tag that was built"
+        value: ${{ jobs.build.outputs.image_tag }}
+
+env:
+  # Default image tag if not set elsewhere
+  IMAGE_TAG: latest
+
+jobs:
+  build:
+    name: "Build and Push Docker Image"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      image_tag: ${{ steps.set_tag.outputs.image_tag }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.event.inputs.ref || github.ref }}
+
+      - name: Debug Ref Information
+        run: |
+          echo "github.ref: ${{ github.ref }}"
+          echo "github.ref_name: ${{ github.ref_name }}"
+          echo "github.ref_type: ${{ github.ref_type }}"
+          echo "inputs.ref: ${{ inputs.ref }}"
+          echo "github.event.inputs.ref: ${{ github.event.inputs.ref }}"
+          echo "github.event_name: ${{ github.event_name }}"
+
+      - name: Log in to GitHub Container Registry (GHCR)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_PAT }}
+
+      - name: Set Image Tag
+        id: set_tag
+        run: |
+          # Determine the image tag based on the context
+          if [ "${{ github.ref_type }}" == "tag" ]; then
+            IMAGE_TAG="${{ github.ref_name }}"
+          elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            IMAGE_TAG="${{ github.event.inputs.ref }}"
+          elif [ "${{ github.event_name }}" == "workflow_call" ]; then
+            IMAGE_TAG="${{ inputs.ref || 'latest' }}"
+          else
+            IMAGE_TAG="latest"
+          fi
+
+          # Make sure we have a valid tag
+          if [ -z "$IMAGE_TAG" ]; then
+            IMAGE_TAG="latest"
+          fi
+
+          # Set outputs
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          echo "Using image_tag: $IMAGE_TAG"
+
+      - name: Build Docker image
+        run: |
+          echo "Building image with tag: ${{ env.IMAGE_TAG }}"
+          docker build -t "ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }}" .
+
+      - name: Push Docker image to GHCR
+        run: |
+          echo "Pushing image with tag: ${{ env.IMAGE_TAG }}"
+          docker push "ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }}"

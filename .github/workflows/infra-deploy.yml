@@ -32,9 +32,20 @@ on:
         required: false
         default: 'test'
         type: string
+      image_tag:
+        description: 'Docker image tag to use'
+        required: false
+        default: 'latest'
+        type: string
     secrets:
       AZURE_CREDENTIALS:
         description: 'Azure credentials for authentication'
+        required: false
+      GHCR_PAT:
+        description: 'GitHub Personal Access Token for GHCR and creating secrets'
+        required: true
+      DJANGO_SECRET_KEY:
+        description: 'Django secret key'
         required: false
 
 env:
@@ -69,15 +80,20 @@ jobs:
       app_service_name: ${{ steps.terraform-outputs.outputs.app_service_name }}
       app_service_hostname: ${{ steps.terraform-outputs.outputs.app_service_default_site_hostname }}
 
-    defaults:
-      run:
-        working-directory: Konveyor-infra/environments/${{ inputs.environment || github.event.inputs.environment || 'test' }}
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref || github.event.inputs.ref || github.ref }}
+
+      - name: List files in workspace root
+        run: ls -R $GITHUB_WORKSPACE
+        shell: bash
+
+      - name: List files in intended working directory
+        run: ls -R Konveyor-infra/environments/${{ inputs.environment || github.event.inputs.environment || 'test' }}
+        shell: bash
+        continue-on-error: true # Allow this to fail if the path is indeed wrong
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
@@ -92,6 +108,7 @@ jobs:
       # Note: Resource cleanup is handled by the resource-cleanup job
 
       - name: Terraform Init
+        working-directory: Konveyor-infra/environments/${{ inputs.environment || github.event.inputs.environment || 'test' }}
         run: |
           # Initialize Terraform with remote backend for state persistence
           terraform init \
@@ -102,9 +119,11 @@ jobs:
             -input=false
 
       - name: Select Terraform Workspace
+        working-directory: Konveyor-infra/environments/${{ inputs.environment || github.event.inputs.environment || 'test' }}
         run: terraform workspace select integration-test || terraform workspace new integration-test
 
       - name: Create Terraform Variables
+        working-directory: Konveyor-infra/environments/${{ inputs.environment || github.event.inputs.environment || 'test' }}
         run: |
           # Create terraform.tfvars file securely using GitHub Secrets
           # This approach prevents secrets from being exposed in logs
@@ -121,22 +140,27 @@ jobs:
           DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY || 'django-insecure-test-key-for-ci' }}"
           github_repository="${{ github.repository }}"
           docker_registry_username="${{ github.actor }}"
+          docker_image_tag="${{ inputs.image_tag || 'latest' }}"
           EOF
 
           # Debug: Confirm the file was created (without showing contents)
           echo "terraform.tfvars file created successfully"
 
       - name: Terraform Validate
+        working-directory: Konveyor-infra/environments/${{ inputs.environment || github.event.inputs.environment || 'test' }}
         run: terraform validate
 
       - name: Terraform Plan
+        working-directory: Konveyor-infra/environments/${{ inputs.environment || github.event.inputs.environment || 'test' }}
         run: terraform plan -var-file=terraform.tfvars -out=tfplan
 
       - name: Terraform Apply
+        working-directory: Konveyor-infra/environments/${{ inputs.environment || github.event.inputs.environment || 'test' }}
         run: timeout 15m terraform apply -auto-approve tfplan
 
       - name: Extract Terraform Outputs
         id: terraform-outputs
+        working-directory: Konveyor-infra/environments/${{ inputs.environment || github.event.inputs.environment || 'test' }}
         run: |
           # Extract non-sensitive outputs
           echo "cognitive_search_endpoint=$(terraform output -raw cognitive_search_endpoint)" >> $GITHUB_OUTPUT
@@ -157,14 +181,14 @@ jobs:
         with:
           name: AZURE_SEARCH_API_KEY_${{ inputs.environment || github.event.inputs.environment || 'TEST' }}
           value: ${{ env.AZURE_SEARCH_API_KEY }}
-          pa_token: ${{ secrets.GH_PAT }}
+          pa_token: ${{ secrets.GHCR_PAT }}
 
       - name: Save OpenAI API Key
         uses: gliech/create-github-secret-action@v1
         with:
           name: AZURE_OPENAI_API_KEY_${{ inputs.environment || github.event.inputs.environment || 'TEST' }}
           value: ${{ env.AZURE_OPENAI_API_KEY }}
-          pa_token: ${{ secrets.GH_PAT }}
+          pa_token: ${{ secrets.GHCR_PAT }}
 
       - name: Save Document Intelligence API Key
         uses: gliech/create-github-secret-action@v1

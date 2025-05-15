@@ -84,45 +84,46 @@ jobs:
           ACTIVE_RESOURCE=$(az cognitiveservices account list --query "[?name=='$DOCINT_NAME' && resourceGroup=='${{ env.RESOURCE_GROUP }}']" -o tsv)
 
           if [ -n "$ACTIVE_RESOURCE" ]; then
-            echo "Found active Document Intelligence account. Keeping it active as per resource management strategy."
-          fi
-
-          # Now check if the resource exists in a soft-deleted state
-          SOFT_DELETED=$(az resource list --query "[?name=='$DOCINT_NAME' && resourceGroup=='${{ env.RESOURCE_GROUP }}' && properties.isInDeletionState==true]" -o tsv)
-
-          if [ -n "$SOFT_DELETED" ]; then
-            echo "Found soft-deleted Document Intelligence account. Attempting to purge..."
-            # Use timeout command with proper syntax
-            for i in {1..3}; do
-              echo "Purge attempt $i of 3..."
-              if timeout 60 az cognitiveservices account purge \
-                --name $DOCINT_NAME \
-                --resource-group ${{ env.RESOURCE_GROUP }} \
-                --subscription $SUBSCRIPTION_ID \
-                --location eastus; then
-                echo "Purge operation succeeded!"
-                break
-              else
-                echo "Purge attempt $i failed. Waiting before retry..."
-                sleep 30
-              fi
-
-              # If this is the last attempt, check if it's still soft-deleted
-              if [ $i -eq 3 ]; then
-                STILL_DELETED=$(az resource list --query "[?name=='$DOCINT_NAME' && resourceGroup=='${{ env.RESOURCE_GROUP }}' && properties.isInDeletionState==true]" -o tsv)
-                if [ -n "$STILL_DELETED" ]; then
-                  echo "WARNING: Failed to purge Document Intelligence account after 3 attempts."
-                else
-                  echo "Resource no longer appears as soft-deleted. It may have been purged successfully."
-                fi
-              fi
-            done
-
-            # Wait for purge operation to complete
-            echo "Waiting for purge operation to complete..."
-            sleep 30
+            echo "Found active Document Intelligence account: $DOCINT_NAME. Keeping it active as per resource management strategy. Skipping soft-delete check and purge attempt."
           else
-            echo "No soft-deleted Document Intelligence account found."
+            # Only check for soft-deleted if no active resource is found
+            echo "No active Document Intelligence account found: $DOCINT_NAME. Checking for soft-deleted version..."
+            SOFT_DELETED=$(az resource list --query "[?name=='$DOCINT_NAME' && resourceGroup=='${{ env.RESOURCE_GROUP }}' && properties.isInDeletionState==true]" -o tsv)
+
+            if [ -n "$SOFT_DELETED" ]; then
+              echo "Found soft-deleted Document Intelligence account. Attempting to purge..."
+              # Use timeout command with proper syntax
+              for i in {1..3}; do
+                echo "Purge attempt $i of 3..."
+                if timeout 60 az cognitiveservices account purge \
+                  --name $DOCINT_NAME \
+                  --resource-group ${{ env.RESOURCE_GROUP }} \
+                  --subscription $SUBSCRIPTION_ID \
+                  --location eastus; then
+                  echo "Purge operation succeeded!"
+                  break
+                else
+                  echo "Purge attempt $i failed. Waiting before retry..."
+                  sleep 30
+                fi
+
+                # If this is the last attempt, check if it's still soft-deleted
+                if [ $i -eq 3 ]; then
+                  STILL_DELETED=$(az resource list --query "[?name=='$DOCINT_NAME' && resourceGroup=='${{ env.RESOURCE_GROUP }}' && properties.isInDeletionState==true]" -o tsv)
+                  if [ -n "$STILL_DELETED" ]; then
+                    echo "WARNING: Failed to purge Document Intelligence account after 3 attempts."
+                  else
+                    echo "Resource no longer appears as soft-deleted. It may have been purged successfully."
+                  fi
+                fi
+              done
+
+              # Wait for purge operation to complete
+              echo "Waiting for purge operation to complete..."
+              sleep 30
+            else
+              echo "No soft-deleted Document Intelligence account found: $DOCINT_NAME."
+            fi
           fi
 
           # OpenAI
@@ -133,45 +134,46 @@ jobs:
           ACTIVE_RESOURCE=$(az cognitiveservices account list --query "[?name=='$OPENAI_NAME' && resourceGroup=='${{ env.RESOURCE_GROUP }}']" -o tsv)
 
           if [ -n "$ACTIVE_RESOURCE" ]; then
-            echo "Found active OpenAI account. Keeping it active as per resource management strategy."
-          fi
-
-          # Now check if the resource exists in a soft-deleted state
-          SOFT_DELETED=$(az resource list --query "[?name=='$OPENAI_NAME' && resourceGroup=='${{ env.RESOURCE_GROUP }}' && properties.isInDeletionState==true]" -o tsv)
-
-          if [ -n "$SOFT_DELETED" ]; then
-            echo "Found soft-deleted OpenAI account. Attempting to purge..."
-            # Use timeout command with proper syntax
-            for i in {1..3}; do
-              echo "Purge attempt $i of 3..."
-              if timeout 60 az cognitiveservices account purge \
-                --name $OPENAI_NAME \
-                --resource-group ${{ env.RESOURCE_GROUP }} \
-                --subscription $SUBSCRIPTION_ID \
-                --location eastus; then
-                echo "Purge operation succeeded!"
-                break
-              else
-                echo "Purge attempt $i failed. Waiting before retry..."
-                sleep 30
-              fi
-
-              # If this is the last attempt, check if it's still soft-deleted
-              if [ $i -eq 3 ]; then
-                STILL_DELETED=$(az resource list --query "[?name=='$OPENAI_NAME' && resourceGroup=='${{ env.RESOURCE_GROUP }}' && properties.isInDeletionState==true]" -o tsv)
-                if [ -n "$STILL_DELETED" ]; then
-                  echo "WARNING: Failed to purge OpenAI account after 3 attempts."
-                else
-                  echo "Resource no longer appears as soft-deleted. It may have been purged successfully."
-                fi
-              fi
-            done
-
-            # Wait for purge operation to complete
-            echo "Waiting for purge operation to complete..."
-            sleep 30
+            echo "Found active OpenAI account: $OPENAI_NAME. Keeping it active as per resource management strategy. Skipping soft-delete check and purge attempt."
           else
-            echo "No soft-deleted OpenAI account found."
+            # Only check for soft-deleted if no active resource is found
+            echo "No active OpenAI account found: $OPENAI_NAME. Checking for soft-deleted version..."
+            SOFT_DELETED=$(az resource list --query "[?name=='$OPENAI_NAME' && resourceGroup=='${{ env.RESOURCE_GROUP }}' && properties.isInDeletionState==true]" -o tsv)
+
+            if [ -n "$SOFT_DELETED" ]; then
+              echo "Found soft-deleted OpenAI account. Attempting to purge..."
+              # Use timeout command with proper syntax
+              for i in {1..3}; do
+                echo "Purge attempt $i of 3..."
+                if timeout 60 az cognitiveservices account purge \
+                  --name $OPENAI_NAME \
+                  --resource-group ${{ env.RESOURCE_GROUP }} \
+                  --subscription $SUBSCRIPTION_ID \
+                  --location eastus; then
+                  echo "Purge operation succeeded!"
+                  break
+                else
+                  echo "Purge attempt $i failed. Waiting before retry..."
+                  sleep 30
+                fi
+
+                # If this is the last attempt, check if it's still soft-deleted
+                if [ $i -eq 3 ]; then
+                  STILL_DELETED=$(az resource list --query "[?name=='$OPENAI_NAME' && resourceGroup=='${{ env.RESOURCE_GROUP }}' && properties.isInDeletionState==true]" -o tsv)
+                  if [ -n "$STILL_DELETED" ]; then
+                    echo "WARNING: Failed to purge OpenAI account after 3 attempts."
+                  else
+                    echo "Resource no longer appears as soft-deleted. It may have been purged successfully."
+                  fi
+                fi
+              done
+
+              # Wait for purge operation to complete
+              echo "Waiting for purge operation to complete..."
+              sleep 30
+            else
+              echo "No soft-deleted OpenAI account found: $OPENAI_NAME."
+            fi
           fi
 
           # Cognitive Search

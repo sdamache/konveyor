@@ -44,8 +44,8 @@ on:
       fast_track:
         description: 'Run only critical tests for quick deployment'
         required: false
-        default: false
-        type: boolean
+        default: 'false'
+        type: string
       deploy_infrastructure:
         description: 'Whether to deploy infrastructure'
         required: false
@@ -75,12 +75,17 @@ on:
       fast_track:
         description: 'Run only critical tests for quick deployment'
         required: false
-        default: false
-        type: boolean
+        default: 'false'
+        type: string
       deploy_infrastructure:
         description: 'Whether to deploy infrastructure'
         required: false
         default: 'auto'
+        type: string
+      image_tag:
+        description: 'Docker image tag to use'
+        required: false
+        default: 'latest'
         type: string
     secrets:
       AZURE_CREDENTIALS:
@@ -192,6 +197,7 @@ jobs:
             TEST_CATEGORY="${{ inputs.test_category }}"
           fi
 
+          # Handle fast_track as a string
           if [[ "${{ github.event.inputs.fast_track }}" == "true" || "${{ inputs.fast_track }}" == "true" ]]; then
             FAST_TRACK="true"
           fi
@@ -298,7 +304,8 @@ jobs:
             CURRENT_TEST_TYPE="${{ inputs.test_type || github.event.inputs.test_type || env.TEST_TYPE }}"
             CURRENT_ENVIRONMENT="${{ inputs.environment || github.event.inputs.environment || env.ENVIRONMENT }}"
             CURRENT_TEST_CATEGORY="${{ inputs.test_category || github.event.inputs.test_category || env.TEST_CATEGORY }}"
-            CURRENT_FAST_TRACK="${{ format('{0}', inputs.fast_track || github.event.inputs.fast_track || env.FAST_TRACK) }}"
+            # Handle fast_track as a string
+            CURRENT_FAST_TRACK="${{ inputs.fast_track || github.event.inputs.fast_track || env.FAST_TRACK }}"
           fi
 
           # Set command-line arguments for the test runner
@@ -511,78 +518,6 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: '1.5.7'
-
-      - name: Clean up infrastructure
-        if: >-
-          ${{
-            always() &&
-            (env.DEPLOY_INFRA == 'always' ||
-            (env.DEPLOY_INFRA == 'auto' && (env.TEST_TYPE == 'real' || (github.event_name == 'pull_request' && github.base_ref == 'main'))))
-          }}
-        run: |
-          # Check if Konveyor-infra directory exists (case-insensitive)
-          if [ ! -d "Konveyor-infra" ] && [ ! -d "konveyor-infra" ]; then
-            echo "::warning::Konveyor-infra directory not found (checked both cases). Skipping infrastructure cleanup."
-            # Debug: List all directories to see what's available
-            echo "Available directories:"
-            ls -la
-            exit 0
-          fi
-
-          # Set the correct infrastructure directory
-          INFRA_DIR="Konveyor-infra"
-          if [ ! -d "$INFRA_DIR" ] && [ -d "konveyor-infra" ]; then
-            INFRA_DIR="konveyor-infra"
-          fi
-
-          # Check if the environment directory exists
-          ENV_DIR="$INFRA_DIR/environments/${{ env.ENVIRONMENT }}"
-          if [ ! -d "$ENV_DIR" ]; then
-            echo "::warning::Environment directory $ENV_DIR not found. Skipping infrastructure cleanup."
-            # Debug: List available environments
-            echo "Available environments:"
-            ls -la $INFRA_DIR/environments/ || echo "No environments directory found"
-            exit 0
-          fi
-
-          cd $ENV_DIR
-
-          # Initialize Terraform with remote backend for state persistence
-          # This ensures state is saved even though resources will be destroyed
-          terraform init \
-            -backend=true \
-            -backend-config="resource_group_name=terraform-state-rg" \
-            -backend-config="storage_account_name=konveyortfstate" \
-            -backend-config="container_name=tfstate" \
-
-          # Select the relevant workspace
-          terraform workspace select integration-test || terraform workspace new integration-test
-
-          # Call the resource-cleanup workflow as a reusable workflow
-          # This will be done in a separate job
-
-          # Create terraform.tfvars file securely using GitHub Secrets
-          # This approach prevents secrets from being exposed in logs
-          cat > terraform.tfvars << 'EOF'
-          microsoft_app_id="${{ secrets.TF_VAR_MICROSOFT_APP_ID || 'c8218a52-681c-4df2-b558-5fa8e5067b43' }}"
-          microsoft_app_password="${{ secrets.TF_VAR_MICROSOFT_APP_PASSWORD }}"
-          slack_bot_token="${{ secrets.TF_VAR_SLACK_BOT_TOKEN }}"
-          slack_app_token="${{ secrets.TF_VAR_SLACK_APP_TOKEN }}"
-          slack_signing_secret="${{ secrets.TF_VAR_SLACK_SIGNING_SECRET }}"
-          slack_client_id="${{ secrets.TF_VAR_SLACK_CLIENT_ID }}"
-          slack_client_secret="${{ secrets.TF_VAR_SLACK_CLIENT_SECRET }}"
-          slack_test_channel_id="${{ secrets.TF_VAR_SLACK_TEST_CHANNEL_ID || 'D08KQ0WPGR2' }}"
-          GHCR_PAT="${{ secrets.GHCR_PAT }}"
-          DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY || 'django-insecure-test-key-for-ci' }}"
-          github_repository="${{ github.repository }}"
-          docker_registry_username="${{ github.actor }}"
-          EOF
-
-          # Debug: Confirm the file was created (without showing contents)
-          echo "terraform.tfvars file created successfully"
-
-          # Use timeout to prevent hanging
-          timeout 15m terraform destroy -auto-approve -var-file=terraform.tfvars
 
 #TODO: Assumption: Ensure run_all_tests.py script or the pytest command calls would be updated to generate --html=test_report/index.html when we uncomment this.
 #TODO: The actual github pages step will be added when we are successful with Upload Pages Artifact in code-quality
